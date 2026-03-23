@@ -1775,7 +1775,20 @@
             }
             await new Promise((r) => setTimeout(r, 800));
           }
+          // Nombre del archivo PDF: MP-Punto-IDAtm
+          const puntoSlug = (form.punto || "SinPunto")
+            .normalize("NFD")
+            .replace(/[̀-ͯ]/g, "") // quitar tildes
+            .replace(/[^a-zA-Z0-9\s-]/g, "") // solo alfanum y guiones
+            .trim()
+            .replace(/\s+/g, "-"); // espacios → guiones
+          const idSlug = (form.idAtm || "SinID").replace(/[^a-zA-Z0-9]/g, "");
+          const pdfTitle = "MP-" + puntoSlug + "-" + idSlug;
+
+          const prevTitle = document.title;
+          document.title = pdfTitle;
           window.print();
+          document.title = prevTitle;
         }
 
         return (
