@@ -323,8 +323,16 @@ export default function TecnicosPage() {
               <>
                 <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Importar Tecnicos</h2>
                 <p style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>Columnas requeridas en el archivo:</p>
-                <div style={{ background: '#0f172a', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontFamily: 'monospace', fontSize: 12, color: '#60a5fa' }}>
-                  num_interno &nbsp;|&nbsp; nombre
+                <div style={{ background: '#0f172a', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 12 }}>
+                  {[
+                    { col: 'num_interno', desc: 'Número único del técnico (se convierte a mayúsculas)' },
+                    { col: 'nombre',      desc: 'Nombre completo del técnico' },
+                  ].map(({ col, desc }) => (
+                    <div key={col} style={{ display: 'flex', gap: 12, marginBottom: 4, alignItems: 'baseline' }}>
+                      <span style={{ fontFamily: 'monospace', color: '#60a5fa', minWidth: 110, flexShrink: 0 }}>{col}</span>
+                      <span style={{ color: '#94a3b8' }}>{desc}</span>
+                    </div>
+                  ))}
                 </div>
                 <p style={{ color: '#64748b', fontSize: 11, marginBottom: 20 }}>Formatos aceptados: .xlsx, .xls, .csv</p>
                 {importFileError && <div style={{ color: '#f87171', fontSize: 12, marginBottom: 16 }}>{importFileError}</div>}

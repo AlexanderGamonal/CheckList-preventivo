@@ -449,10 +449,21 @@ export default function AtmsPage() {
               <>
                 <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Importar ATMs</h2>
                 <p style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>Columnas requeridas en el archivo:</p>
-                <div style={{ background: '#0f172a', borderRadius: 8, padding: '10px 14px', marginBottom: 8, fontFamily: 'monospace', fontSize: 12, color: '#60a5fa' }}>
-                  cliente &nbsp;|&nbsp; id_atm &nbsp;|&nbsp; punto &nbsp;|&nbsp; marca &nbsp;|&nbsp; modelo &nbsp;|&nbsp; tipo
+                <div style={{ background: '#0f172a', borderRadius: 8, padding: '10px 14px', marginBottom: 12, fontSize: 12 }}>
+                  {[
+                    { col: 'cliente', desc: 'Nombre del cliente (se crea si no existe)' },
+                    { col: 'id_atm',  desc: 'Identificador único del ATM (se convierte a mayúsculas)' },
+                    { col: 'punto',   desc: 'Ubicación o nombre del punto de instalación' },
+                    { col: 'marca',   desc: 'Marca del ATM (se crea si no existe)' },
+                    { col: 'modelo',  desc: 'Modelo del ATM (se crea si no existe)' },
+                    { col: 'tipo',    desc: 'dispensador · depositos · multifuncion' },
+                  ].map(({ col, desc }) => (
+                    <div key={col} style={{ display: 'flex', gap: 12, marginBottom: 4, alignItems: 'baseline' }}>
+                      <span style={{ fontFamily: 'monospace', color: '#60a5fa', minWidth: 76, flexShrink: 0 }}>{col}</span>
+                      <span style={{ color: '#94a3b8' }}>{desc}</span>
+                    </div>
+                  ))}
                 </div>
-                <p style={{ color: '#64748b', fontSize: 11, marginBottom: 4 }}>Valores válidos para <strong style={{ color: '#94a3b8' }}>tipo</strong>: dispensador · depositos · multifuncion</p>
                 <p style={{ color: '#64748b', fontSize: 11, marginBottom: 20 }}>Formatos aceptados: .xlsx, .xls, .csv — Si cliente, marca o modelo no existen, se crearán automáticamente.</p>
                 {importFileError && <div style={{ color: '#f87171', fontSize: 12, marginBottom: 16 }}>{importFileError}</div>}
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
