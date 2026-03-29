@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.claude/
+
+# Variables de entorno — NUNCA commitear
+.env
+.env.local
+.env.*.local
+.env.production
