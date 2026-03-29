@@ -73,7 +73,7 @@ export const SEC_OTROS = {
 export const DISP_NCR_6622 = {
   id: "dispensador",
   tipo: "disp",
-  title: "Dispensador de Billetes — NCR 6622",
+  title: "Dispensador de Billetes — NCR S1",
   emoji: "💵",
   items: [
     "Shutter S1",
@@ -83,6 +83,29 @@ export const DISP_NCR_6622 = {
     "Pick Module 1 S1",
     "Pick Module 2 S1",
     "Cassette de Rechazos",
+    "Cassette 1",
+    "Cassette 2",
+    "Cassette 3",
+    "Cassette 4",
+  ],
+};
+
+export const DISP_NCR_6623 = {
+  id: "dispensador",
+  tipo: "disp",
+  title: "Dispensador de Billetes — NCR S2",
+  emoji: "💵",
+  items: [
+    "Shutter",
+    "Carriege",
+    "Presenter Core",
+    "Main Motor",
+    "Bill Aligner Module (BAM)",
+    "Single Note Transport (SNT)",
+    "Double Pick Module 1",
+    "Double Pick Module 2",
+    "Main Control Board S2",
+    "Purge Bin",
     "Cassette 1",
     "Cassette 2",
     "Cassette 3",
@@ -198,8 +221,15 @@ export const LECTORA_HYOSUNG = {
 
 export const DISP_MAP = { NCR: DISP_NCR, Diebold: DISP_DIEBOLD, GRG: DISP_GRG, Hyosung: DISP_HYOSUNG };
 
+const NCR_6622_MODELOS = ["ss22", "ss26", "6622"];
+const NCR_6623_MODELOS = ["ss23", "ss27", "6623"];
+
 function getDisp(marca, modelo) {
-  if (marca === "NCR" && modelo && modelo.includes("6622")) return DISP_NCR_6622;
+  if (marca === "NCR" && modelo) {
+    const m = modelo.toLowerCase();
+    if (NCR_6622_MODELOS.some(k => m.includes(k))) return DISP_NCR_6622;
+    if (NCR_6623_MODELOS.some(k => m.includes(k))) return DISP_NCR_6623;
+  }
   return DISP_MAP[marca] || null;
 }
 
