@@ -10,17 +10,38 @@ const LBL = {
   marginBottom: 5,
 };
 
+const MAX_PX = 1280;
+const QUALITY = 0.82;
+
+function compressImage(file) {
+  return new Promise((resolve) => {
+    const r = new FileReader();
+    r.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const { width, height } = img;
+        const scale = Math.min(1, MAX_PX / Math.max(width, height));
+        const w = Math.round(width * scale);
+        const h = Math.round(height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', QUALITY));
+      };
+      img.src = ev.target.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+
 export default function PhotoUpload({ label, photos, setPhotos }) {
-  const handleFiles = (e) => {
-    Array.from(e.target.files).forEach((file) => {
-      const r = new FileReader();
-      r.onload = (ev) =>
-        setPhotos((p) => [
-          ...p,
-          { name: file.name, src: ev.target.result },
-        ]);
-      r.readAsDataURL(file);
-    });
+  const handleFiles = async (e) => {
+    const files = Array.from(e.target.files);
+    for (const file of files) {
+      const src = await compressImage(file);
+      setPhotos((p) => [...p, { name: file.name, src }]);
+    }
   };
   return (
     <div style={{ marginBottom: 16 }}>
