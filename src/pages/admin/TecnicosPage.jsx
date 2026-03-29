@@ -133,7 +133,7 @@ export default function TecnicosPage() {
       const buffer = await file.arrayBuffer();
       const wb = XLSX.read(buffer, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      const raw = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
 
       if (raw.length === 0) {
         setImportFileError('El archivo no contiene filas de datos.');
