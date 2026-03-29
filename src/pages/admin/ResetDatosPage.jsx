@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../admin/AdminLayout.jsx';
 import { supabase } from '../../lib/supabase.js';
@@ -11,15 +11,59 @@ const BTN_GHOST = {
   padding: '10px 20px', borderRadius: 8, border: '1px solid #334155',
   background: 'transparent', color: '#94a3b8', fontSize: 13, cursor: 'pointer',
 };
+const TH = { padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #334155', whiteSpace: 'nowrap' };
+const TD = { padding: '10px 14px', fontSize: 12, borderBottom: '1px solid #1e293b', color: '#cbd5e1', whiteSpace: 'nowrap' };
 
 export default function ResetDatosPage() {
   const navigate = useNavigate();
+  const [tab, setTab] = useState('masivo'); // 'masivo' | 'individual'
   const [step, setStep] = useState(1); // 1=selección, 2=confirmación, 3=resultado
   const [opciones, setOpciones] = useState({ mantenimientos: false, atms: false, tecnicos: false });
   const [conteos, setConteos] = useState({ mantenimientos: 0, atms: 0, tecnicos: 0 });
   const [confirmText, setConfirmText] = useState('');
   const [loading, setLoading] = useState(false);
   const [resultados, setResultados] = useState([]);
+
+  // Estado para borrado individual
+  const [mantenimientos, setMantenimientos] = useState([]);
+  const [loadingMants, setLoadingMants] = useState(false);
+  const [searchMant, setSearchMant] = useState('');
+  const [selectedMant, setSelectedMant] = useState(null);
+  const [deletingMant, setDeletingMant] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  const fetchMantenimientos = useCallback(async () => {
+    setLoadingMants(true);
+    const { data } = await supabase
+      .from('mantenimientos')
+      .select('id, fecha, id_atm_texto, punto_texto, tecnico_nombre, est_final')
+      .order('fecha', { ascending: false })
+      .limit(300);
+    setMantenimientos(data || []);
+    setLoadingMants(false);
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'individual') fetchMantenimientos();
+  }, [tab, fetchMantenimientos]);
+
+  async function eliminarMantenimiento() {
+    if (!selectedMant) return;
+    setDeletingMant(true);
+    const { error } = await supabase.from('mantenimientos').delete().eq('id', selectedMant.id);
+    setDeletingMant(false);
+    if (!error) {
+      setMantenimientos(prev => prev.filter(m => m.id !== selectedMant.id));
+      setConteos(prev => ({ ...prev, mantenimientos: Math.max(0, prev.mantenimientos - 1) }));
+    }
+    setSelectedMant(null);
+    setDeleteConfirmText('');
+  }
+
+  const mantsFiltrados = mantenimientos.filter(m => {
+    const q = searchMant.toLowerCase();
+    return !q || m.id_atm_texto?.toLowerCase().includes(q) || m.tecnico_nombre?.toLowerCase().includes(q) || m.punto_texto?.toLowerCase().includes(q) || String(m.id).includes(q);
+  });
 
   useEffect(() => { cargarConteos(); }, []);
 
@@ -89,9 +133,9 @@ export default function ResetDatosPage() {
 
   return (
     <AdminLayout>
-      <div style={{ maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ maxWidth: 700, margin: '0 auto' }}>
         {/* Header */}
-        <div style={{ marginBottom: 32 }}>
+        <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: '#450a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⚠️</div>
             <div>
@@ -104,7 +148,97 @@ export default function ResetDatosPage() {
           </div>
         </div>
 
-        {/* STEP 1 — Selección */}
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 4, background: '#1e293b', borderRadius: 10, padding: 4, marginBottom: 24, border: '1px solid #334155' }}>
+          {[{ id: 'masivo', label: 'Reset masivo' }, { id: 'individual', label: 'Borrar mantenimiento' }].map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{
+              flex: 1, padding: '8px 12px', borderRadius: 7, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              background: tab === t.id ? '#ef4444' : 'transparent',
+              color: tab === t.id ? '#fff' : '#64748b',
+              transition: 'all .15s',
+            }}>{t.label}</button>
+          ))}
+        </div>
+
+        {/* TAB: Borrar mantenimiento individual */}
+        {tab === 'individual' && (
+          <div style={{ background: '#1e293b', borderRadius: 12, padding: 24 }}>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', marginBottom: 16 }}>
+              Selecciona un mantenimiento para eliminar
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por ID ATM, técnico o punto..."
+              value={searchMant}
+              onChange={e => setSearchMant(e.target.value)}
+              style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #334155', background: '#0f172a', color: '#f8fafc', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
+            />
+            {loadingMants ? (
+              <div style={{ color: '#64748b', fontSize: 13, padding: 16, textAlign: 'center' }}>Cargando...</div>
+            ) : (
+              <div style={{ maxHeight: 400, overflowY: 'auto', borderRadius: 8, border: '1px solid #334155' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 500 }}>
+                  <thead>
+                    <tr style={{ background: '#0f172a' }}>
+                      {['ID', 'Fecha', 'ATM', 'Punto', 'Técnico', 'Estado'].map(h => <th key={h} style={{ ...TH, position: 'sticky', top: 0, background: '#0f172a' }}>{h}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mantsFiltrados.length === 0 ? (
+                      <tr><td colSpan={6} style={{ ...TD, textAlign: 'center', color: '#475569' }}>Sin resultados</td></tr>
+                    ) : mantsFiltrados.map(m => (
+                      <tr
+                        key={m.id}
+                        onClick={() => { setSelectedMant(m); setDeleteConfirmText(''); }}
+                        style={{ cursor: 'pointer', background: selectedMant?.id === m.id ? 'rgba(239,68,68,0.1)' : 'transparent', transition: 'background 0.1s' }}
+                        onMouseEnter={e => { if (selectedMant?.id !== m.id) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                        onMouseLeave={e => { if (selectedMant?.id !== m.id) e.currentTarget.style.background = 'transparent'; }}
+                      >
+                        <td style={{ ...TD, color: '#64748b' }}>#{m.id}</td>
+                        <td style={TD}>{m.fecha}</td>
+                        <td style={{ ...TD, fontFamily: 'monospace', color: '#60a5fa' }}>{m.id_atm_texto}</td>
+                        <td style={TD}>{m.punto_texto}</td>
+                        <td style={TD}>{m.tecnico_nombre}</td>
+                        <td style={{ ...TD, color: m.est_final === 'conforme' ? '#22c55e' : m.est_final === 'no_conforme' ? '#ef4444' : '#f59e0b' }}>{m.est_final}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Panel de confirmación */}
+            {selectedMant && (
+              <div style={{ marginTop: 20, padding: 16, borderRadius: 8, background: '#450a0a22', border: '1px solid #ef444433' }}>
+                <div style={{ color: '#fca5a5', fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
+                  Eliminar mantenimiento #{selectedMant.id} — {selectedMant.id_atm_texto} — {selectedMant.fecha}
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 8 }}>
+                  Escribe <strong style={{ color: '#ef4444' }}>CONFIRMAR</strong> para continuar:
+                </div>
+                <input
+                  type="text" autoFocus
+                  value={deleteConfirmText}
+                  onChange={e => setDeleteConfirmText(e.target.value)}
+                  placeholder="CONFIRMAR"
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${deleteConfirmText === 'CONFIRMAR' ? '#ef4444' : '#334155'}`, background: '#0f172a', color: '#f8fafc', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
+                />
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                  <button onClick={() => { setSelectedMant(null); setDeleteConfirmText(''); }} style={BTN_GHOST}>Cancelar</button>
+                  <button
+                    onClick={eliminarMantenimiento}
+                    disabled={deleteConfirmText !== 'CONFIRMAR' || deletingMant}
+                    style={{ ...BTN_RED, opacity: deleteConfirmText === 'CONFIRMAR' && !deletingMant ? 1 : 0.4, cursor: deleteConfirmText === 'CONFIRMAR' && !deletingMant ? 'pointer' : 'not-allowed' }}
+                  >
+                    {deletingMant ? 'Eliminando...' : 'Eliminar'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'masivo' && <>
         {step === 1 && (
           <div style={{ background: '#1e293b', borderRadius: 12, padding: 28 }}>
             <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', marginBottom: 20 }}>
@@ -227,6 +361,7 @@ export default function ResetDatosPage() {
             </div>
           </div>
         )}
+        </>}
       </div>
     </AdminLayout>
   );

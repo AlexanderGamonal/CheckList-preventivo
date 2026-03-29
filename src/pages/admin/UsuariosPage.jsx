@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../admin/AdminLayout.jsx';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../hooks/useAuth.js';
+import { useIsMobile } from '../../hooks/useIsMobile.js';
 
 const TH = { padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #334155', whiteSpace: 'nowrap' };
 const TD = { padding: '10px 14px', fontSize: 13, color: '#e2e8f0' };
@@ -45,6 +46,7 @@ async function callManageUsers(body) {
 }
 
 export default function UsuariosPage() {
+  const isMobile = useIsMobile();
   const { session } = useAuth();
   const currentUserId = session?.user?.id;
 
@@ -174,7 +176,7 @@ export default function UsuariosPage() {
 
       {/* Table */}
       <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 500 }}>
           <thead>
             <tr style={{ background: '#0f172a' }}>
               {['Email', 'Rol', 'Estado', 'Creado', 'Último acceso', 'Acciones'].map(h => (
@@ -258,7 +260,7 @@ export default function UsuariosPage() {
       {/* Modal — Invitar usuario */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: 16 }}>
-          <div style={{ background: '#1e293b', borderRadius: 16, padding: 32, width: '100%', maxWidth: 440, boxShadow: '0 25px 50px rgba(0,0,0,0.5)' }}>
+          <div style={{ background: '#1e293b', borderRadius: 16, padding: isMobile ? 20 : 32, width: '100%', maxWidth: 440, boxShadow: '0 25px 50px rgba(0,0,0,0.5)' }}>
             <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Invitar usuario</h2>
             <p style={{ color: '#64748b', fontSize: 13, marginBottom: 24 }}>
               Se enviará un correo con un enlace para que el usuario establezca su contraseña.
@@ -304,7 +306,7 @@ export default function UsuariosPage() {
       {/* Modal — Confirmar eliminación */}
       {deleteId && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: 16 }}>
-          <div style={{ background: '#1e293b', borderRadius: 16, padding: 32, width: '100%', maxWidth: 400, boxShadow: '0 25px 50px rgba(0,0,0,0.5)' }}>
+          <div style={{ background: '#1e293b', borderRadius: 16, padding: isMobile ? 20 : 32, width: '100%', maxWidth: 400, boxShadow: '0 25px 50px rgba(0,0,0,0.5)' }}>
             <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 10 }}>Eliminar usuario</h2>
             <p style={{ color: '#94a3b8', fontSize: 14, marginBottom: 8 }}>
               {users.find(u => u.id === deleteId)?.email}

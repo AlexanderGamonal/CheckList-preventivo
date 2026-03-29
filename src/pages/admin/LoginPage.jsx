@@ -34,6 +34,13 @@ export default function LoginPage() {
         background: '#1e293b', borderRadius: 16, padding: 40, width: '100%', maxWidth: 380,
         boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
       }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+          <img
+            src="/favicon.png"
+            alt="CheckList ATM"
+            style={{ width: 96, height: 96, objectFit: 'contain' }}
+          />
+        </div>
         <h1 style={{ color: '#f8fafc', fontSize: 20, fontWeight: 700, marginBottom: 6 }}>
           Panel Administracion
         </h1>

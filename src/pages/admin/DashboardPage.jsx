@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import AdminLayout from '../../admin/AdminLayout.jsx';
 import { supabase } from '../../lib/supabase.js';
+import { useIsMobile } from '../../hooks/useIsMobile.js';
 
 /* ─── Paleta ──────────────────────────────────────────────────── */
 const C = {
@@ -91,6 +92,7 @@ function ChartCard({ title, children, style = {} }) {
 
 /* ─── Main ─────────────────────────────────────────────────────── */
 export default function DashboardPage() {
+  const isMobile = useIsMobile();
   const [periodo, setPeriodo] = useState(6); // meses
   const [data, setData] = useState([]);
   const [kpis, setKpis] = useState(null);
@@ -198,7 +200,7 @@ export default function DashboardPage() {
   return (
     <AdminLayout>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', gap: isMobile ? 12 : 0, marginBottom: 28 }}>
         <div>
           <h1 style={{ color: C.text, fontSize: 22, fontWeight: 700 }}>Dashboard</h1>
           <p style={{ color: C.muted, fontSize: 13, marginTop: 4 }}>Estadísticas de mantenimientos preventivos</p>
@@ -230,7 +232,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Fila 1: Barras por mes + Pie */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: 16, marginBottom: 16 }}>
         <ChartCard title={`Mantenimientos por mes — últimos ${periodo} meses`}>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={data.byMes} barSize={22} barGap={4}>
@@ -268,7 +270,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Fila 2: Top técnicos + Dispositivos por mes */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <ChartCard title="Top técnicos — mantenimientos realizados">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={data.topTecs} layout="vertical" barSize={16}>

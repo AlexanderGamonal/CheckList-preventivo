@@ -237,7 +237,7 @@ export default function MantenimientosPage() {
 
       {/* Table */}
       <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
           <thead>
             <tr style={{ background: '#0f172a' }}>
               {['Fecha', 'ID ATM', 'Punto', 'Marca', 'Técnico', 'Estado', 'B ✓', 'D ✗', '% Cumpl.'].map(h => (

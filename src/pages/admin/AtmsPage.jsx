@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import AdminLayout from '../../admin/AdminLayout.jsx';
+import { useIsMobile } from '../../hooks/useIsMobile.js';
 import { supabase } from '../../lib/supabase.js';
 import Toast from '../../components/Toast.jsx';
 
@@ -17,6 +18,7 @@ const ATM_TIPOS = ['dispensador', 'depositos', 'multifuncion'];
 const EMPTY_FORM = { id_atm: '', punto: '', cliente_id: '', marca_id: '', modelo_id: '', atm_tipo: 'dispensador' };
 
 export default function AtmsPage() {
+  const isMobile = useIsMobile();
   const [atms, setAtms] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [marcas, setMarcas] = useState([]);
@@ -327,7 +329,7 @@ export default function AtmsPage() {
 
       {/* Table */}
       <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
           <thead>
             <tr>
               {['ID ATM', 'Punto', 'Cliente', 'Marca', 'Modelo', 'Tipo', 'Activo', 'Acciones'].map(h => (
@@ -388,7 +390,7 @@ export default function AtmsPage() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#1e293b', borderRadius: 16, padding: 32, width: '100%', maxWidth: 480, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#1e293b', borderRadius: 16, padding: isMobile ? 20 : 32, width: '100%', maxWidth: 480, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 24 }}>{editRow ? 'Editar ATM' : 'Nuevo ATM'}</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
@@ -442,7 +444,7 @@ export default function AtmsPage() {
       {/* Import Modal */}
       {showImportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#1e293b', borderRadius: 16, padding: 32, width: '100%', maxWidth: importStep === 'preview' ? 800 : 460, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#1e293b', borderRadius: 16, padding: isMobile ? 20 : 32, width: '100%', maxWidth: importStep === 'preview' ? 800 : 460, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
 
             {/* STEP: pick */}
             {importStep === 'pick' && (

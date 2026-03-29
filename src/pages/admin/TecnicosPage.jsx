@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import AdminLayout from '../../admin/AdminLayout.jsx';
+import { useIsMobile } from '../../hooks/useIsMobile.js';
 import { supabase } from '../../lib/supabase.js';
 import Toast from '../../components/Toast.jsx';
 
@@ -16,6 +17,7 @@ const LABEL_STYLE = { display: 'block', color: '#94a3b8', fontSize: 11, fontWeig
 const EMPTY_FORM = { nombre: '', num_interno: '' };
 
 export default function TecnicosPage() {
+  const isMobile = useIsMobile();
   const [tecnicos, setTecnicos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -289,7 +291,7 @@ export default function TecnicosPage() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#1e293b', borderRadius: 16, padding: 32, width: '100%', maxWidth: 420, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#1e293b', borderRadius: 16, padding: isMobile ? 20 : 32, width: '100%', maxWidth: 420, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 24 }}>
               {editRow ? 'Editar Tecnico' : 'Nuevo Tecnico'}
             </h2>
@@ -317,7 +319,7 @@ export default function TecnicosPage() {
       {/* Import Modal */}
       {showImportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#1e293b', borderRadius: 16, padding: 32, width: '100%', maxWidth: importStep === 'preview' ? 560 : 440, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#1e293b', borderRadius: 16, padding: isMobile ? 20 : 32, width: '100%', maxWidth: importStep === 'preview' ? 560 : 440, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
 
             {importStep === 'pick' && (
               <>

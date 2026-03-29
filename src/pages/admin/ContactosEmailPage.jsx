@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../admin/AdminLayout.jsx';
 import { supabase } from '../../lib/supabase.js';
+import { useIsMobile } from '../../hooks/useIsMobile.js';
 
 const TH = { padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #334155' };
 const TD = { padding: '10px 14px', fontSize: 13, color: '#e2e8f0', borderBottom: '1px solid #0f172a' };
@@ -14,6 +15,7 @@ const LABEL_STYLE = { display: 'block', color: '#94a3b8', fontSize: 11, fontWeig
 const EMPTY_FORM = { nombre: '', email: '' };
 
 export default function ContactosEmailPage() {
+  const isMobile = useIsMobile();
   const [contactos, setContactos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -162,8 +164,8 @@ export default function ContactosEmailPage() {
       )}
 
       {/* Table */}
-      <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 420 }}>
           <thead>
             <tr>
               {['Nombre', 'Email', 'Estado', 'Acciones'].map(h => (
@@ -231,7 +233,7 @@ export default function ContactosEmailPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
         }}>
           <div style={{
-            background: '#1e293b', borderRadius: 16, padding: 32, width: '100%', maxWidth: 420,
+            background: '#1e293b', borderRadius: 16, padding: isMobile ? 20 : 32, width: '100%', maxWidth: 420,
             boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
           }}>
             <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 24 }}>
