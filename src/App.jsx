@@ -284,7 +284,8 @@ export default function App() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-primary)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-primary)" }} role="application">
+      <main id="main-content" style={{ display: "contents" }}>
       {toast && (
         <Toast
           msg={toast.msg}
@@ -349,7 +350,7 @@ export default function App() {
               </div>
               <p
                 style={{
-                  color: tipoObj ? tipoObj.color : "#64748b",
+                  color: tipoObj ? tipoObj.color : "#94a3b8",
                   fontSize: 11,
                   fontWeight: 600,
                   marginTop: 2,
@@ -437,7 +438,7 @@ export default function App() {
                   fontWeight: 700,
                   whiteSpace: "nowrap",
                   background: tab === i ? "#fff" : hoveredTab === i ? "rgba(255,255,255,0.1)" : "transparent",
-                  color: tab === i ? "#0f172a" : hoveredTab === i ? "#cbd5e1" : "#64748b",
+                  color: tab === i ? "#0f172a" : hoveredTab === i ? "#cbd5e1" : "#94a3b8",
                   border: "none",
                   cursor: "pointer",
                   borderRadius: "8px 8px 0 0",
@@ -472,8 +473,9 @@ export default function App() {
 
                 {/* 1. FECHA */}
                 <div>
-                  <label style={{ ...LBL, whiteSpace: "nowrap" }}>Fecha</label>
+                  <label htmlFor="fecha-input" style={{ ...LBL, whiteSpace: "nowrap" }}>Fecha</label>
                   <input
+                    id="fecha-input"
                     type="date"
                     value={form.fecha}
                     onChange={(e) => upd("fecha", e.target.value)}
@@ -1726,6 +1728,7 @@ export default function App() {
           )}
         </div>
       </div>
+      </main>
     </div>
   );
 }
