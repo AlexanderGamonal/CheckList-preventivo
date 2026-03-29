@@ -7,17 +7,33 @@ const INP = {
   color: '#0f172a', fontSize: 13, outline: 'none', boxSizing: 'border-box',
 };
 
+// Caché de módulo — se carga una sola vez por sesión
+let tecCache = null;
+let cachePromise = null;
+
+function getCache() {
+  if (tecCache) return Promise.resolve(tecCache);
+  if (!cachePromise) {
+    cachePromise = supabase
+      .from('tecnicos')
+      .select('id, nombre, num_interno')
+      .eq('activo', true)
+      .order('num_interno')
+      .then(({ data }) => {
+        tecCache = data || [];
+        return tecCache;
+      });
+  }
+  return cachePromise;
+}
+
 async function searchTecnicos(partial) {
   if (!partial || partial.length < 1) return [];
-  const { data, error } = await supabase
-    .from('tecnicos')
-    .select('id, nombre, num_interno')
-    .ilike('num_interno', `%${partial}%`)
-    .eq('activo', true)
-    .order('num_interno')
-    .limit(8);
-  if (error) return [];
-  return data || [];
+  const cache = await getCache();
+  const q = partial.toLowerCase();
+  return cache
+    .filter(t => t.num_interno.toLowerCase().includes(q))
+    .slice(0, 8);
 }
 
 export default function TecnicoNumInput({ value, onChange, onAutofill, style }) {
@@ -26,6 +42,9 @@ export default function TecnicoNumInput({ value, onChange, onAutofill, style }) 
   const [showDropdown, setShowDropdown] = useState(false);
   const debounceRef = useRef(null);
   const containerRef = useRef(null);
+
+  // Precarga la caché al montar
+  useEffect(() => { getCache(); }, []);
 
   useEffect(() => {
     function handler(e) {
@@ -49,7 +68,7 @@ export default function TecnicoNumInput({ value, onChange, onAutofill, style }) 
       setSuggestions(results);
       setShowDropdown(results.length > 0);
       setStatus(results.length > 0 ? null : 'notfound');
-    }, 250);
+    }, 0);
   }, [onChange]);
 
   const handleSelect = useCallback((tecnico) => {

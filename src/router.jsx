@@ -16,6 +16,7 @@ const UsuariosPage         = lazy(() => import('./pages/admin/UsuariosPage.jsx')
 const ContactosEmailPage   = lazy(() => import('./pages/admin/ContactosEmailPage.jsx'));
 const SetPasswordPage      = lazy(() => import('./pages/admin/SetPasswordPage.jsx'));
 const ResetDatosPage       = lazy(() => import('./pages/admin/ResetDatosPage.jsx'));
+const ColorSystemPreview   = lazy(() => import('./pages/ColorSystemPreview.jsx'));
 
 function PageLoader() {
   return (
@@ -68,6 +69,9 @@ export default function AppRouter() {
 
         {/* Invitación — establecer contraseña */}
         <Route path="/admin/set-password" element={<SetPasswordPage />} />
+
+        {/* Design system preview — solo desarrollo */}
+        <Route path="/dev/colors" element={<ColorSystemPreview />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

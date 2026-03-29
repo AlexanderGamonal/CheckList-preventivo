@@ -8,12 +8,14 @@ import { supabase } from '../../lib/supabase.js';
 
 /* ─── Paleta ──────────────────────────────────────────────────── */
 const C = {
-  bg:      '#0f172a',
-  card:    '#1e293b',
-  border:  '#334155',
-  muted:   '#64748b',
-  text:    '#f8fafc',
-  sub:     '#94a3b8',
+  // Layout — CSS tokens (dark mode OLED)
+  bg:      'var(--bg-primary)',
+  card:    'var(--bg-secondary)',
+  border:  'var(--border-default)',
+  muted:   'var(--text-disabled)',
+  text:    'var(--text-primary)',
+  sub:     'var(--text-muted)',
+  // Chart colors — hex requerido por Recharts (SVG fill/stroke)
   green:   '#22c55e',
   red:     '#ef4444',
   amber:   '#f59e0b',
@@ -52,7 +54,7 @@ function getFirstOfPeriod(meses) {
 const DarkTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 8, padding: '10px 14px', fontSize: 12 }}>
+    <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-default)', borderRadius: 8, padding: '10px 14px', fontSize: 12 }}>
       {label && <div style={{ color: '#94a3b8', marginBottom: 6, fontWeight: 700 }}>{label}</div>}
       {payload.map((p, i) => (
         <div key={i} style={{ color: p.color || '#f8fafc', marginBottom: 2 }}>

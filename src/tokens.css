@@ -1,0 +1,267 @@
+/* ============================================================
+   ATM CheckList — Design Tokens
+   Style: Fintech Dark Mode (OLED)
+   ============================================================ */
+
+:root {
+  /* ----------------------------------------------------------
+     BACKGROUNDS — Layered depth for OLED black
+     Use from deepest (base) to most elevated (overlay)
+  ---------------------------------------------------------- */
+  --bg-base:      #020617;   /* Body background — true OLED black */
+  --bg-primary:   #0F172A;   /* Main surfaces: sidebar, nav */
+  --bg-secondary: #1E293B;   /* Cards, panels, drawers */
+  --bg-tertiary:  #334155;   /* Elevated cards, input fields */
+  --bg-overlay:   #475569;   /* Tooltips, dropdowns, popovers */
+
+  /* ----------------------------------------------------------
+     BRAND — Blue fintech (trust + tecnología)
+  ---------------------------------------------------------- */
+  --brand:         #3B82F6;  /* Primary action color */
+  --brand-light:   #60A5FA;  /* Links, highlights */
+  --brand-dark:    #1D4ED8;  /* Pressed states */
+  --brand-subtle:  rgba(59, 130, 246, 0.12);  /* Selected bg, badges */
+  --brand-glow:    rgba(59, 130, 246, 0.18);  /* Focus glow, active rings */
+
+  /* ----------------------------------------------------------
+     STATUS — Semántica para estados de ATM
+  ---------------------------------------------------------- */
+
+  /* Operacional / Sin fallas */
+  --status-ok:        #22C55E;
+  --status-ok-dim:    rgba(34, 197, 94, 0.10);
+  --status-ok-border: rgba(34, 197, 94, 0.25);
+
+  /* Advertencia / Revisión pendiente */
+  --status-warn:        #F59E0B;
+  --status-warn-dim:    rgba(245, 158, 11, 0.10);
+  --status-warn-border: rgba(245, 158, 11, 0.25);
+
+  /* Crítico / Fuera de servicio */
+  --status-critical:        #EF4444;
+  --status-critical-dim:    rgba(239, 68, 68, 0.10);
+  --status-critical-border: rgba(239, 68, 68, 0.25);
+
+  /* Desconectado / Sin datos */
+  --status-offline:        #64748B;
+  --status-offline-dim:    rgba(100, 116, 139, 0.10);
+  --status-offline-border: rgba(100, 116, 139, 0.20);
+
+  /* Informativo / En proceso */
+  --status-info:        #06B6D4;
+  --status-info-dim:    rgba(6, 182, 212, 0.10);
+  --status-info-border: rgba(6, 182, 212, 0.25);
+
+  /* ----------------------------------------------------------
+     TEXTO — Jerarquía de lectura
+  ---------------------------------------------------------- */
+  --text-primary:   #F8FAFC;  /* Títulos, datos importantes */
+  --text-secondary: #CBD5E1;  /* Cuerpo de texto, descripciones */
+  --text-muted:     #94A3B8;  /* Labels, placeholders, metadatos */
+  --text-disabled:  #475569;  /* Elementos inactivos */
+  --text-brand:     #60A5FA;  /* Links, texto de acción */
+  --text-inverse:   #0F172A;  /* Texto sobre fondos claros (CTA) */
+
+  /* ----------------------------------------------------------
+     BORDES — Separación sutil en dark mode
+  ---------------------------------------------------------- */
+  --border-subtle:  rgba(148, 163, 184, 0.07);  /* Separadores internos */
+  --border-default: rgba(148, 163, 184, 0.14);  /* Bordes estándar de card */
+  --border-strong:  rgba(148, 163, 184, 0.24);  /* Énfasis, hover */
+  --border-brand:   rgba(59, 130, 246, 0.35);   /* Focus, seleccionado */
+
+  /* ----------------------------------------------------------
+     ESTADOS INTERACTIVOS
+  ---------------------------------------------------------- */
+  --hover-overlay:  rgba(255, 255, 255, 0.04);  /* Row hover, card hover */
+  --active-overlay: rgba(255, 255, 255, 0.08);  /* Pressed */
+  --focus-ring:     rgba(59, 130, 246, 0.50);   /* outline de foco */
+  --selected-bg:    rgba(59, 130, 246, 0.12);   /* Row / item seleccionado */
+
+  /* ----------------------------------------------------------
+     SOMBRAS — Profundidad para dark mode
+  ---------------------------------------------------------- */
+  --shadow-sm:    0 1px 3px rgba(0, 0, 0, 0.40);
+  --shadow-md:    0 4px 16px rgba(0, 0, 0, 0.50);
+  --shadow-lg:    0 8px 32px rgba(0, 0, 0, 0.64);
+  --shadow-brand: 0 0 20px rgba(59, 130, 246, 0.15);
+  --shadow-ok:    0 0 16px rgba(34, 197, 94, 0.15);
+  --shadow-critical: 0 0 16px rgba(239, 68, 68, 0.20);
+
+  /* ----------------------------------------------------------
+     TIPOGRAFÍA
+     Heading: Fira Code (monospace técnico — dashboards, IDs de ATM)
+     Body:    Fira Sans (legible, profesional)
+  ---------------------------------------------------------- */
+  --font-heading: 'Fira Code', 'Consolas', monospace;
+  --font-body:    'Fira Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    'Fira Code', 'Consolas', monospace;
+
+  --text-xs:   0.75rem;   /* 12px — badges, timestamps */
+  --text-sm:   0.875rem;  /* 14px — labels, tablas */
+  --text-base: 1rem;      /* 16px — cuerpo principal */
+  --text-lg:   1.125rem;  /* 18px — subtítulos */
+  --text-xl:   1.25rem;   /* 20px — títulos de sección */
+  --text-2xl:  1.5rem;    /* 24px — títulos de página */
+  --text-3xl:  1.875rem;  /* 30px — KPIs, métricas grandes */
+
+  --leading-tight:  1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* ----------------------------------------------------------
+     ESPACIADO — Escala base 4px
+  ---------------------------------------------------------- */
+  --space-1:  0.25rem;   /*  4px */
+  --space-2:  0.5rem;    /*  8px */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+
+  /* ----------------------------------------------------------
+     RADIOS DE BORDE
+  ---------------------------------------------------------- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* ----------------------------------------------------------
+     TRANSICIONES
+  ---------------------------------------------------------- */
+  --transition-fast:   150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow:   350ms ease;
+
+  /* ----------------------------------------------------------
+     Z-INDEX — Escala predecible
+  ---------------------------------------------------------- */
+  --z-base:    10;
+  --z-dropdown: 20;
+  --z-sticky:  30;
+  --z-modal:   50;
+  --z-toast:   9999;
+}
+
+/* ----------------------------------------------------------
+   CLASES DE UTILIDAD — Status indicators
+   Usar en badges, dots y etiquetas de estado de ATM
+---------------------------------------------------------- */
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.status-dot--ok       { background: var(--status-ok);       box-shadow: 0 0 6px var(--status-ok); }
+.status-dot--warn     { background: var(--status-warn);     box-shadow: 0 0 6px var(--status-warn); }
+.status-dot--critical { background: var(--status-critical); box-shadow: 0 0 6px var(--status-critical); }
+.status-dot--offline  { background: var(--status-offline); }
+.status-dot--info     { background: var(--status-info);     box-shadow: 0 0 6px var(--status-info); }
+
+/* Pulsing para "en vivo" o crítico activo */
+.status-dot--pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* Badge de estado completo */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.status-badge--ok {
+  color: var(--status-ok);
+  background: var(--status-ok-dim);
+  border-color: var(--status-ok-border);
+}
+.status-badge--warn {
+  color: var(--status-warn);
+  background: var(--status-warn-dim);
+  border-color: var(--status-warn-border);
+}
+.status-badge--critical {
+  color: var(--status-critical);
+  background: var(--status-critical-dim);
+  border-color: var(--status-critical-border);
+}
+.status-badge--offline {
+  color: var(--status-offline);
+  background: var(--status-offline-dim);
+  border-color: var(--status-offline-border);
+}
+.status-badge--info {
+  color: var(--status-info);
+  background: var(--status-info-dim);
+  border-color: var(--status-info-border);
+}
+
+/* ----------------------------------------------------------
+   CARD — Superficie estándar
+---------------------------------------------------------- */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+}
+
+.card--elevated {
+  background: var(--bg-tertiary);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ----------------------------------------------------------
+   FOCUS GLOBAL — Accesibilidad
+---------------------------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ----------------------------------------------------------
+   SCROLLBAR — Fintech dark style
+---------------------------------------------------------- */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb  {
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--brand); }
+
+/* ----------------------------------------------------------
+   SELECTION
+---------------------------------------------------------- */
+::selection {
+  background: var(--brand-subtle);
+  color: var(--text-primary);
+}

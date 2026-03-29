@@ -1,9 +1,13 @@
 node_modules/
 dist/
 .claude/
+.vscode/
 
 # Variables de entorno — NUNCA commitear
 .env
 .env.local
 .env.*.local
 .env.production
+
+# Supabase CLI temp files
+supabase/.temp/

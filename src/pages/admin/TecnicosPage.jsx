@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import AdminLayout from '../../admin/AdminLayout.jsx';
 import { supabase } from '../../lib/supabase.js';
+import Toast from '../../components/Toast.jsx';
 
 const TH = { padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #334155' };
 const TD = { padding: '10px 14px', fontSize: 13, color: '#e2e8f0', borderBottom: '1px solid #0f172a' };
@@ -24,10 +25,12 @@ export default function TecnicosPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [togglingId, setTogglingId] = useState(null);
+  const [hoveredRow, setHoveredRow] = useState(null);
+  const [toast, setToast] = useState(null);
 
   // --- Import state ---
   const [showImportModal, setShowImportModal] = useState(false);
-  const [importStep, setImportStep] = useState('pick'); // 'pick' | 'preview' | 'results'
+  const [importStep, setImportStep] = useState('pick');
   const [importRows, setImportRows] = useState([]);
   const [importing, setImporting] = useState(false);
   const [importResults, setImportResults] = useState(null);
@@ -70,7 +73,7 @@ export default function TecnicosPage() {
   async function handleSave() {
     const { nombre, num_interno } = form;
     if (!nombre.trim() || !num_interno.trim()) {
-      setError('Nombre y numero interno son obligatorios.');
+      setError('Nombre y número interno son obligatorios.');
       return;
     }
     setSaving(true);
@@ -85,13 +88,17 @@ export default function TecnicosPage() {
     setSaving(false);
     if (res.error) { setError(res.error.message); return; }
     closeModal();
+    setToast({ msg: editRow ? 'Técnico actualizado correctamente' : 'Técnico creado correctamente', type: 'ok' });
     loadTecnicos();
   }
 
   async function handleToggleActivo(tec) {
+    const accion = tec.activo ? 'desactivar' : 'activar';
+    if (!window.confirm(`¿Confirmar ${accion} al técnico ${tec.nombre}?`)) return;
     setTogglingId(tec.id);
     await supabase.from('tecnicos').update({ activo: !tec.activo }).eq('id', tec.id);
     setTogglingId(null);
+    setToast({ msg: `${tec.nombre} ${tec.activo ? 'desactivado' : 'activado'}`, type: 'ok' });
     loadTecnicos();
   }
 
@@ -133,14 +140,12 @@ export default function TecnicosPage() {
         return;
       }
 
-      // Normalize keys
       const rows = raw.map(r => {
         const n = {};
         Object.keys(r).forEach(k => { n[k.trim().toLowerCase()] = String(r[k]).trim(); });
         return n;
-      }).filter(r => r.num_interno || r.nombre); // skip empty rows
+      }).filter(r => r.num_interno || r.nombre);
 
-      // Validate
       const seenNums = new Set();
       const validated = rows.map(row => {
         const num = (row.num_interno || '').toUpperCase();
@@ -189,6 +194,8 @@ export default function TecnicosPage() {
 
   return (
     <AdminLayout>
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h1 style={{ color: '#f8fafc', fontSize: 22, fontWeight: 700 }}>Tecnicos</h1>
@@ -222,8 +229,8 @@ export default function TecnicosPage() {
       </div>
 
       {/* Table */}
-      <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
           <thead>
             <tr>
               {['Nombre', 'Num. Interno', 'Activo', 'Registrado', 'Acciones'].map(h => (
@@ -233,11 +240,24 @@ export default function TecnicosPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} style={{ ...TD, textAlign: 'center', color: '#64748b' }}>Cargando...</td></tr>
+              <tr>
+                <td colSpan={5} style={{ ...TD, textAlign: 'center', paddingTop: 32, paddingBottom: 32 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                    <div style={{ width: 18, height: 18, border: '2px solid #334155', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                    <span style={{ color: '#64748b', fontSize: 13 }}>Cargando...</span>
+                  </div>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </td>
+              </tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={5} style={{ ...TD, textAlign: 'center', color: '#64748b' }}>Sin resultados</td></tr>
+              <tr><td colSpan={5} style={{ ...TD, textAlign: 'center', color: '#64748b', paddingTop: 32, paddingBottom: 32 }}>Sin resultados — intenta con otro término de búsqueda</td></tr>
             ) : filtered.map(t => (
-              <tr key={t.id} style={{ opacity: t.activo ? 1 : 0.5 }}>
+              <tr
+                key={t.id}
+                onMouseEnter={() => setHoveredRow(t.id)}
+                onMouseLeave={() => setHoveredRow(null)}
+                style={{ opacity: t.activo ? 1 : 0.5, background: hoveredRow === t.id ? '#263548' : 'transparent', transition: 'background 0.15s' }}
+              >
                 <td style={{ ...TD, fontWeight: 600 }}>{t.nombre}</td>
                 <td style={{ ...TD, color: '#60a5fa', fontFamily: 'monospace' }}>{t.num_interno}</td>
                 <td style={TD}>
@@ -248,8 +268,14 @@ export default function TecnicosPage() {
                 <td style={{ ...TD, color: '#64748b', fontSize: 12 }}>{formatDate(t.created_at)}</td>
                 <td style={TD}>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => openEdit(t)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: '#334155', color: '#e2e8f0', fontSize: 12, cursor: 'pointer' }}>Editar</button>
-                    <button onClick={() => handleToggleActivo(t)} disabled={togglingId === t.id} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: t.activo ? '#7f1d1d' : '#14532d', color: t.activo ? '#fca5a5' : '#86efac', fontSize: 12, cursor: 'pointer' }}>
+                    <button onClick={() => openEdit(t)}
+                      style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: '#334155', color: '#e2e8f0', fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#475569'}
+                      onMouseLeave={e => e.currentTarget.style.background = '#334155'}
+                    >Editar</button>
+                    <button onClick={() => handleToggleActivo(t)} disabled={togglingId === t.id}
+                      style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: t.activo ? '#7f1d1d' : '#14532d', color: t.activo ? '#fca5a5' : '#86efac', fontSize: 12, cursor: togglingId === t.id ? 'not-allowed' : 'pointer', transition: 'opacity 0.15s' }}
+                    >
                       {togglingId === t.id ? '...' : t.activo ? 'Desactivar' : 'Activar'}
                     </button>
                   </div>
@@ -263,7 +289,7 @@ export default function TecnicosPage() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#1e293b', borderRadius: 16, padding: 32, width: '100%', maxWidth: 420, boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}>
+          <div style={{ background: '#1e293b', borderRadius: 16, padding: 32, width: '100%', maxWidth: 420, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 24 }}>
               {editRow ? 'Editar Tecnico' : 'Nuevo Tecnico'}
             </h2>
@@ -273,7 +299,7 @@ export default function TecnicosPage() {
                 <input type="text" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Carlos Ramirez Torres" style={INP_STYLE} autoFocus />
               </div>
               <div>
-                <label style={LABEL_STYLE}>Numero interno</label>
+                <label style={LABEL_STYLE}>Número interno</label>
                 <input type="text" value={form.num_interno} onChange={e => setForm(p => ({ ...p, num_interno: e.target.value }))} placeholder="Ej: TEC-006" style={INP_STYLE} />
               </div>
             </div>
@@ -291,9 +317,8 @@ export default function TecnicosPage() {
       {/* Import Modal */}
       {showImportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#1e293b', borderRadius: 16, padding: 32, width: '100%', maxWidth: importStep === 'preview' ? 560 : 440, boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}>
+          <div style={{ background: '#1e293b', borderRadius: 16, padding: 32, width: '100%', maxWidth: importStep === 'preview' ? 560 : 440, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
 
-            {/* STEP: pick */}
             {importStep === 'pick' && (
               <>
                 <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Importar Tecnicos</h2>
@@ -312,13 +337,12 @@ export default function TecnicosPage() {
               </>
             )}
 
-            {/* STEP: preview */}
             {importStep === 'preview' && (
               <>
                 <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Vista previa</h2>
                 <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                  <span style={{ color: '#22c55e', fontSize: 13, fontWeight: 600 }}>✓ {validCount} listos</span>
-                  {errorCount > 0 && <span style={{ color: '#f87171', fontSize: 13, fontWeight: 600 }}>✗ {errorCount} con errores (se omitirán)</span>}
+                  <span style={{ color: '#22c55e', fontSize: 13, fontWeight: 600 }}>{validCount} listos</span>
+                  {errorCount > 0 && <span style={{ color: '#f87171', fontSize: 13, fontWeight: 600 }}>{errorCount} con errores (se omitirán)</span>}
                 </div>
                 <div style={{ maxHeight: 340, overflowY: 'auto', borderRadius: 8, border: '1px solid #334155' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -347,16 +371,15 @@ export default function TecnicosPage() {
               </>
             )}
 
-            {/* STEP: results */}
             {importStep === 'results' && importResults && (
               <>
                 <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Importación completada</h2>
                 <div style={{ marginBottom: 12 }}>
-                  <span style={{ color: '#22c55e', fontSize: 15, fontWeight: 700 }}>✓ {importResults.ok} técnicos importados</span>
+                  <span style={{ color: '#22c55e', fontSize: 15, fontWeight: 700 }}>{importResults.ok} técnicos importados</span>
                 </div>
                 {importResults.errors.length > 0 && (
                   <>
-                    <div style={{ color: '#f87171', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>✗ {importResults.errors.length} errores:</div>
+                    <div style={{ color: '#f87171', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{importResults.errors.length} errores:</div>
                     <div style={{ maxHeight: 200, overflowY: 'auto', background: '#0f172a', borderRadius: 8, padding: 12 }}>
                       {importResults.errors.map((e, i) => (
                         <div key={i} style={{ color: '#fca5a5', fontSize: 11, marginBottom: 4 }}>
@@ -375,7 +398,6 @@ export default function TecnicosPage() {
         </div>
       )}
 
-      {/* Hidden file input */}
       <input ref={importFileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={handleImportFile} />
     </AdminLayout>
   );

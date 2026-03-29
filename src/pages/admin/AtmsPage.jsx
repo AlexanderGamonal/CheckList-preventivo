@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import AdminLayout from '../../admin/AdminLayout.jsx';
 import { supabase } from '../../lib/supabase.js';
+import Toast from '../../components/Toast.jsx';
 
 const TH = { padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #334155' };
 const TD = { padding: '10px 14px', fontSize: 13, color: '#e2e8f0', borderBottom: '1px solid #0f172a' };
@@ -29,6 +30,8 @@ export default function AtmsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [togglingId, setTogglingId] = useState(null);
+  const [hoveredRow, setHoveredRow] = useState(null);
+  const [toast, setToast] = useState(null);
 
   // --- Import state ---
   const [showImportModal, setShowImportModal] = useState(false);
@@ -113,13 +116,17 @@ export default function AtmsPage() {
     setSaving(false);
     if (res.error) { setError(res.error.message); return; }
     closeModal();
+    setToast({ msg: editRow ? 'ATM actualizado correctamente' : 'ATM creado correctamente', type: 'ok' });
     loadAll();
   }
 
   async function handleToggleActivo(atm) {
+    const accion = atm.activo ? 'desactivar' : 'activar';
+    if (!window.confirm(`¿Confirmar ${accion} el ATM ${atm.id_atm}?`)) return;
     setTogglingId(atm.id);
     await supabase.from('atms').update({ activo: !atm.activo }).eq('id', atm.id);
     setTogglingId(null);
+    setToast({ msg: `ATM ${atm.id_atm} ${atm.activo ? 'desactivado' : 'activado'}`, type: 'ok' });
     loadAll();
   }
 
@@ -285,6 +292,7 @@ export default function AtmsPage() {
 
   return (
     <AdminLayout>
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h1 style={{ color: '#f8fafc', fontSize: 22, fontWeight: 700 }}>ATMs</h1>
@@ -318,7 +326,7 @@ export default function AtmsPage() {
       </div>
 
       {/* Table */}
-      <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
@@ -329,26 +337,44 @@ export default function AtmsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} style={{ ...TD, textAlign: 'center', color: '#64748b' }}>Cargando...</td></tr>
+              <tr>
+                <td colSpan={8} style={{ ...TD, textAlign: 'center', paddingTop: 32, paddingBottom: 32 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                    <div style={{ width: 18, height: 18, border: '2px solid #334155', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                    <span style={{ color: '#64748b', fontSize: 13 }}>Cargando...</span>
+                  </div>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </td>
+              </tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={8} style={{ ...TD, textAlign: 'center', color: '#64748b' }}>Sin resultados</td></tr>
+              <tr><td colSpan={8} style={{ ...TD, textAlign: 'center', color: '#64748b', paddingTop: 32, paddingBottom: 32 }}>Sin resultados — intenta con otro término de búsqueda</td></tr>
             ) : filtered.map(a => (
-              <tr key={a.id} style={{ opacity: a.activo ? 1 : 0.5 }}>
+              <tr
+                key={a.id}
+                onMouseEnter={() => setHoveredRow(a.id)}
+                onMouseLeave={() => setHoveredRow(null)}
+                style={{ opacity: a.activo ? 1 : 0.5, background: hoveredRow === a.id ? '#263548' : 'transparent', transition: 'background 0.15s' }}
+              >
                 <td style={{ ...TD, fontWeight: 700, color: '#60a5fa' }}>{a.id_atm}</td>
                 <td style={TD}>{a.punto}</td>
                 <td style={TD}>{a.clientes?.nombre || '—'}</td>
                 <td style={TD}>{a.marcas?.nombre || '—'}</td>
                 <td style={TD}>{a.modelos?.nombre || '—'}</td>
                 <td style={TD}>
-                  <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: 11, background: '#334155', color: '#94a3b8' }}>{a.atm_tipo}</span>
+                  <span style={{ padding: '3px 8px', borderRadius: 10, fontSize: 11, background: '#334155', color: '#94a3b8' }}>{a.atm_tipo}</span>
                 </td>
                 <td style={TD}>
                   <span style={{ color: a.activo ? '#22c55e' : '#ef4444', fontWeight: 700, fontSize: 12 }}>{a.activo ? 'Si' : 'No'}</span>
                 </td>
                 <td style={TD}>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => openEdit(a)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: '#334155', color: '#e2e8f0', fontSize: 12, cursor: 'pointer' }}>Editar</button>
-                    <button onClick={() => handleToggleActivo(a)} disabled={togglingId === a.id} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: a.activo ? '#7f1d1d' : '#14532d', color: a.activo ? '#fca5a5' : '#86efac', fontSize: 12, cursor: 'pointer' }}>
+                    <button onClick={() => openEdit(a)} style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: '#334155', color: '#e2e8f0', fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#475569'}
+                      onMouseLeave={e => e.currentTarget.style.background = '#334155'}
+                    >Editar</button>
+                    <button onClick={() => handleToggleActivo(a)} disabled={togglingId === a.id}
+                      style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: a.activo ? '#7f1d1d' : '#14532d', color: a.activo ? '#fca5a5' : '#86efac', fontSize: 12, cursor: togglingId === a.id ? 'not-allowed' : 'pointer', transition: 'opacity 0.15s' }}
+                    >
                       {togglingId === a.id ? '...' : a.activo ? 'Desactivar' : 'Activar'}
                     </button>
                   </div>

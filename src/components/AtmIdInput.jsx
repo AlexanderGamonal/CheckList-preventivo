@@ -14,6 +14,9 @@ export default function AtmIdInput({ value, onChange, onAutofill, onNotFound, st
   const debounceRef = useRef(null);
   const containerRef = useRef(null);
 
+  // Precarga la caché al montar para que el primer tipeo sea instantáneo
+  useEffect(() => { searchAtmIds('_preload_'); }, []);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handler(e) {
@@ -30,14 +33,14 @@ export default function AtmIdInput({ value, onChange, onAutofill, onNotFound, st
     onChange(val);
     setStatus(null);
     clearTimeout(debounceRef.current);
-    if (val.length < 2) { setSuggestions([]); setShowDropdown(false); return; }
+    if (val.length < 1) { setSuggestions([]); setShowDropdown(false); return; }
     setStatus('loading');
     debounceRef.current = setTimeout(async () => {
       const results = await searchAtmIds(val);
       setSuggestions(results);
       setShowDropdown(results.length > 0);
       setStatus(results.length > 0 ? null : 'notfound');
-    }, 300);
+    }, 0);
   }, [onChange]);
 
   const handleSelect = useCallback(async (idAtm) => {

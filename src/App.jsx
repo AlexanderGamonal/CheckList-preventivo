@@ -70,6 +70,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const [atmNotFound, setAtmNotFound] = useState(false);
+  const [hoveredTab, setHoveredTab] = useState(null);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [tab]);
 
@@ -283,7 +284,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0f172a" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-primary)" }}>
       {toast && (
         <Toast
           msg={toast.msg}
@@ -316,11 +317,11 @@ export default function App() {
         {/* HEADER */}
         <div
           style={{
-            background: "#0f172a",
+            background: "var(--bg-primary)",
             padding: "14px 14px 0",
             position: "sticky",
             top: 0,
-            zIndex: 20,
+            zIndex: "var(--z-sticky)",
           }}
         >
           <div
@@ -378,7 +379,7 @@ export default function App() {
                   >
                     <div
                       style={{
-                        background: "#1e293b",
+                        background: "var(--bg-tertiary)",
                         borderRadius: 20,
                         height: 6,
                         width: 80,
@@ -391,8 +392,8 @@ export default function App() {
                           width: pct + "%",
                           background:
                             pct === 100
-                              ? "#16a34a"
-                              : tipoObj?.color || "#3b82f6",
+                              ? "var(--status-ok)"
+                              : tipoObj?.color || "var(--brand)",
                           borderRadius: 20,
                           transition: "width .4s",
                         }}
@@ -400,7 +401,7 @@ export default function App() {
                     </div>
                     <span
                       style={{
-                        color: pct === 100 ? "#4ade80" : "#60a5fa",
+                        color: pct === 100 ? "var(--status-ok)" : "var(--brand-light)",
                         fontSize: 12,
                         fontWeight: 800,
                       }}
@@ -427,26 +428,29 @@ export default function App() {
               <button
                 key={i}
                 onClick={() => setTab(i)}
+                onMouseEnter={() => setHoveredTab(i)}
+                onMouseLeave={() => setHoveredTab(null)}
                 style={{
                   flex: "0 0 auto",
                   padding: "8px 12px",
                   fontSize: 11,
                   fontWeight: 700,
                   whiteSpace: "nowrap",
-                  background: tab === i ? "#fff" : "transparent",
-                  color: tab === i ? "#0f172a" : "#64748b",
+                  background: tab === i ? "#fff" : hoveredTab === i ? "rgba(255,255,255,0.1)" : "transparent",
+                  color: tab === i ? "#0f172a" : hoveredTab === i ? "#cbd5e1" : "#64748b",
                   border: "none",
                   cursor: "pointer",
                   borderRadius: "8px 8px 0 0",
                   display: "flex",
                   alignItems: "center",
                   gap: 4,
+                  transition: "background 0.15s, color 0.15s",
                 }}
               >
                 {t}
                 <span style={{
                   width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-                  background: tabOk[i] ? "#22c55e" : "#f59e0b",
+                  background: tabOk[i] ? "var(--status-ok)" : "var(--status-warn)",
                 }} />
               </button>
             ))}
@@ -533,27 +537,39 @@ export default function App() {
                   />
                 </div>
 
-                {/* 6. MODELO (auto-relleno, editable) */}
-                <div style={{ gridColumn: "1/-1", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignItems: "end" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, height: 38 }}>
-                    <span style={LBL}>Marca</span>
-                    {form.marca ? <BrandLogo marca={form.marca} height={40} /> : <span style={{ color: "#cbd5e1", fontSize: 12 }}>—</span>}
+                {/* 6. MARCA (solo lectura) + MODELO (editable) */}
+                <div>
+                  <label style={LBL}>Marca</label>
+                  <div style={{
+                    ...INP,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    background: "#f1f5f9",
+                    color: form.marca ? "#1e293b" : "#94a3b8",
+                    cursor: "default",
+                    userSelect: "none",
+                  }}>
+                    {form.marca
+                      ? <><BrandLogo marca={form.marca} height={18} />{form.marca}</>
+                      : "—"}
                   </div>
-                  <div>
-                    <label style={LBL}>Modelo</label>
-                    <input
-                      type="text"
-                      placeholder={
-                        form.marca === "NCR" ? "Ej: SelfServ 6683"
-                        : form.marca === "Diebold" ? "Ej: Opteva 522"
-                        : form.marca === "GRG" ? "Ej: H22N"
-                        : "Se completa al seleccionar ID ATM"
-                      }
-                      value={form.modelo}
-                      onChange={(e) => upd("modelo", e.target.value)}
-                      style={INP}
-                    />
-                  </div>
+                </div>
+
+                <div>
+                  <label style={LBL}>Modelo</label>
+                  <input
+                    type="text"
+                    placeholder={
+                      form.marca === "NCR" ? "Ej: SelfServ 6683"
+                      : form.marca === "Diebold" ? "Ej: Opteva 522"
+                      : form.marca === "GRG" ? "Ej: H22N"
+                      : "Se completa al seleccionar ID ATM"
+                    }
+                    value={form.modelo}
+                    onChange={(e) => upd("modelo", e.target.value)}
+                    style={INP}
+                  />
                 </div>
               </div>
 
@@ -1661,7 +1677,7 @@ export default function App() {
                   <>
                     {!formCompleto && (
                       <div style={{ textAlign: 'center', fontSize: 11, color: '#f59e0b', marginBottom: 8, fontWeight: 600 }}>
-                        {pendientes}/6 secciones completas — completa las pestañas marcadas con 🟡
+                        {pendientes}/6 secciones completas — revisa las pestañas con indicador amarillo
                       </div>
                     )}
                     <button
@@ -1684,11 +1700,23 @@ export default function App() {
                         boxShadow: formCompleto ? "0 4px 15px rgba(0,0,0,.3)" : "none",
                         transition: "background .2s",
                         opacity: deshabilitado && !enviando ? 0.6 : 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 10,
                       }}
                     >
-                      {enviando
-                        ? "⏳ Enviando…"
-                        : "📄 Generar PDF y Enviar Correo"}
+                      {enviando && (
+                        <div style={{
+                          width: 18, height: 18,
+                          border: "2px solid rgba(255,255,255,0.3)",
+                          borderTopColor: "#fff",
+                          borderRadius: "50%",
+                          animation: "spin 0.7s linear infinite",
+                          flexShrink: 0,
+                        }} />
+                      )}
+                      {enviando ? "Enviando…" : "Generar PDF y Enviar Correo"}
                     </button>
                   </>
                 );
