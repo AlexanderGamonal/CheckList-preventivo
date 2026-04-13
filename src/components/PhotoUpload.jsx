@@ -35,7 +35,13 @@ function compressImage(file) {
   });
 }
 
+const MIN_PHOTOS = 5;
+
 export default function PhotoUpload({ label, photos, setPhotos }) {
+  const count = photos.length;
+  const ok = count >= MIN_PHOTOS;
+  const faltantes = Math.max(0, MIN_PHOTOS - count);
+
   const handleFiles = async (e) => {
     const files = Array.from(e.target.files);
     for (const file of files) {
@@ -45,14 +51,26 @@ export default function PhotoUpload({ label, photos, setPhotos }) {
   };
   return (
     <div style={{ marginBottom: 16 }}>
-      <p style={{ ...LBL, marginBottom: 8 }}>{label}</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <p style={{ ...LBL, marginBottom: 0 }}>{label}</p>
+        <span style={{
+          fontSize: 11,
+          fontWeight: 700,
+          padding: "2px 8px",
+          borderRadius: 20,
+          background: ok ? "#dcfce7" : "#fee2e2",
+          color: ok ? "#15803d" : "#b91c1c",
+        }}>
+          {ok ? `✓ ${count} fotos` : `${count}/${MIN_PHOTOS} — faltan ${faltantes}`}
+        </span>
+      </div>
       <label
         style={{
           display: "flex",
           alignItems: "center",
           gap: 10,
           background: "#f8fafc",
-          border: "2px dashed #cbd5e1",
+          border: `2px dashed ${ok ? "#86efac" : count > 0 ? "#fca5a5" : "#cbd5e1"}`,
           borderRadius: 10,
           padding: "14px 16px",
           cursor: "pointer",

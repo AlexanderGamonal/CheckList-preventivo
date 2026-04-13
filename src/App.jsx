@@ -183,8 +183,8 @@ export default function App() {
     sections.length > 0 && sections.every(s => s.items.every((_, ii) => !!form.devices[s.id + "_" + ii]?.est)),
     // 4 Cierre
     !!(form.estFinal && form.obsGen?.trim() && form.rec?.trim()),
-    // 5 Fotos — al menos 1 antes y 1 después
-    fotosAntes.length > 0 && fotosDespues.length > 0,
+    // 5 Fotos — mínimo 5 antes y 5 después
+    fotosAntes.length >= 5 && fotosDespues.length >= 5,
   ];
 
   function validar() {
@@ -232,8 +232,8 @@ export default function App() {
     if (!form.rec?.trim()) return "Cierre: completa las Recomendaciones";
 
     // ── Fotos ────────────────────────────────────────────────────────
-    if (fotosAntes.length === 0) return "Fotos: agrega al menos 1 foto de Antes";
-    if (fotosDespues.length === 0) return "Fotos: agrega al menos 1 foto de Después";
+    if (fotosAntes.length < 5) return `Fotos: faltan ${5 - fotosAntes.length} foto(s) de Antes (mínimo 5)`;
+    if (fotosDespues.length < 5) return `Fotos: faltan ${5 - fotosDespues.length} foto(s) de Después (mínimo 5)`;
 
     return null;
   }
