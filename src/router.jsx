@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './admin/ProtectedRoute.jsx';
+import InstallPrompt from './components/InstallPrompt.jsx';
 
 // Checklist principal — carga inmediata (es la ruta raíz)
 import App from './App.jsx';
@@ -33,6 +34,7 @@ function PageLoader() {
 export default function AppRouter() {
   return (
     <Suspense fallback={<PageLoader />}>
+      <InstallPrompt />
       <Routes>
         {/* Public checklist */}
         <Route path="/" element={<App />} />
