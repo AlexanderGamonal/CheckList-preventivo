@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import Toast from './components/Toast.jsx';
 import SectionBlock from './components/SectionBlock.jsx';
 import PhotoUpload from './components/PhotoUpload.jsx';
+import { InstallButton } from './components/InstallPrompt.jsx';
 import PdfView from './components/PdfView.jsx';
 import AtmIdInput from './components/AtmIdInput.jsx';
 import TecnicoNumInput from './components/TecnicoNumInput.jsx';
@@ -371,7 +372,8 @@ export default function App() {
                   )}
                 </p>
               </div>
-              <div style={{ textAlign: "right" }}>
+              <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                <InstallButton />
                 {form.atmTipo && form.marca && (
                   <>
                     <div
