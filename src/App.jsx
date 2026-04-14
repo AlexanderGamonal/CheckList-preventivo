@@ -1389,17 +1389,28 @@ export default function App() {
                 }}
               >
                 {[
-                  ["obsGen", "Observaciones Generales", 3],
-                  ["rec", "Recomendaciones", 3],
-                ].map(([f, l, r]) => (
+                  ["obsGen", "Observaciones Generales", 3, true],
+                  ["rec", "Recomendaciones", 3, false],
+                ].map(([f, l, r, required]) => (
                   <div key={f}>
-                    <label style={LBL}>{l}</label>
+                    <label style={LBL}>
+                      {l}
+                      {required && (
+                        <span style={{ color: "#ef4444", marginLeft: 4 }}>*</span>
+                      )}
+                    </label>
                     <textarea
                       rows={r}
                       value={form[f]}
                       onChange={(e) => upd(f, e.target.value)}
-                      style={{ ...INP, resize: "none" }}
-                      placeholder={l + "…"}
+                      style={{
+                        ...INP,
+                        resize: "none",
+                        ...(required && !form[f]?.trim()
+                          ? { borderColor: "#fca5a5" }
+                          : {}),
+                      }}
+                      placeholder={required ? l + "… (obligatorio)" : l + "…"}
                     />
                   </div>
                 ))}
