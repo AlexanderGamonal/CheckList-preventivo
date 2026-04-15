@@ -183,7 +183,7 @@ export default function App() {
     // 3 Dispositivos — todos con estado
     sections.length > 0 && sections.every(s => s.items.every((_, ii) => !!form.devices[s.id + "_" + ii]?.est)),
     // 4 Cierre
-    !!(form.estFinal && form.obsGen?.trim() && form.rec?.trim()),
+    !!(form.estFinal && form.obsGen?.trim()),
     // 5 Fotos — mínimo 5 antes y 5 después
     fotosAntes.length >= 5 && fotosDespues.length >= 5,
   ];
@@ -230,7 +230,6 @@ export default function App() {
     // ── Cierre ───────────────────────────────────────────────────────
     if (!form.estFinal) return "Cierre: selecciona el Estado Final";
     if (!form.obsGen?.trim()) return "Cierre: completa las Observaciones Generales";
-    if (!form.rec?.trim()) return "Cierre: completa las Recomendaciones";
 
     // ── Fotos ────────────────────────────────────────────────────────
     if (fotosAntes.length < 5) return `Fotos: faltan ${5 - fotosAntes.length} foto(s) de Antes (mínimo 5)`;
