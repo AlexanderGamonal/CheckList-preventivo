@@ -3,7 +3,8 @@ import { buildEmailSummary } from './mantenimientoService.js';
 
 export async function sendNotificationEmail(form, pdfArrayBuffer) {
   const summary = buildEmailSummary(form);
-  const filename = `MP-${form.punto.replace(/\s+/g, '-')}-${form.idAtm}.pdf`;
+  const sanitize = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9\-_]/g, '-').replace(/-+/g, '-');
+  const filename = `MP-${sanitize(form.punto)}-${form.idAtm}.pdf`;
   const storagePath = `temp/${Date.now()}-${filename}`;
 
   // 1. Subir PDF a Storage (evita límite de body JSON)
