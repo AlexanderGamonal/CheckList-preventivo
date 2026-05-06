@@ -3,25 +3,25 @@
 -- ============================================================
 SELECT
   id,
-  id_atm                    AS id_actual,
-  'BBVA-' || id_atm         AS id_nuevo
+  id_atm               AS id_actual,
+  'BBVA-' || id_atm    AS id_nuevo
 FROM atms
-WHERE id_atm NOT LIKE 'BBVA-%'
+WHERE id_atm ~ '^[0-9]+$'
 ORDER BY id;
 
 -- ============================================================
--- PASO 2: ACTUALIZAR atms (cuando confirmes que el listado es correcto)
+-- PASO 2: ACTUALIZAR atms
 -- ============================================================
 UPDATE atms
 SET id_atm = 'BBVA-' || id_atm
-WHERE id_atm NOT LIKE 'BBVA-%';
+WHERE id_atm ~ '^[0-9]+$';
 
 -- ============================================================
--- PASO 3: ACTUALIZAR mantenimientos (por si alguno ya fue registrado)
+-- PASO 3: ACTUALIZAR mantenimientos
 -- ============================================================
 UPDATE mantenimientos
 SET id_atm_texto = 'BBVA-' || id_atm_texto
-WHERE id_atm_texto NOT LIKE 'BBVA-%';
+WHERE id_atm_texto ~ '^[0-9]+$';
 
 -- ============================================================
 -- PASO 4: VERIFICAR resultado final
