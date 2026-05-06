@@ -101,9 +101,10 @@ VITE_SUPABASE_ANON_KEY_PUBLIC=<tu-anon-key>
 En el **SQL Editor** de Supabase, ejecutar en orden:
 
 ```
-supabase/seed/schema.sql           -- Tablas y relaciones
-supabase/seed/add_delete_policies.sql  -- Políticas RLS de eliminación
-supabase/seed/seed.sql             -- Datos iniciales opcionales
+supabase/seed/schema.sql                -- Tablas, relaciones e índices
+supabase/seed/add_delete_policies.sql   -- Políticas RLS de eliminación
+supabase/seed/add_hyosung_models.sql    -- Modelos Hyosung y Alfin
+supabase/seed/seed.sql                  -- Datos iniciales opcionales
 ```
 
 ### 4. Desplegar las Edge Functions
@@ -118,7 +119,8 @@ Agregar los siguientes **Secrets** en Supabase → Edge Functions → Secrets:
 | Secret | Valor |
 |---|---|
 | `ALLOWED_ORIGIN` | URL de producción (ej. `https://mi-app.vercel.app`) |
-| `RESEND_API_KEY` | API key de [Resend](https://resend.com) |
+| `GMAIL_USER` | Dirección Gmail usada como remitente (ej. `checklist@gmail.com`) |
+| `GMAIL_APP_PASSWORD` | App Password de Gmail (no la contraseña normal de la cuenta) |
 
 ### 5. Iniciar en desarrollo
 
