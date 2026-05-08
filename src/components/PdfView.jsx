@@ -456,7 +456,7 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
               <div className="pdf-photos">
                 {fotosAntes.map((p, i) => (
                   <div key={i}>
-                    <img src={p.src} alt="" className="pdf-photo" />
+                    <img src={typeof p === 'string' ? p : p.src} alt="" className="pdf-photo" />
                   </div>
                 ))}
               </div>
@@ -476,7 +476,7 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
               <div className="pdf-photos">
                 {fotosDespues.map((p, i) => (
                   <div key={i}>
-                    <img src={p.src} alt="" className="pdf-photo" />
+                    <img src={typeof p === 'string' ? p : p.src} alt="" className="pdf-photo" />
                   </div>
                 ))}
               </div>
