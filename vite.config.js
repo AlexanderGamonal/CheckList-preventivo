@@ -20,8 +20,8 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'CheckList Mantenimiento ATM',
-        short_name: 'CheckList ATM',
+        name: 'GICE',
+        short_name: 'GICE',
         description: 'Sistema de checklist de mantenimiento preventivo de cajeros automáticos.',
         theme_color: '#020617',
         background_color: '#020617',

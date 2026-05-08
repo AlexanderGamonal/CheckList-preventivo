@@ -433,7 +433,7 @@ export default function AuditFormPage() {
   const sec1Complete = !!(form.idAtm && form.fecha && form.punto);
   const sec2Complete = !!form.equipoFuncionando;
   const sec3Complete = !!(form.pruebas.consultaSaldos && form.pruebas.retiroEfectivo && form.pruebas.depositoEfectivo);
-  const sec4Complete = !!(form.ipEquipo || form.sistemaOperativo);
+  const sec4Complete = !!(form.ipEquipo && form.sistemaOperativo);
   const sec5Complete = !!(form.lectorTarjetas && form.cpu);
   const sec6Complete = !!(form.site.camaras && form.site.iluminacion);
   const sec7Complete = !!(form.voltajes.atmLT || form.voltajes.atmLN || form.voltajes.atmNT);
@@ -639,7 +639,7 @@ export default function AuditFormPage() {
         </Section>
 
         {/* ══ 4. INFORMACIÓN GENERAL ══ */}
-        <Section icon="🌐" title="Información General" complete={sec4Complete}>
+        <Section icon="🌐" title="Software y Comunicación" complete={sec4Complete}>
           {/* Fila 1: IP + Máscara */}
           <Row2>
             <div>
