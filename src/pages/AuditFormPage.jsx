@@ -968,25 +968,26 @@ export default function AuditFormPage() {
         )}
         <button
           onClick={handleEnviarPDF}
-          disabled={sending}
+          disabled={sending || progressPct < 100}
+          title={progressPct < 100 ? `Completa todas las secciones (${completedCount}/${allSecs.length})` : undefined}
           style={{
             width: isMobile ? '100%' : 'auto',
             minWidth: isMobile ? undefined : 320,
             padding: '13px 32px',
             borderRadius: 10,
             border: 'none',
-            background: sending ? 'var(--bg-tertiary)' : '#16a34a',
-            color: '#fff',
+            background: (sending || progressPct < 100) ? 'var(--bg-tertiary)' : '#16a34a',
+            color: (sending || progressPct < 100) ? 'var(--text-disabled)' : '#fff',
             fontSize: 15,
             fontWeight: 700,
-            cursor: sending ? 'not-allowed' : 'pointer',
-            opacity: sending ? 0.7 : 1,
+            cursor: (sending || progressPct < 100) ? 'not-allowed' : 'pointer',
+            opacity: (sending || progressPct < 100) ? 0.6 : 1,
             letterSpacing: '0.2px',
-            boxShadow: sending ? 'none' : '0 2px 8px rgba(22,163,74,0.35)',
+            boxShadow: (sending || progressPct < 100) ? 'none' : '0 2px 8px rgba(22,163,74,0.35)',
             transition: 'opacity 0.15s, box-shadow 0.15s',
           }}
         >
-          {sending ? 'Generando y enviando...' : '✉  Generar PDF y Enviar Correo'}
+          {sending ? 'Generando y enviando...' : progressPct < 100 ? `✉  Completa las secciones (${completedCount}/${allSecs.length})` : '✉  Generar PDF y Enviar Correo'}
         </button>
       </div>
 

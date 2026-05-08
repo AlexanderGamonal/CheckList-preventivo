@@ -19,7 +19,7 @@ function DispositivosBadge({ estado }) {
   return (
     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
       {ok   > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--status-ok)',       background: 'rgba(34,197,94,0.1)',  borderRadius: 4, padding: '2px 6px' }}>{ok} OK</span>}
-      {mant > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: '#F59E0B',                background: 'rgba(245,158,11,0.1)', borderRadius: 4, padding: '2px 6px' }}>⚠ {mant}</span>}
+      {mant > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--status-warn)',    background: 'var(--status-warn-dim)', borderRadius: 4, padding: '2px 6px' }}>⚠ {mant}</span>}
       {rep  > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--status-critical)', background: 'rgba(239,68,68,0.1)',  borderRadius: 4, padding: '2px 6px' }}>✕ {rep}</span>}
     </div>
   );
