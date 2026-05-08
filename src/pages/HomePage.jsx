@@ -176,6 +176,17 @@ export default function HomePage() {
           );
         })}
       </div>
+
+      {/* ── Crédito ── */}
+      <div style={{
+        marginTop: 28,
+        fontSize: 11,
+        color: 'var(--text-disabled)',
+        letterSpacing: '0.08em',
+        opacity: 0.5,
+      }}>
+        By AG
+      </div>
     </div>
   );
 }
