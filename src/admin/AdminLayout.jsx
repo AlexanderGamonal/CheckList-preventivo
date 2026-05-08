@@ -63,7 +63,7 @@ export default function AdminLayout({ children }) {
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
         </div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand-light)' }}>CheckList ATM</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand-light)' }}>GICE ATM</div>
         <div style={{ fontSize: 11, color: 'var(--text-disabled)', marginTop: 2 }}>Panel de Administracion</div>
       </div>
       <nav style={{ flex: 1, padding: '16px 0' }}>
