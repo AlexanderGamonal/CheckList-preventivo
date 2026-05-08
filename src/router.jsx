@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import ProtectedRoute from './admin/ProtectedRoute.jsx';
 import InstallPrompt from './components/InstallPrompt.jsx';
 
@@ -33,9 +33,10 @@ function PageLoader() {
 }
 
 export default function AppRouter() {
+  const location = useLocation();
   return (
     <Suspense fallback={<PageLoader />}>
-      <InstallPrompt />
+      {location.pathname === '/' && <InstallPrompt />}
       <Routes>
         {/* Home — selección de módulo */}
         <Route path="/" element={<HomePage />} />

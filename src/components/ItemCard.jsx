@@ -1,6 +1,6 @@
 import React from 'react';
 import Tag from './Tag.jsx';
-import { ESTADOS, E_COL } from '../constants/devices.js';
+import { ESTADOS, E_COL, E_ICON } from '../constants/devices.js';
 
 const INP = {
   width: "100%",
@@ -40,13 +40,13 @@ export default function ItemCard({ label, state, onChange }) {
         <Tag
           label="Limpieza"
           active={state.lim}
-          color="#2563eb"
+          color="var(--brand)"
           onToggle={() => onChange("lim", !state.lim)}
         />
         <Tag
           label="Pruebas"
           active={state.pru}
-          color="#2563eb"
+          color="var(--brand)"
           onToggle={() => onChange("pru", !state.pru)}
         />
       </div>
@@ -54,7 +54,7 @@ export default function ItemCard({ label, state, onChange }) {
         {ESTADOS.map((e) => (
           <Tag
             key={e}
-            label={e}
+            label={`${E_ICON[e]} ${e}`}
             active={state.est === e}
             color={E_COL[e]}
             onToggle={() => onChange("est", state.est === e ? "" : e)}

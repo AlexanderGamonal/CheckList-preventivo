@@ -148,12 +148,10 @@ export default function InstallPrompt() {
     if (isStandalone() || isDismissed()) return;
 
     if (ios) {
-      // iOS: mostrar banner directo (no hay evento)
       setVisible(true);
       return;
     }
 
-    // Android/Chrome: esperar el evento
     if (window.__pwaPrompt) {
       setVisible(true);
       return;
@@ -162,6 +160,13 @@ export default function InstallPrompt() {
     window.addEventListener('pwa-prompt-ready', h);
     return () => window.removeEventListener('pwa-prompt-ready', h);
   }, []);
+
+  // Auto-hide después de 8 segundos
+  useEffect(() => {
+    if (!visible) return;
+    const t = setTimeout(() => setVisible(false), 8000);
+    return () => clearTimeout(t);
+  }, [visible]);
 
   if (!visible) return null;
 

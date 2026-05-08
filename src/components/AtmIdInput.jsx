@@ -70,7 +70,7 @@ export default function AtmIdInput({ value, onChange, onAutofill, onNotFound, st
     }, 200);
   }, [value, status, onAutofill, onNotFound]);
 
-  const borderColor = status === 'found' ? '#16a34a' : status === 'notfound' ? '#d97706' : '#e2e8f0';
+  const borderColor = status === 'found' ? 'var(--status-ok)' : status === 'notfound' ? 'var(--status-warn)' : 'var(--border-default)';
 
   return (
     <div ref={containerRef} style={{ position: 'relative', ...style }}>
@@ -84,13 +84,13 @@ export default function AtmIdInput({ value, onChange, onAutofill, onNotFound, st
         autoComplete="off"
       />
       {status === 'found' && (
-        <div style={{ position: 'absolute', fontSize: 10, color: '#16a34a', marginTop: 2, fontWeight: 600 }}>
-          ATM encontrado
+        <div style={{ position: 'absolute', fontSize: 11, color: 'var(--status-ok)', marginTop: 2, fontWeight: 600 }}>
+          ✓ ATM encontrado
         </div>
       )}
       {status === 'notfound' && (
-        <div style={{ position: 'absolute', fontSize: 10, color: '#d97706', marginTop: 2 }}>
-          No encontrado en BD — ingrese datos manualmente
+        <div style={{ position: 'absolute', fontSize: 11, color: 'var(--status-warn)', marginTop: 2 }}>
+          ⚠ No encontrado en BD — ingrese datos manualmente
         </div>
       )}
       {showDropdown && suggestions.length > 0 && (

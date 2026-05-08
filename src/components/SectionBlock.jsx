@@ -36,7 +36,7 @@ export default function SectionBlock({ section, devices, updateDevice, accentCol
         <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span
             style={{
-              background: done ? "#16a34a" : "rgba(255,255,255,.25)",
+              background: done ? "var(--color-action-green)" : "rgba(255,255,255,.25)",
               color: "#fff",
               borderRadius: 20,
               padding: "2px 9px",

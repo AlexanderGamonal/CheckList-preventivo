@@ -362,9 +362,12 @@ export default function AuditFormPage() {
   });
   const [toast, setToast] = useState(null);
   const [sending, setSending] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   useEffect(() => {
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(form)); } catch { }
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(form)); } catch {
+      setToast({ msg: '⚠ Sin espacio disponible: el borrador no pudo guardarse', type: 'err' });
+    }
   }, [form]);
 
   const set = useCallback((f, v) => setForm(p => ({ ...p, [f]: v })), []);
@@ -500,7 +503,7 @@ export default function AuditFormPage() {
         display: 'flex', alignItems: 'center', gap: 12,
         position: 'sticky', top: 0, zIndex: 30,
       }}>
-        <button onClick={() => navigate('/')}
+        <button onClick={() => progressPct > 0 ? setShowLeaveModal(true) : navigate('/')}
           style={{ background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.15)', color: '#94A3B8', cursor: 'pointer', padding: '5px 7px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
@@ -888,8 +891,8 @@ export default function AuditFormPage() {
         <Section icon="📸" title="Evidencias de Dispositivos" complete={sec8Complete}>
           {DEVICE_CFG.map(({ key, label, min, max }) => {
             const estado = form.devFotos[key].estado;
-            const estadoColor = estado === 'ok' ? '#16a34a' : estado === 'mantenimiento' ? '#D97706' : estado === 'repuesto' ? '#DC2626' : 'var(--text-disabled)';
-            const estadoBg    = estado === 'ok' ? 'rgba(22,163,74,0.08)' : estado === 'mantenimiento' ? 'rgba(217,119,6,0.08)' : estado === 'repuesto' ? 'rgba(220,38,38,0.08)' : 'var(--bg-secondary)';
+            const estadoColor = estado === 'ok' ? 'var(--status-ok)' : estado === 'mantenimiento' ? 'var(--status-warn)' : estado === 'repuesto' ? 'var(--status-critical)' : 'var(--text-disabled)';
+            const estadoBg    = estado === 'ok' ? 'var(--status-ok-dim)' : estado === 'mantenimiento' ? 'var(--status-warn-dim)' : estado === 'repuesto' ? 'var(--status-critical-dim)' : 'var(--bg-secondary)';
             return (
             <DevGroup key={key}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{label}</div>
@@ -976,14 +979,14 @@ export default function AuditFormPage() {
             padding: '13px 32px',
             borderRadius: 10,
             border: 'none',
-            background: (sending || progressPct < 100) ? 'var(--bg-tertiary)' : '#16a34a',
+            background: (sending || progressPct < 100) ? 'var(--bg-tertiary)' : 'var(--color-action-green)',
             color: (sending || progressPct < 100) ? 'var(--text-disabled)' : '#fff',
             fontSize: 15,
             fontWeight: 700,
             cursor: (sending || progressPct < 100) ? 'not-allowed' : 'pointer',
             opacity: (sending || progressPct < 100) ? 0.6 : 1,
             letterSpacing: '0.2px',
-            boxShadow: (sending || progressPct < 100) ? 'none' : '0 2px 8px rgba(22,163,74,0.35)',
+            boxShadow: (sending || progressPct < 100) ? 'none' : 'var(--shadow-action-green)',
             transition: 'opacity 0.15s, box-shadow 0.15s',
           }}
         >
@@ -994,6 +997,26 @@ export default function AuditFormPage() {
       <AuditPdfView form={form} />
 
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} aboveBar />}
+
+      {/* Modal confirmación de salida */}
+      {showLeaveModal && (
+        <div onClick={() => setShowLeaveModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)', borderRadius: 16, padding: '22px 20px', width: '100%', maxWidth: 340 }}>
+            <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: 15, marginBottom: 8 }}>¿Salir del formulario?</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 20, lineHeight: 1.5 }}>
+              Tienes {progressPct}% completado. El borrador se mantendrá guardado y podrás continuar desde el inicio.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowLeaveModal(false)} style={{ flex: 1, padding: '11px 0', background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 10, color: 'var(--text-secondary)', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+                Continuar editando
+              </button>
+              <button onClick={() => { setShowLeaveModal(false); navigate('/'); }} style={{ flex: 1, padding: '11px 0', background: 'var(--status-critical-dim)', border: '1px solid var(--status-critical-border)', borderRadius: 10, color: 'var(--status-critical)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                Salir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

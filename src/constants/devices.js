@@ -316,10 +316,16 @@ export function getSections(atmTipo, marca, modelo = "") {
 ══════════════════════════════════════ */
 export const ESTADOS = ["Bueno", "Defectuoso", "Regular", "No Aplica"];
 export const E_COL = {
-  Bueno: "#16a34a",
-  Defectuoso: "#dc2626",
-  Regular: "#d97706",
-  "No Aplica": "#64748b",
+  Bueno:        "var(--status-ok)",
+  Defectuoso:   "var(--status-critical)",
+  Regular:      "var(--status-warn)",
+  "No Aplica":  "var(--status-offline)",
+};
+export const E_ICON = {
+  Bueno:        "✓",
+  Defectuoso:   "✗",
+  Regular:      "⚠",
+  "No Aplica":  "—",
 };
 
 export function initVoltages() {
