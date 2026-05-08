@@ -84,7 +84,7 @@ export default function HomePage() {
       <div style={{
         fontSize: 11, fontWeight: 600, color: 'var(--text-muted)',
         letterSpacing: '1.2px', textTransform: 'uppercase',
-        marginBottom: 10, alignSelf: 'flex-start', maxWidth: 420, width: '50%',
+        marginBottom: 10, textAlign: 'center', maxWidth: 420, width: '100%',
       }}>
         Módulos
       </div>
@@ -180,10 +180,10 @@ export default function HomePage() {
       {/* ── Crédito ── */}
       <div style={{
         marginTop: 28,
-        fontSize: 9,
+        fontSize: 11,
         color: 'var(--text-disabled)',
         letterSpacing: '0.08em',
-        opacity: 0.8,
+        opacity: 0.5,
       }}>
         By AG
       </div>
