@@ -254,7 +254,7 @@ function VoltRow({ prefix, voltajes, setVoltaje }) {
   const MEDIDAS = [
     { key: `${prefix}LT`, label: 'L–T (V)',          isTierra: false, val: lt },
     { key: `${prefix}LN`, label: 'L–N (V)',          isTierra: false, val: ln },
-    { key: `${prefix}NT`, label: 'N–T / Tierra (V)', isTierra: true,  val: nt },
+    { key: `${prefix}NT`, label: 'N–T (V)', isTierra: true,  val: nt },
   ];
   const overall    = equipoStatus(lt, ln, nt);
   const anyTouched = Object.values(touched).some(Boolean);
