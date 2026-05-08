@@ -180,10 +180,10 @@ export default function HomePage() {
       {/* ── Crédito ── */}
       <div style={{
         marginTop: 28,
-        fontSize: 11,
+        fontSize: 9,
         color: 'var(--text-disabled)',
         letterSpacing: '0.08em',
-        opacity: 0.5,
+        opacity: 0.8,
       }}>
         By AG
       </div>
