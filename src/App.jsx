@@ -21,7 +21,8 @@ import './pdf-styles.css';
 ══════════════════════════════════════ */
 const INP = {
   width: "100%",
-  padding: "9px 12px",
+  padding: "10px 12px",
+  minHeight: 44,
   borderRadius: "var(--radius-md)",
   border: "1px solid var(--border-default)",
   fontSize: 14,
@@ -32,7 +33,7 @@ const INP = {
 };
 const LBL = {
   display: "block",
-  fontSize: 10,
+  fontSize: 12,
   fontWeight: 700,
   color: "var(--text-muted)",
   textTransform: "uppercase",
@@ -56,14 +57,6 @@ export default function App() {
     } catch { return null; }
   }
 
-  function saveDraft(form, fotosAntes, fotosDespues, tab) {
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, fotosAntes, fotosDespues, tab }));
-    } catch {
-      // localStorage lleno (fotos muy pesadas) — ignorar silenciosamente
-    }
-  }
-
   function clearDraft() {
     localStorage.removeItem(DRAFT_KEY);
   }
@@ -77,11 +70,18 @@ export default function App() {
   const [enviando, setEnviando] = useState(false);
   const [atmNotFound, setAtmNotFound] = useState(false);
   const [hoveredTab, setHoveredTab] = useState(null);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [tab]);
 
   // Guardar borrador en cada cambio
-  useEffect(() => { saveDraft(form, fotosAntes, fotosDespues, tab); }, [form, fotosAntes, fotosDespues, tab]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, fotosAntes, fotosDespues, tab }));
+    } catch {
+      setToast({ msg: '⚠ Sin espacio disponible: el borrador no pudo guardarse', type: 'err' });
+    }
+  }, [form, fotosAntes, fotosDespues, tab]);
 
   const upd = (f, v) => setForm((p) => ({ ...p, [f]: v }));
 
@@ -303,6 +303,26 @@ export default function App() {
           />
         )}
 
+        {/* Modal confirmación de salida */}
+        {showLeaveModal && (
+          <div onClick={() => setShowLeaveModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)', borderRadius: 16, padding: '22px 20px', width: '100%', maxWidth: 340 }}>
+              <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: 15, marginBottom: 8 }}>¿Salir del formulario?</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 20, lineHeight: 1.5 }}>
+                Tienes {pct}% completado. El borrador se mantendrá guardado y podrás continuar desde el inicio.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setShowLeaveModal(false)} style={{ flex: 1, padding: '11px 0', background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 10, color: 'var(--text-secondary)', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+                  Continuar editando
+                </button>
+                <button onClick={() => { setShowLeaveModal(false); navigate('/'); }} style={{ flex: 1, padding: '11px 0', background: 'var(--status-critical-dim)', border: '1px solid var(--status-critical-border)', borderRadius: 10, color: 'var(--status-critical)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                  Salir
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* PDF oculto — capturado por html2canvas */}
         <div
           id="pdf-root"
@@ -346,7 +366,7 @@ export default function App() {
                 <div
                   style={{ display: "flex", alignItems: "center", gap: 8 }}
                 >
-                  <button onClick={() => navigate('/')}
+                  <button onClick={() => pct > 0 ? setShowLeaveModal(true) : navigate('/')}
                     style={{ background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.15)', color: '#94A3B8', cursor: 'pointer', padding: '5px 7px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
@@ -1106,23 +1126,32 @@ export default function App() {
                                       color: cText,
                                     }}
                                   />
-                                  {est && (
+                                  {est ? (
                                     <p
                                       style={{
                                         textAlign: "center",
-                                        fontSize: 9,
+                                        fontSize: 13,
                                         fontWeight: 700,
                                         marginTop: 3,
                                         color: cText,
                                       }}
                                     >
                                       {est === "ok"
-                                        ? isNT
-                                          ? "✓ " + v[f] + " V"
-                                          : "✓ " + v[f] + " V"
+                                        ? "✓ " + v[f] + " V"
                                         : isNT
                                           ? "⚠ " + v[f] + " V"
                                           : "✗ " + v[f] + " V"}
+                                    </p>
+                                  ) : (
+                                    <p
+                                      style={{
+                                        textAlign: "center",
+                                        fontSize: 11,
+                                        marginTop: 3,
+                                        color: "var(--text-disabled)",
+                                      }}
+                                    >
+                                      {isNT ? "≤ 5V" : "209–231V"}
                                     </p>
                                   )}
                                 </div>

@@ -362,9 +362,12 @@ export default function AuditFormPage() {
   });
   const [toast, setToast] = useState(null);
   const [sending, setSending] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   useEffect(() => {
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(form)); } catch { }
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(form)); } catch {
+      setToast({ msg: '⚠ Sin espacio disponible: el borrador no pudo guardarse', type: 'err' });
+    }
   }, [form]);
 
   const set = useCallback((f, v) => setForm(p => ({ ...p, [f]: v })), []);
@@ -500,7 +503,7 @@ export default function AuditFormPage() {
         display: 'flex', alignItems: 'center', gap: 12,
         position: 'sticky', top: 0, zIndex: 30,
       }}>
-        <button onClick={() => navigate('/')}
+        <button onClick={() => progressPct > 0 ? setShowLeaveModal(true) : navigate('/')}
           style={{ background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.15)', color: '#94A3B8', cursor: 'pointer', padding: '5px 7px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
@@ -994,6 +997,26 @@ export default function AuditFormPage() {
       <AuditPdfView form={form} />
 
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} aboveBar />}
+
+      {/* Modal confirmación de salida */}
+      {showLeaveModal && (
+        <div onClick={() => setShowLeaveModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)', borderRadius: 16, padding: '22px 20px', width: '100%', maxWidth: 340 }}>
+            <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: 15, marginBottom: 8 }}>¿Salir del formulario?</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 20, lineHeight: 1.5 }}>
+              Tienes {progressPct}% completado. El borrador se mantendrá guardado y podrás continuar desde el inicio.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowLeaveModal(false)} style={{ flex: 1, padding: '11px 0', background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 10, color: 'var(--text-secondary)', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+                Continuar editando
+              </button>
+              <button onClick={() => { setShowLeaveModal(false); navigate('/'); }} style={{ flex: 1, padding: '11px 0', background: 'var(--status-critical-dim)', border: '1px solid var(--status-critical-border)', borderRadius: 10, color: 'var(--status-critical)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                Salir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

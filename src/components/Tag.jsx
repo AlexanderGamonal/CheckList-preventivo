@@ -5,9 +5,10 @@ export default function Tag({ label, active, color, onToggle }) {
     <button
       onClick={onToggle}
       style={{
-        padding: "6px 11px",
+        padding: "10px 12px",
+        minHeight: 44,
         borderRadius: 6,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
         cursor: "pointer",
         border: "1.5px solid " + (active ? color : "var(--border-default)"),
@@ -15,6 +16,8 @@ export default function Tag({ label, active, color, onToggle }) {
         color: active ? "#fff" : "var(--text-muted)",
         transition: "all .15s",
         userSelect: "none",
+        display: "inline-flex",
+        alignItems: "center",
       }}
     >
       {active ? "✓ " : ""}
