@@ -13,30 +13,36 @@ async function buildPDF(containerId, scale, jpegQuality) {
   const pageH = pdf.internal.pageSize.getHeight();
 
   for (let i = 0; i < targets.length; i++) {
+    const rect = targets[i].getBoundingClientRect();
     const canvas = await html2canvas(targets[i], {
       scale,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
-      windowWidth:  targets[i].scrollWidth,
-      windowHeight: targets[i].scrollHeight,
+      width:        Math.round(rect.width)  || targets[i].offsetWidth,
+      height:       Math.round(rect.height) || targets[i].offsetHeight,
+      windowWidth:  Math.round(rect.width)  || targets[i].offsetWidth,
+      windowHeight: Math.round(rect.height) || targets[i].offsetHeight,
+      x: 0,
+      y: 0,
     });
 
     if (i > 0) pdf.addPage();
 
-    const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
-    const imgW  = canvas.width  * ratio;
-    const imgH  = canvas.height * ratio;
-    const x     = (pageW - imgW) / 2;
+    // Siempre escalar al ancho completo del PDF.
+    // Math.min causaría que páginas con contenido alto se vuelvan más angostas.
+    const ratio = pageW / canvas.width;
+    const imgW  = pageW;                    // ancho completo siempre
+    const imgH  = canvas.height * ratio;   // alto proporcional
 
-    pdf.addImage(canvas.toDataURL('image/jpeg', jpegQuality), 'JPEG', x, 0, imgW, imgH);
+    pdf.addImage(canvas.toDataURL('image/jpeg', jpegQuality), 'JPEG', 0, 0, imgW, imgH);
   }
 
   return pdf;
 }
 
-export async function generatePDF(containerId, filename) {
+export async function generatePDF(containerId, filename, { download = true } = {}) {
   const element = document.getElementById(containerId);
   if (!element) throw new Error(`Element #${containerId} not found`);
 
@@ -51,14 +57,16 @@ export async function generatePDF(containerId, filename) {
   element.style.left       = '0';
   element.style.top        = '0';
   element.style.visibility = 'visible';
-  element.style.zIndex     = '-9999';
+  element.style.zIndex     = '99999';
 
-  let pdfBase64;
+  // Esperar dos frames para que el navegador pinte el elemento antes de capturar
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  let pdfBuffer;
   try {
-    const pdf = await buildPDF(containerId, 1.5, 0.85);
-    pdf.save(filename + '.pdf');
-    // Retorna arraybuffer para subir a Storage sin corrupción
-    pdfBase64 = pdf.output('arraybuffer');
+    const pdf = await buildPDF(containerId, 2.0, 0.92);
+    if (download) pdf.save(filename + '.pdf');
+    pdfBuffer = pdf.output('arraybuffer');
   } finally {
     element.style.position   = prev.position;
     element.style.left       = prev.left;
@@ -67,5 +75,5 @@ export async function generatePDF(containerId, filename) {
     element.style.zIndex     = prev.zIndex;
   }
 
-  return pdfBase64;
+  return pdfBuffer;
 }

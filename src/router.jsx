@@ -3,10 +3,10 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './admin/ProtectedRoute.jsx';
 import InstallPrompt from './components/InstallPrompt.jsx';
 
-// Checklist principal — carga inmediata (es la ruta raíz)
-import App from './App.jsx';
-
 // Lazy: se descargan solo cuando el usuario navega a esa ruta
+const HomePage             = lazy(() => import('./pages/HomePage.jsx'));
+const ChecklistApp         = lazy(() => import('./App.jsx'));
+const AuditFormPage        = lazy(() => import('./pages/AuditFormPage.jsx'));
 const PdfPreviewPage       = lazy(() => import('./pages/PdfPreviewPage.jsx'));
 const LoginPage            = lazy(() => import('./pages/admin/LoginPage.jsx'));
 const DashboardPage        = lazy(() => import('./pages/admin/DashboardPage.jsx'));
@@ -18,6 +18,7 @@ const ContactosEmailPage   = lazy(() => import('./pages/admin/ContactosEmailPage
 const SetPasswordPage      = lazy(() => import('./pages/admin/SetPasswordPage.jsx'));
 const ResetDatosPage       = lazy(() => import('./pages/admin/ResetDatosPage.jsx'));
 const ColorSystemPreview   = lazy(() => import('./pages/ColorSystemPreview.jsx'));
+const AuditoriasPage       = lazy(() => import('./pages/admin/AuditoriasPage.jsx'));
 
 function PageLoader() {
   return (
@@ -36,8 +37,12 @@ export default function AppRouter() {
     <Suspense fallback={<PageLoader />}>
       <InstallPrompt />
       <Routes>
-        {/* Public checklist */}
-        <Route path="/" element={<App />} />
+        {/* Home — selección de módulo */}
+        <Route path="/" element={<HomePage />} />
+
+        {/* Módulos públicos */}
+        <Route path="/checklist" element={<ChecklistApp />} />
+        <Route path="/auditoria" element={<AuditFormPage />} />
 
         {/* PDF preview */}
         <Route path="/preview" element={<PdfPreviewPage />} />
@@ -50,6 +55,9 @@ export default function AppRouter() {
         } />
         <Route path="/admin/mantenimientos" element={
           <ProtectedRoute><MantenimientosPage /></ProtectedRoute>
+        } />
+        <Route path="/admin/auditorias" element={
+          <ProtectedRoute><AuditoriasPage /></ProtectedRoute>
         } />
         <Route path="/admin/atms" element={
           <ProtectedRoute requireSuperadmin><AtmsPage /></ProtectedRoute>

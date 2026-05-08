@@ -1,81 +1,93 @@
-# CheckList ATM — Mantenimiento Preventivo
+# 🏧 CheckList Preventivo & Auditoría ATM
 
-Aplicación web para la gestión y registro de mantenimientos preventivos de cajeros automáticos (ATM). Permite al técnico completar un checklist estructurado en campo, generar un informe PDF y enviarlo por correo electrónico, todo desde el navegador. Incluye un panel de administración con dashboard, historial de mantenimientos, gestión de ATMs, técnicos y usuarios.
+![React](https://img.shields.io/badge/React-18.2.0-blue.svg?style=for-the-badge&logo=react)
+![Vite](https://img.shields.io/badge/Vite-5.0.8-646CFF.svg?style=for-the-badge&logo=vite)
+![Supabase](https://img.shields.io/badge/Supabase-DB_%26_Auth-3ECF8E.svg?style=for-the-badge&logo=supabase)
+![Vercel](https://img.shields.io/badge/Vercel-Deployment-000000.svg?style=for-the-badge&logo=vercel)
 
----
-
-## Características principales
-
-### Formulario de checklist
-- Registro guiado por secciones: **Información general**, **Site**, **Voltajes**, **Dispositivos**, **Cierre** y **Fotos**
-- Indicadores visuales por tab del estado de completitud
-- Validación de secciones obligatorias antes de habilitar el envío
-- **Borrador automático** en `localStorage` — el progreso se conserva si se cierra el navegador accidentalmente
-- Carga de fotos (antes y después) directamente desde el dispositivo
-- Generación de **PDF profesional** con logo, tabla de dispositivos y observaciones
-- Envío del informe por **correo electrónico** vía Supabase Edge Function
-
-### Panel de administración (`/admin`)
-- **Dashboard** con KPIs (total de mantenimientos, operativos, con observaciones, inoperativos) y gráficos de tendencia por período
-- **Mantenimientos** — historial completo con filtros por fecha, ID ATM, punto, marca, técnico y estado; exportación a CSV
-- **ATMs** — gestión de cajeros con cliente, marca y modelo
-- **Técnicos** — registro de técnicos de mantenimiento
-- **Usuarios** — invitación por email, asignación de roles (Admin / Superadmin) y eliminación de cuentas
-- **Contactos Email** — lista de destinatarios para el envío automático de informes
-- **Reset de datos** — borrado seguro de datos de prueba con confirmación por texto antes de cargar datos reales
-- Control de acceso por roles: **Admin** (solo lectura de mantenimientos) y **Superadmin** (acceso total)
+Aplicación web integral para la **gestión, registro y auditoría de cajeros automáticos (ATM)**. Diseñada para uso en campo (técnicos y auditores), permite completar formularios estructurados, capturar evidencias fotográficas, generar informes PDF profesionales multipágina y enviarlos por correo electrónico directamente desde el navegador.
 
 ---
 
-## Stack tecnológico
+## 🚀 Módulos Principales
+
+El sistema se divide en dos grandes módulos operativos orientados al personal en campo, más un panel de control administrativo.
+
+### 1. 📋 Check List (Mantenimiento Preventivo)
+Formulario paso a paso para mantenimientos de rutina.
+- **Flujo Guiado**: Información general, Site, Voltajes, Dispositivos, Cierre y captura de fotos (Antes/Después).
+- **Control de Estado**: Indicadores visuales y validación estricta de campos obligatorios.
+- **Reporte Rápido**: Generación de PDF consolidado de 1 a 2 páginas con resumen ejecutivo.
+
+### 2. 📝 Acta de Auditoría (Nueva Funcionalidad)
+Módulo avanzado para auditorías profundas de hardware y software.
+- **Análisis Eléctrico**: Captura y validación inteligente de voltajes L-T, L-N y N-T tanto para ATM como para UPS.
+- **Evidencias por Componente**: Captura de fotografías independientes (comprimidas en WebP) para Dispensador, Aceptador, Lectora, CPU, Shutter, etc.
+- **Cassettes Dinámicos**: Configuración automática de la cantidad de cassettes (4 o 5) dependiendo de la marca del equipo (NCR, GRG, Hyosung vs Diebold).
+- **Estados Rápidos**: Clasificación visual rápida por dispositivo (✅ OK, ⚠ Mantenimiento, ❌ Cambio de repuesto).
+- **PDF Dinámico Multipágina**: Algoritmo de renderizado que calcula el espacio disponible en tiempo real para agrupar fotos sin cortes de página.
+
+### 3. 🛡️ Panel de Administración (Backoffice)
+Centro de control para coordinadores y supervisores (Ruta: `/admin`).
+- **Dashboard Estadístico**: KPIs en tiempo real y gráficos de tendencia sobre el estado operativo de la red.
+- **Gestión Integral**: ABM (Alta, Baja, Modificación) de ATMs, Técnicos, Usuarios y Contactos de correo.
+- **Historial y Exportación**: Filtrado avanzado de intervenciones y exportación de data cruda a CSV.
+- **Roles y Permisos**: Accesos jerárquicos (`Admin` para lectura/reportes y `Superadmin` para configuración total).
+
+---
+
+## ✨ Características Técnicas Destacadas
+
+*   **Offline-First (Borrador Automático)**: El progreso de los formularios se guarda continuamente en el `localStorage` del navegador, previniendo la pérdida de datos ante cierres accidentales.
+*   **Motor de Renderizado PDF Híbrido**: Utiliza `html2canvas` (escalado a 2x de resolución) sobre un nodo DOM oculto combinado con `jsPDF` para asegurar documentos estéticos, corporativos y con textos nítidos.
+*   **Theme Switcher**: Soporte nativo para modo Claro/Oscuro optimizado para visibilidad en exteriores e interiores.
+*   **Compresión de Imágenes en Cliente**: Todas las fotografías tomadas se redimensionan y convierten a formato `WebP` antes de ser adjuntadas, ahorrando ancho de banda y reduciendo dramáticamente el peso final del reporte.
+
+---
+
+## 🛠️ Stack Tecnológico
 
 | Capa | Tecnología |
-|---|---|
-| Frontend | React 18 + Vite |
-| Routing | React Router DOM v7 |
-| Gráficos | Recharts |
-| Exportación | jsPDF + html2canvas (PDF), xlsx (CSV) |
-| Backend / Auth / DB | Supabase (PostgreSQL + RLS + Auth) |
-| Funciones serverless | Supabase Edge Functions (Deno) |
-| Despliegue | Vercel |
+| :--- | :--- |
+| **Frontend** | React 18, Vite, CSS Vanilla (Design System) |
+| **Enrutamiento** | React Router DOM v7 |
+| **Visualización de Datos**| Recharts |
+| **Exportación & Reportes**| jsPDF, html2canvas, SheetJS (xlsx) |
+| **Backend & Base de Datos**| Supabase (PostgreSQL, Row Level Security, Auth) |
+| **Funciones Serverless** | Supabase Edge Functions (Deno) |
+| **Despliegue (Hosting)** | Vercel |
 
 ---
 
-## Estructura del proyecto
+## 📂 Estructura del Proyecto
 
-```
-├── public/
-│   └── robots.txt
+```text
+├── public/                 # Assets estáticos (Logos, favicons)
 ├── src/
-│   ├── admin/              # Layout y ProtectedRoute
-│   ├── components/         # Componentes reutilizables
-│   ├── constants/          # Definición de ATMs, dispositivos y voltajes
-│   ├── hooks/              # useAuth, useAtmLookup, useTecnicos
-│   ├── lib/                # Cliente Supabase
-│   ├── pages/
-│   │   ├── admin/          # Dashboard, Mantenimientos, ATMs, Técnicos, Usuarios, etc.
-│   │   └── PdfPreviewPage.jsx
-│   ├── services/           # pdfService, emailService, mantenimientoService, csvExport
-│   ├── App.jsx             # Formulario principal de checklist
-│   ├── router.jsx          # Rutas con lazy loading
-│   └── main.jsx
-├── supabase/
-│   ├── functions/
-│   │   ├── manage-users/   # Edge Function: gestión de usuarios Auth
-│   │   └── send-email/     # Edge Function: envío de correos
-│   └── seed/               # Scripts SQL: schema, políticas RLS, datos iniciales
-├── vercel.json             # Headers de seguridad HTTP + rewrite SPA
-└── vite.config.js          # Code splitting por vendor chunks
+│   ├── admin/              # Layout y Rutas protegidas (Backoffice)
+│   ├── components/         # UI Components reutilizables (Inputs, Cards, PhotoUploader)
+│   ├── constants/          # Diccionarios de datos (ATMs, Modelos, Validaciones)
+│   ├── hooks/              # Custom Hooks (useTheme, useAuth, useIsMobile)
+│   ├── lib/                # Configuración de clientes externos (Supabase)
+│   ├── pages/              # Vistas de la aplicación (Home, Formulario, Admin)
+│   ├── services/           # Lógica de negocio (pdfService, emailService, bdService)
+│   ├── App.jsx             # Punto de entrada de Formularios
+│   ├── router.jsx          # Configuración del árbol de rutas (Lazy Loading)
+│   └── main.jsx            # Entry point de React
+├── supabase/               # Configuración Backend
+│   ├── functions/          # Código fuente Deno para Edge Functions
+│   └── seed/               # Migraciones SQL, Políticas RLS y Datos Semilla
+├── vercel.json             # Reglas de enrutamiento SPA y Cabeceras de Seguridad
+└── vite.config.js          # Configuración del bundler y PWA
 ```
 
 ---
 
-## Instalación y desarrollo local
+## ⚙️ Instalación y Configuración Local
 
-### Requisitos previos
-- Node.js 18+
-- Cuenta en [Supabase](https://supabase.com)
-- CLI de Supabase (`npm install -g supabase`)
+### Requisitos Previos
+- [Node.js](https://nodejs.org/) (v18 o superior)
+- CLI de Supabase (`npm i -g supabase`)
 
 ### 1. Clonar el repositorio
 
@@ -85,9 +97,9 @@ cd CheckList-preventivo
 npm install
 ```
 
-### 2. Configurar variables de entorno
+### 2. Variables de Entorno
 
-Crear el archivo `.env.local` en la raíz del proyecto:
+Crear un archivo `.env.local` en la raíz del proyecto con la configuración de tu proyecto Supabase:
 
 ```env
 VITE_SUPABASE_URL=https://<tu-proyecto>.supabase.co
@@ -96,33 +108,29 @@ VITE_SUPABASE_FUNCTIONS_URL=https://<tu-proyecto>.supabase.co/functions/v1
 VITE_SUPABASE_ANON_KEY_PUBLIC=<tu-anon-key>
 ```
 
-### 3. Configurar la base de datos
+### 3. Configuración de Base de Datos (Supabase)
 
-En el **SQL Editor** de Supabase, ejecutar en orden:
+Desde el **SQL Editor** de Supabase, ejecuta los scripts de migración ubicados en `supabase/seed/` en el siguiente orden sugerido:
 
-```
-supabase/seed/schema.sql                -- Tablas, relaciones e índices
-supabase/seed/add_delete_policies.sql   -- Políticas RLS de eliminación
-supabase/seed/add_hyosung_models.sql    -- Modelos Hyosung y Alfin
-supabase/seed/seed.sql                  -- Datos iniciales opcionales
-```
+1. `schema.sql` (Esquema base y tablas primarias)
+2. `add_auditorias_table.sql` / `add_auditorias_missing_fields.sql` (Módulo de Auditorías)
+3. `add_delete_policies.sql` (Políticas de seguridad RLS)
+4. `add_hyosung_models.sql` (Datos base)
 
-### 4. Desplegar las Edge Functions
+### 4. Despliegue de Edge Functions (Opcional para uso local)
+
+Para habilitar la invitación de usuarios y el envío de correos, despliega las funciones en tu proyecto Supabase:
 
 ```bash
 npx supabase functions deploy manage-users --no-verify-jwt
 npx supabase functions deploy send-email
 ```
 
-Agregar los siguientes **Secrets** en Supabase → Edge Functions → Secrets:
+**Variables (Secrets) requeridas en Supabase:**
+- `ALLOWED_ORIGIN`: URL del frontend.
+- `GMAIL_USER` / `GMAIL_APP_PASSWORD`: Credenciales SMTP.
 
-| Secret | Valor |
-|---|---|
-| `ALLOWED_ORIGIN` | URL de producción (ej. `https://mi-app.vercel.app`) |
-| `GMAIL_USER` | Dirección Gmail usada como remitente (ej. `checklist@gmail.com`) |
-| `GMAIL_APP_PASSWORD` | App Password de Gmail (no la contraseña normal de la cuenta) |
-
-### 5. Iniciar en desarrollo
+### 5. Iniciar Servidor de Desarrollo
 
 ```bash
 npm run dev
@@ -130,38 +138,12 @@ npm run dev
 
 ---
 
-## Despliegue en Vercel
+## 🔒 Seguridad y Compliance
 
-1. Conectar el repositorio en [vercel.com](https://vercel.com)
-2. Agregar las variables de entorno (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`)
-3. Vercel detecta automáticamente Vite — no requiere configuración adicional
-4. En Supabase → Authentication → URL Configuration, actualizar:
-   - **Site URL**: `https://mi-app.vercel.app`
-   - **Redirect URLs**: `https://mi-app.vercel.app/admin/set-password`
+- **Cero Credenciales en Código**: Uso estricto de variables de entorno para llaves públicas. Las llaves privilegiadas (`service_role_key`) existen exclusivamente en el entorno aislado de las Edge Functions.
+- **Row Level Security (RLS)**: El acceso a los datos está segmentado a nivel de base de datos en PostgreSQL. Los técnicos solo pueden insertar registros, pero la lectura y modificación requiere autenticación obligatoria.
+- **Cabeceras HTTP Restrictivas**: Configuración activa en `vercel.json` contra ataques comunes (Clickjacking, XSS, Sniffing).
 
 ---
 
-## Roles de usuario
-
-| Rol | Permisos |
-|---|---|
-| **Admin** | Ver mantenimientos, exportar CSV |
-| **Superadmin** | Acceso total: ATMs, técnicos, usuarios, contactos, reset de datos |
-
-Los usuarios son invitados por email desde el panel `/admin/usuarios`. El primer superadmin debe crearse directamente desde el dashboard de Supabase.
-
----
-
-## Seguridad
-
-- Las credenciales sensibles nunca se incluyen en el repositorio (`.gitignore`)
-- La `service_role_key` de Supabase solo existe como secret en las Edge Functions, nunca en el frontend
-- Todas las tablas tienen políticas **Row Level Security (RLS)** activas
-- Headers HTTP de seguridad configurados en `vercel.json`: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`
-- `robots.txt` bloquea la indexación por motores de búsqueda (uso interno)
-
----
-
-## Licencia
-
-Uso interno — todos los derechos reservados.
+> Propiedad Intelectual — Uso interno reservado.

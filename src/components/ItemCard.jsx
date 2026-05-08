@@ -5,44 +5,38 @@ import { ESTADOS, E_COL } from '../constants/devices.js';
 const INP = {
   width: "100%",
   padding: "9px 12px",
-  borderRadius: 8,
-  border: "1px solid #e2e8f0",
+  borderRadius: "var(--radius-sm)",
+  border: "1px solid var(--border-default)",
   fontSize: 14,
-  background: "#fff",
-  color: "#1e293b",
+  background: "var(--bg-tertiary)",
+  color: "var(--text-primary)",
   outline: "none",
+  boxSizing: "border-box",
 };
 
 export default function ItemCard({ label, state, onChange }) {
   return (
     <div
       style={{
-        background: "#fff",
-        borderRadius: 10,
-        border: "1px solid #e2e8f0",
+        background: "var(--bg-secondary)",
+        borderRadius: "var(--radius-md)",
+        border: "1px solid var(--border-default)",
         padding: "10px 12px",
         marginBottom: 8,
-        boxShadow: "0 1px 3px rgba(0,0,0,.05)",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <p
         style={{
           fontSize: 13,
           fontWeight: 700,
-          color: "#334155",
+          color: "var(--text-secondary)",
           marginBottom: 7,
         }}
       >
         {label}
       </p>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 5,
-          marginBottom: 6,
-        }}
-      >
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 6 }}>
         <Tag
           label="Limpieza"
           active={state.lim}
@@ -56,14 +50,7 @@ export default function ItemCard({ label, state, onChange }) {
           onToggle={() => onChange("pru", !state.pru)}
         />
       </div>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 4,
-          marginBottom: 7,
-        }}
-      >
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 7 }}>
         {ESTADOS.map((e) => (
           <Tag
             key={e}
@@ -79,12 +66,7 @@ export default function ItemCard({ label, state, onChange }) {
         placeholder="Observaciones…"
         value={state.obs}
         onChange={(e) => onChange("obs", e.target.value)}
-        style={{
-          ...INP,
-          fontSize: 12,
-          background: "#f8fafc",
-          padding: "7px 10px",
-        }}
+        style={{ ...INP, fontSize: 12, background: "var(--bg-primary)", padding: "7px 10px" }}
       />
     </div>
   );

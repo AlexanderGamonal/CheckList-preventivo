@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTheme } from './hooks/useTheme.js';
 import Toast from './components/Toast.jsx';
 import SectionBlock from './components/SectionBlock.jsx';
 import PhotoUpload from './components/PhotoUpload.jsx';
@@ -20,18 +22,19 @@ import './pdf-styles.css';
 const INP = {
   width: "100%",
   padding: "9px 12px",
-  borderRadius: 8,
-  border: "1px solid #e2e8f0",
+  borderRadius: "var(--radius-md)",
+  border: "1px solid var(--border-default)",
   fontSize: 14,
-  background: "#fff",
-  color: "#1e293b",
+  background: "var(--bg-secondary)",
+  color: "var(--text-primary)",
   outline: "none",
+  boxSizing: "border-box",
 };
 const LBL = {
   display: "block",
   fontSize: 10,
   fontWeight: 700,
-  color: "#94a3b8",
+  color: "var(--text-muted)",
   textTransform: "uppercase",
   letterSpacing: "0.06em",
   marginBottom: 5,
@@ -41,6 +44,8 @@ const LBL = {
    APP PRINCIPAL
 ══════════════════════════════════════ */
 export default function App() {
+  const navigate = useNavigate();
+  const { theme, toggle: toggleTheme } = useTheme();
   const DRAFT_KEY = 'checklist_draft';
 
   function loadDraft() {
@@ -319,10 +324,10 @@ export default function App() {
 
         {/* UI pantalla */}
         <div className="screen-ui no-print" style={{ display: "block" }}>
-          {/* HEADER */}
+          {/* HEADER — siempre oscuro */}
           <div
             style={{
-              background: "var(--bg-primary)",
+              background: "#0F172A",
               padding: "14px 14px 0",
               position: "sticky",
               top: 0,
@@ -341,9 +346,13 @@ export default function App() {
                 <div
                   style={{ display: "flex", alignItems: "center", gap: 8 }}
                 >
+                  <button onClick={() => navigate('/')}
+                    style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: 20, padding: 0, lineHeight: 1 }}>
+                    ←
+                  </button>
                   <p
                     style={{
-                      color: "#fff",
+                      color: "#F8FAFC",
                       fontWeight: 800,
                       fontSize: 14,
                       lineHeight: 1.2,
@@ -354,7 +363,7 @@ export default function App() {
                 </div>
                 <p
                   style={{
-                    color: tipoObj ? tipoObj.color : "#94a3b8",
+                    color: tipoObj ? tipoObj.color : "var(--text-muted)",
                     fontSize: 11,
                     fontWeight: 600,
                     marginTop: 2,
@@ -364,7 +373,7 @@ export default function App() {
                     ? tipoObj.emoji + " " + tipoObj.label
                     : "Selecciona tipo de cajero"}
                   {form.punto && (
-                    <span style={{ color: "#64748b" }}>
+                    <span style={{ color: "var(--text-muted)" }}>
                       {" "}
                       · {form.punto}
                     </span>
@@ -372,7 +381,19 @@ export default function App() {
                 </p>
               </div>
               <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                <InstallButton />
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button
+                    onClick={toggleTheme}
+                    title={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                    style={{
+                      background: "none", border: "none", cursor: "pointer",
+                      fontSize: 18, padding: "2px 4px", lineHeight: 1, opacity: 0.75,
+                    }}
+                  >
+                    {theme === "dark" ? "☀️" : "🌙"}
+                  </button>
+                  <InstallButton />
+                </div>
                 {form.atmTipo && form.marca && (
                   <>
                     <div
@@ -442,8 +463,8 @@ export default function App() {
                     fontSize: 11,
                     fontWeight: 700,
                     whiteSpace: "nowrap",
-                    background: tab === i ? "#fff" : hoveredTab === i ? "rgba(255,255,255,0.1)" : "transparent",
-                    color: tab === i ? "#0f172a" : hoveredTab === i ? "#cbd5e1" : "#94a3b8",
+                    background: tab === i ? "#334155" : hoveredTab === i ? "rgba(255,255,255,0.06)" : "transparent",
+                    color: tab === i ? "#F8FAFC" : hoveredTab === i ? "#CBD5E1" : "#94A3B8",
                     border: "none",
                     cursor: "pointer",
                     borderRadius: "8px 8px 0 0",
@@ -465,7 +486,7 @@ export default function App() {
 
           <div
             style={{
-              background: "#fff",
+              background: "var(--bg-base)",
               minHeight: "calc(100vh - 88px)",
               padding: "16px 14px",
             }}
@@ -508,8 +529,8 @@ export default function App() {
                       onChange={(e) => upd("tec", e.target.value)}
                       style={{
                         ...INP,
-                        background: form.tec ? "#f0fdf4" : "#f8fafc",
-                        borderColor: form.tec ? "#16a34a" : "#e2e8f0",
+                        background: form.tec ? "var(--color-action-green-dim)" : "var(--bg-secondary)",
+                        borderColor: form.tec ? "var(--status-ok)" : "var(--border-default)",
                       }}
                     />
                   </div>
@@ -538,8 +559,8 @@ export default function App() {
                         fontWeight: 700,
                         fontSize: 15,
                         borderWidth: 2,
-                        borderColor: form.punto ? "#004A97" : "#e2e8f0",
-                        background: form.punto ? "#e8f0fb" : "#fff",
+                        borderColor: form.punto ? "var(--brand)" : "var(--border-default)",
+                        background: form.punto ? "var(--brand-subtle)" : "var(--bg-secondary)",
                       }}
                     />
                   </div>
@@ -552,8 +573,8 @@ export default function App() {
                       display: "flex",
                       alignItems: "center",
                       gap: 8,
-                      background: "#f1f5f9",
-                      color: form.marca ? "#1e293b" : "#94a3b8",
+                      background: "var(--bg-tertiary)",
+                      color: form.marca ? "var(--text-primary)" : "var(--text-muted)",
                       cursor: "default",
                       userSelect: "none",
                     }}>
@@ -582,8 +603,8 @@ export default function App() {
 
                 {/* FALLBACK: selección manual de tipo y marca (solo si ATM no encontrado en BD) */}
                 {atmNotFound && (
-                  <div style={{ marginTop: 16, padding: "14px", background: "#fffbeb", borderRadius: 12, border: "1.5px solid #fcd34d" }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: "#92400e", marginBottom: 12 }}>
+                  <div style={{ marginTop: 16, padding: "14px", background: "var(--status-warn-dim)", borderRadius: 12, border: "1.5px solid var(--status-warn-border)" }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: "var(--status-warn)", marginBottom: 12 }}>
                       ⚠ ATM no encontrado en BD — selecciona tipo y marca manualmente:
                     </p>
                     {/* Tipo */}
@@ -595,11 +616,11 @@ export default function App() {
                           <button key={t.id} onClick={() => cambiarTipo(t.id)} style={{
                             padding: "10px 6px", borderRadius: 10, cursor: "pointer", textAlign: "center",
                             border: "2px solid " + (sel ? t.color : t.border),
-                            background: sel ? t.bg : "#fff",
+                            background: sel ? t.bg : "var(--bg-secondary)",
                             transition: "all .2s",
                           }}>
                             <div style={{ fontSize: 20, marginBottom: 2 }}>{t.emoji}</div>
-                            <div style={{ fontSize: 11, fontWeight: 800, color: sel ? t.color : "#475569" }}>{t.label}</div>
+                            <div style={{ fontSize: 11, fontWeight: 800, color: sel ? t.color : "var(--text-muted)" }}>{t.label}</div>
                             {sel && <div style={{ marginTop: 4, background: t.color, color: "#fff", borderRadius: 20, fontSize: 10, fontWeight: 700, padding: "1px 8px", display: "inline-block" }}>✓</div>}
                           </button>
                         );
@@ -617,11 +638,11 @@ export default function App() {
                               <button key={m} onClick={() => cambiarMarca(m)} style={{
                                 flex: "1 1 0", padding: "10px 8px", borderRadius: 10, cursor: "pointer",
                                 border: "2px solid " + (sel ? mc.color : mc.border),
-                                background: sel ? mc.bg : "#fff",
+                                background: sel ? mc.bg : "var(--bg-secondary)",
                                 display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
                                 transition: "all .2s",
                               }}>
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 36, padding: "4px 8px", background: sel ? "#fff" : "#f8fafc", borderRadius: 6, border: "1px solid " + (sel ? mc.border : "#e2e8f0") }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 36, padding: "4px 8px", background: sel ? "var(--bg-secondary)" : "var(--bg-primary)", borderRadius: 6, border: "1px solid " + (sel ? mc.border : "var(--border-default)") }}>
                                   {React.createElement(LOGO_MAP[m], { size: 24, selected: sel })}
                                 </div>
                                 {sel && <div style={{ background: mc.color, color: "#fff", borderRadius: 20, fontSize: 10, fontWeight: 700, padding: "1px 8px" }}>✓</div>}
@@ -643,12 +664,12 @@ export default function App() {
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                       {sections.map((s) => (
                         <span key={s.id + s.title} style={{
-                          fontSize: 11, background: "#fff",
+                          fontSize: 11, background: "var(--bg-secondary)",
                           border: "1px solid " + tipoObj.border,
                           color: tipoObj.color, borderRadius: 20,
                           padding: "2px 9px", fontWeight: 600,
                         }}>
-                          {s.title} <span style={{ color: "#94a3b8" }}>({s.items.length})</span>
+                          {s.title} <span style={{ color: "var(--text-muted)" }}>({s.items.length})</span>
                         </span>
                       ))}
                     </div>
@@ -688,8 +709,8 @@ export default function App() {
                     marginBottom: 14,
                     padding: "10px 14px",
                     borderRadius: 10,
-                    background: "#f0f4ff",
-                    border: "1px solid #c7d7fd",
+                    background: "var(--brand-subtle)",
+                    border: "1px solid var(--border-brand)",
                   }}
                 >
                   <span style={{ fontSize: 22 }}>🏢</span>
@@ -698,12 +719,12 @@ export default function App() {
                       style={{
                         fontSize: 13,
                         fontWeight: 800,
-                        color: "#3730a3",
+                        color: "var(--brand-light)",
                       }}
                     >
                       Evaluación del SITE
                     </p>
-                    <p style={{ fontSize: 10, color: "#6366f1" }}>
+                    <p style={{ fontSize: 10, color: "var(--brand)" }}>
                       Entorno y condiciones de la cabina
                     </p>
                   </div>
@@ -729,28 +750,28 @@ export default function App() {
                     <div
                       key={i}
                       style={{
-                        background: "#fff",
+                        background: "var(--bg-secondary)",
                         borderRadius: 10,
                         border:
                           "2px solid " +
-                          (val ? E_COL_SITE[val] || "#e2e8f0" : "#e2e8f0"),
+                          (val ? E_COL_SITE[val] || "var(--border-default)" : "var(--border-default)"),
                         padding: "12px 14px",
                         marginBottom: 8,
-                        boxShadow: "0 1px 3px rgba(0,0,0,.05)",
+                        boxShadow: "var(--shadow-sm)",
                       }}
                     >
                       <p
                         style={{
                           fontSize: 13,
                           fontWeight: 700,
-                          color: "#334155",
+                          color: "var(--text-secondary)",
                           marginBottom: 8,
                         }}
                       >
                         <span
                           style={{
-                            background: "#e0e7ff",
-                            color: "#3730a3",
+                            background: "var(--brand-subtle)",
+                            color: "var(--brand-light)",
                             borderRadius: 20,
                             fontSize: 10,
                             fontWeight: 800,
@@ -790,10 +811,10 @@ export default function App() {
                               cursor: "pointer",
                               border:
                                 "1.5px solid " +
-                                (val === e ? E_COL_SITE[e] : "#e2e8f0"),
+                                (val === e ? E_COL_SITE[e] : "var(--border-default)"),
                               background:
-                                val === e ? E_COL_SITE[e] : "#fff",
-                              color: val === e ? "#fff" : "#94a3b8",
+                                val === e ? E_COL_SITE[e] : "var(--bg-secondary)",
+                              color: val === e ? "#fff" : "var(--text-muted)",
                               transition: "all .15s",
                             }}
                           >
@@ -812,8 +833,8 @@ export default function App() {
                     style={{
                       flex: 1,
                       padding: 12,
-                      background: "#f1f5f9",
-                      color: "#475569",
+                      background: "var(--bg-tertiary)",
+                      color: "var(--text-muted)",
                       border: "none",
                       borderRadius: 12,
                       fontWeight: 800,
@@ -852,8 +873,8 @@ export default function App() {
                     marginBottom: 12,
                     padding: "9px 14px",
                     borderRadius: 10,
-                    background: "#f0f9ff",
-                    border: "1px solid #bae6fd",
+                    background: "var(--bg-secondary)",
+                    border: "1px solid var(--border-default)",
                   }}
                 >
                   <div>
@@ -861,7 +882,7 @@ export default function App() {
                       style={{
                         fontSize: 12,
                         fontWeight: 800,
-                        color: "#0369a1",
+                        color: "var(--text-primary)",
                       }}
                     >
                       ⚡ Rangos de voltaje
@@ -869,7 +890,7 @@ export default function App() {
                     <p
                       style={{
                         fontSize: 11,
-                        color: "#0284c7",
+                        color: "var(--text-muted)",
                         marginTop: 1,
                       }}
                     >
@@ -882,7 +903,7 @@ export default function App() {
                     <p
                       style={{
                         fontSize: 11,
-                        color: "#7c3aed",
+                        color: "#a78bfa",
                         marginTop: 2,
                       }}
                     >
@@ -901,9 +922,9 @@ export default function App() {
                       style={{
                         fontSize: 10,
                         fontWeight: 700,
-                        background: "#dcfce7",
-                        color: "#16a34a",
-                        border: "1px solid #86efac",
+                        background: "var(--status-ok-dim)",
+                        color: "var(--status-ok)",
+                        border: "1px solid var(--status-ok-border)",
                         borderRadius: 20,
                         padding: "2px 8px",
                       }}
@@ -914,9 +935,9 @@ export default function App() {
                       style={{
                         fontSize: 10,
                         fontWeight: 700,
-                        background: "#fef2f2",
-                        color: "#dc2626",
-                        border: "1px solid #fca5a5",
+                        background: "var(--status-critical-dim)",
+                        color: "var(--status-critical)",
+                        border: "1px solid var(--status-critical-border)",
                         borderRadius: 20,
                         padding: "2px 8px",
                       }}
@@ -927,9 +948,9 @@ export default function App() {
                       style={{
                         fontSize: 10,
                         fontWeight: 700,
-                        background: "#f5f3ff",
-                        color: "#7c3aed",
-                        border: "1px solid #c4b5fd",
+                        background: "var(--status-info-dim)",
+                        color: "#a78bfa",
+                        border: "1px solid var(--status-info-border)",
                         borderRadius: 20,
                         padding: "2px 8px",
                       }}
@@ -950,15 +971,15 @@ export default function App() {
                   const hayErr = estados.some((e) => e === "err");
                   const hayOk = estados.length > 0;
                   const borderColor = !hayOk
-                    ? "#e2e8f0"
+                    ? "var(--border-default)"
                     : hayErr
-                      ? "#fca5a5"
-                      : "#86efac";
+                      ? "var(--status-critical-border)"
+                      : "var(--status-ok-border)";
                   const headerBg = !hayOk
-                    ? "#f8fafc"
+                    ? "var(--bg-secondary)"
                     : hayErr
-                      ? "#fef2f2"
-                      : "#f0fdf4";
+                      ? "var(--status-critical-dim)"
+                      : "var(--status-ok-dim)";
                   return (
                     <div
                       key={item}
@@ -983,7 +1004,7 @@ export default function App() {
                           style={{
                             fontSize: 13,
                             fontWeight: 700,
-                            color: "#1e293b",
+                            color: "var(--text-primary)",
                           }}
                         >
                           ⚡ {item}
@@ -1032,35 +1053,35 @@ export default function App() {
                             const isNT = f === "nt";
                             const cBorder =
                               est === "ok"
-                                ? "#86efac"
+                                ? "var(--status-ok-border)"
                                 : est === "err"
                                   ? isNT
-                                    ? "#c4b5fd"
-                                    : "#fca5a5"
-                                  : "#e2e8f0";
+                                    ? "var(--status-info-border)"
+                                    : "var(--status-critical-border)"
+                                  : "var(--border-default)";
                             const cBg =
                               est === "ok"
-                                ? "#f0fdf4"
+                                ? "var(--status-ok-dim)"
                                 : est === "err"
                                   ? isNT
-                                    ? "#f5f3ff"
-                                    : "#fef2f2"
-                                  : "#fff";
+                                    ? "var(--status-info-dim)"
+                                    : "var(--status-critical-dim)"
+                                  : "var(--bg-secondary)";
                             const cText =
                               est === "ok"
-                                ? "#16a34a"
+                                ? "var(--status-ok)"
                                 : est === "err"
                                   ? isNT
-                                    ? "#7c3aed"
-                                    : "#dc2626"
-                                  : "#1e293b";
+                                    ? "#a78bfa"
+                                    : "var(--status-critical)"
+                                  : "var(--text-primary)";
                             return (
                               <div key={f}>
                                 <label
                                   style={{
                                     ...LBL,
                                     textAlign: "center",
-                                    color: isNT ? "#7c3aed" : "#94a3b8",
+                                    color: isNT ? "#a78bfa" : "var(--text-muted)",
                                   }}
                                 >
                                   {l}
@@ -1119,22 +1140,22 @@ export default function App() {
                             alignItems: "center",
                             gap: 8,
                             background: !hayOk
-                              ? "#f1f5f9"
+                              ? "var(--bg-tertiary)"
                               : hayErr
-                                ? "#fef2f2"
-                                : "#f0fdf4",
+                                ? "var(--status-critical-dim)"
+                                : "var(--status-ok-dim)",
                             border:
                               "1px solid " +
                               (!hayOk
-                                ? "#e2e8f0"
+                                ? "var(--border-default)"
                                 : hayErr
-                                  ? "#fca5a5"
-                                  : "#86efac"),
+                                  ? "var(--status-critical-border)"
+                                  : "var(--status-ok-border)"),
                             color: !hayOk
-                              ? "#94a3b8"
+                              ? "var(--text-muted)"
                               : hayErr
-                                ? "#dc2626"
-                                : "#16a34a",
+                                ? "var(--status-critical)"
+                                : "var(--status-ok)",
                           }}
                         >
                           <span style={{ fontSize: 16 }}>
@@ -1173,17 +1194,17 @@ export default function App() {
                         padding: "12px 16px",
                         borderRadius: 12,
                         background: errLL
-                          ? "#fef2f2"
+                          ? "var(--status-critical-dim)"
                           : errNT
-                            ? "#f5f3ff"
-                            : "#f0fdf4",
+                            ? "var(--status-info-dim)"
+                            : "var(--status-ok-dim)",
                         border:
                           "2px solid " +
                           (errLL
-                            ? "#fca5a5"
+                            ? "var(--status-critical-border)"
                             : errNT
-                              ? "#c4b5fd"
-                              : "#86efac"),
+                              ? "var(--status-info-border)"
+                              : "var(--status-ok-border)"),
                       }}
                     >
                       {errLL && (
@@ -1191,7 +1212,7 @@ export default function App() {
                           style={{
                             fontSize: 13,
                             fontWeight: 800,
-                            color: "#dc2626",
+                            color: "var(--status-critical)",
                             marginBottom: 3,
                           }}
                         >
@@ -1203,7 +1224,7 @@ export default function App() {
                           style={{
                             fontSize: 13,
                             fontWeight: 800,
-                            color: "#7c3aed",
+                            color: "#a78bfa",
                             marginBottom: 3,
                           }}
                         >
@@ -1216,7 +1237,7 @@ export default function App() {
                           style={{
                             fontSize: 13,
                             fontWeight: 800,
-                            color: "#16a34a",
+                            color: "var(--status-ok)",
                           }}
                         >
                           ✅ Todos los voltajes dentro del rango
@@ -1225,7 +1246,7 @@ export default function App() {
                       <p
                         style={{
                           fontSize: 11,
-                          color: "#64748b",
+                          color: "var(--text-muted)",
                           marginTop: 3,
                         }}
                       >
@@ -1242,8 +1263,8 @@ export default function App() {
                     style={{
                       flex: 1,
                       padding: 12,
-                      background: "#f1f5f9",
-                      color: "#475569",
+                      background: "var(--bg-tertiary)",
+                      color: "var(--text-muted)",
                       border: "none",
                       borderRadius: 12,
                       fontWeight: 800,
@@ -1279,7 +1300,7 @@ export default function App() {
                     style={{
                       textAlign: "center",
                       padding: "30px 20px",
-                      color: "#94a3b8",
+                      color: "var(--text-muted)",
                     }}
                   >
                     <p style={{ fontSize: 32, marginBottom: 8 }}>⚠️</p>
@@ -1316,14 +1337,14 @@ export default function App() {
                           </span>
                           {form.punto && (
                             <span
-                              style={{ color: "#64748b", fontWeight: 600 }}
+                              style={{ color: "var(--text-muted)", fontWeight: 600 }}
                             >
                               {" "}
                               · {form.punto}
                             </span>
                           )}
                         </p>
-                        <p style={{ fontSize: 10, color: "#64748b" }}>
+                        <p style={{ fontSize: 10, color: "var(--text-muted)" }}>
                           {filled}/{total} ítems evaluados
                         </p>
                       </div>
@@ -1351,8 +1372,8 @@ export default function App() {
                     style={{
                       flex: 1,
                       padding: 12,
-                      background: "#f1f5f9",
-                      color: "#475569",
+                      background: "var(--bg-tertiary)",
+                      color: "var(--text-muted)",
                       border: "none",
                       borderRadius: 12,
                       fontWeight: 800,
@@ -1397,7 +1418,7 @@ export default function App() {
                     <label style={LBL}>
                       {l}
                       {required && (
-                        <span style={{ color: "#ef4444", marginLeft: 4 }}>*</span>
+                        <span style={{ color: "var(--status-critical)", marginLeft: 4 }}>*</span>
                       )}
                     </label>
                     <textarea
@@ -1408,7 +1429,7 @@ export default function App() {
                         ...INP,
                         resize: "none",
                         ...(required && !form[f]?.trim()
-                          ? { borderColor: "#fca5a5" }
+                          ? { borderColor: "var(--status-critical-border)" }
                           : {}),
                       }}
                       placeholder={required ? l + "… (obligatorio)" : l + "…"}
@@ -1425,9 +1446,9 @@ export default function App() {
                     }}
                   >
                     {[
-                      ["Operativo", "#16a34a", "#f0fdf4"],
-                      ["Inoperativo", "#dc2626", "#fef2f2"],
-                      ["Operativo con observaciones", "#d97706", "#fffbeb"],
+                      ["Operativo", "#16a34a", "var(--status-ok-dim)"],
+                      ["Inoperativo", "#dc2626", "var(--status-critical-dim)"],
+                      ["Operativo con observaciones", "#d97706", "var(--status-warn-dim)"],
                     ].map(([s, c, bg]) => (
                       <button
                         key={s}
@@ -1440,9 +1461,9 @@ export default function App() {
                           cursor: "pointer",
                           border:
                             "2px solid " +
-                            (form.estFinal === s ? c : "#e2e8f0"),
-                          background: form.estFinal === s ? bg : "#fff",
-                          color: form.estFinal === s ? c : "#94a3b8",
+                            (form.estFinal === s ? c : "var(--border-default)"),
+                          background: form.estFinal === s ? bg : "var(--bg-secondary)",
+                          color: form.estFinal === s ? c : "var(--text-muted)",
                           textAlign: "left",
                         }}
                       >
@@ -1458,8 +1479,8 @@ export default function App() {
                     style={{
                       flex: 1,
                       padding: 12,
-                      background: "#f1f5f9",
-                      color: "#475569",
+                      background: "var(--bg-tertiary)",
+                      color: "var(--text-muted)",
                       border: "none",
                       borderRadius: 12,
                       fontWeight: 800,
@@ -1504,9 +1525,9 @@ export default function App() {
                 {/* Resumen */}
                 <div
                   style={{
-                    background: "#f8fafc",
+                    background: "var(--bg-secondary)",
                     borderRadius: 14,
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid var(--border-default)",
                     padding: "16px 14px",
                     marginTop: 4,
                     marginBottom: 16,
@@ -1516,7 +1537,7 @@ export default function App() {
                     style={{
                       fontWeight: 800,
                       fontSize: 14,
-                      color: "#0f172a",
+                      color: "var(--text-primary)",
                       marginBottom: 12,
                     }}
                   >
@@ -1558,7 +1579,7 @@ export default function App() {
                           <p
                             style={{
                               fontSize: 11,
-                              color: "#64748b",
+                              color: "var(--text-muted)",
                               marginTop: 1,
                             }}
                           >
@@ -1587,16 +1608,16 @@ export default function App() {
                       <div
                         key={k}
                         style={{
-                          background: "#fff",
+                          background: "var(--bg-tertiary)",
                           borderRadius: 8,
                           padding: "9px 11px",
-                          border: "1px solid #e2e8f0",
+                          border: "1px solid var(--border-default)",
                         }}
                       >
                         <p
                           style={{
                             fontSize: 9,
-                            color: "#94a3b8",
+                            color: "var(--text-muted)",
                             fontWeight: 700,
                             textTransform: "uppercase",
                             marginBottom: 2,
@@ -1608,7 +1629,7 @@ export default function App() {
                           style={{
                             fontSize: 13,
                             fontWeight: 700,
-                            color: "#1e293b",
+                            color: "var(--text-primary)",
                           }}
                         >
                           {v}
@@ -1638,12 +1659,12 @@ export default function App() {
                           key={e}
                           style={{
                             textAlign: "center",
-                            background: "#fff",
+                            background: "var(--bg-tertiary)",
                             borderRadius: 10,
                             padding: "10px 4px",
                             border:
                               "2px solid " +
-                              (cnt > 0 ? E_COL[e] : "#e2e8f0"),
+                              (cnt > 0 ? E_COL[e] : "var(--border-default)"),
                           }}
                         >
                           <p
@@ -1658,7 +1679,7 @@ export default function App() {
                           <p
                             style={{
                               fontSize: 10,
-                              color: "#64748b",
+                              color: "var(--text-muted)",
                               fontWeight: 600,
                             }}
                           >
@@ -1675,8 +1696,8 @@ export default function App() {
                   style={{
                     width: "100%",
                     padding: 12,
-                    background: "#f1f5f9",
-                    color: "#475569",
+                    background: "var(--bg-tertiary)",
+                    color: "var(--text-muted)",
                     border: "none",
                     borderRadius: 12,
                     fontWeight: 800,
@@ -1714,7 +1735,7 @@ export default function App() {
                             : !formCompleto
                               ? "#334155"
                               : marcaObj?.color || "#0f172a",
-                          color: !formCompleto ? "#64748b" : "#fff",
+                          color: !formCompleto ? "var(--text-disabled)" : "#fff",
                           boxShadow: formCompleto ? "0 4px 15px rgba(0,0,0,.3)" : "none",
                           transition: "background .2s",
                           opacity: deshabilitado && !enviando ? 0.6 : 1,

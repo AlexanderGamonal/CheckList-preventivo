@@ -140,6 +140,16 @@
   --transition-slow:   350ms ease;
 
   /* ----------------------------------------------------------
+     VERDE ACCIÓN — Botones de envío / confirmación
+     Distinto de --status-ok (#22C55E) que es semántico.
+     Este verde más oscuro (#16a34a) garantiza contraste
+     con texto blanco en botones CTA.
+  ---------------------------------------------------------- */
+  --color-action-green:     #16a34a;
+  --color-action-green-dim: rgba(22, 163, 74, 0.08);
+  --shadow-action-green:    0 2px 8px rgba(22, 163, 74, 0.35);
+
+  /* ----------------------------------------------------------
      Z-INDEX — Escala predecible
   ---------------------------------------------------------- */
   --z-base:    10;
@@ -147,6 +157,80 @@
   --z-sticky:  30;
   --z-modal:   50;
   --z-toast:   9999;
+}
+
+/* ============================================================
+   MODO CLARO — Overrides sobre el sistema de tokens oscuro
+   Activado con: <html data-theme="light">
+   ============================================================ */
+[data-theme="light"] {
+  /* Fondos */
+  --bg-base:      #F8FAFC;
+  --bg-primary:   #F1F5F9;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary:  #E2E8F0;
+  --bg-overlay:   #CBD5E1;
+
+  /* Brand (se oscurece para contraste sobre fondos claros) */
+  --brand:         #2563EB;
+  --brand-light:   #1D4ED8;
+  --brand-dark:    #1E40AF;
+  --brand-subtle:  rgba(37, 99, 235, 0.08);
+  --brand-glow:    rgba(37, 99, 235, 0.14);
+
+  /* Status — se oscurecen ligeramente para legibilidad */
+  --status-ok:        #16A34A;
+  --status-ok-dim:    rgba(22, 163, 74, 0.10);
+  --status-ok-border: rgba(22, 163, 74, 0.30);
+
+  --status-warn:        #D97706;
+  --status-warn-dim:    rgba(217, 119, 6, 0.10);
+  --status-warn-border: rgba(217, 119, 6, 0.30);
+
+  --status-critical:        #DC2626;
+  --status-critical-dim:    rgba(220, 38, 38, 0.10);
+  --status-critical-border: rgba(220, 38, 38, 0.30);
+
+  --status-offline:        #64748B;
+  --status-offline-dim:    rgba(100, 116, 139, 0.10);
+  --status-offline-border: rgba(100, 116, 139, 0.20);
+
+  --status-info:        #0284C7;
+  --status-info-dim:    rgba(2, 132, 199, 0.10);
+  --status-info-border: rgba(2, 132, 199, 0.25);
+
+  /* Texto */
+  --text-primary:   #0F172A;
+  --text-secondary: #1E293B;
+  --text-muted:     #64748B;
+  --text-disabled:  #94A3B8;
+  --text-brand:     #2563EB;
+  --text-inverse:   #FFFFFF;
+
+  /* Bordes */
+  --border-subtle:  rgba(71, 85, 105, 0.08);
+  --border-default: rgba(71, 85, 105, 0.18);
+  --border-strong:  rgba(71, 85, 105, 0.30);
+  --border-brand:   rgba(37, 99, 235, 0.40);
+
+  /* Estados interactivos */
+  --hover-overlay:  rgba(0, 0, 0, 0.04);
+  --active-overlay: rgba(0, 0, 0, 0.08);
+  --focus-ring:     rgba(37, 99, 235, 0.40);
+  --selected-bg:    rgba(37, 99, 235, 0.10);
+
+  /* Sombras (más sutiles en modo claro) */
+  --shadow-sm:    0 1px 3px rgba(0, 0, 0, 0.10);
+  --shadow-md:    0 4px 16px rgba(0, 0, 0, 0.10);
+  --shadow-lg:    0 8px 32px rgba(0, 0, 0, 0.14);
+  --shadow-brand: 0 0 20px rgba(37, 99, 235, 0.12);
+  --shadow-ok:    0 0 16px rgba(22, 163, 74, 0.12);
+  --shadow-critical: 0 0 16px rgba(220, 38, 38, 0.14);
+
+  /* Verde acción (mismo, ya tiene buen contraste en claro) */
+  --color-action-green:     #16a34a;
+  --color-action-green-dim: rgba(22, 163, 74, 0.08);
+  --shadow-action-green:    0 2px 8px rgba(22, 163, 74, 0.25);
 }
 
 /* ----------------------------------------------------------

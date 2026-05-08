@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useTheme } from '../hooks/useTheme.js';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { useIsMobile } from '../hooks/useIsMobile.js';
@@ -7,6 +8,7 @@ import { useIsMobile } from '../hooks/useIsMobile.js';
 const LINKS_ALL = [
   { to: '/admin/dashboard',       label: 'Dashboard' },
   { to: '/admin/mantenimientos',  label: 'Mantenimientos' },
+  { to: '/admin/auditorias',      label: 'Auditorías' },
 ];
 
 const LINKS_SUPERADMIN = [
@@ -21,6 +23,7 @@ export default function AdminLayout({ children }) {
   const { isSuperadmin, session } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [loggingOut, setLoggingOut] = useState(false);
   const [hoveredLink, setHoveredLink] = useState(null);
   const [logoutHovered, setLogoutHovered] = useState(false);
@@ -53,11 +56,11 @@ export default function AdminLayout({ children }) {
       } : {}),
     }}>
       <div style={{ padding: '0 20px 24px', borderBottom: '1px solid var(--border-default)', textAlign: 'center' }}>
-        <div style={{ width: 115, height: 115, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 12px' }}>
+        <div style={{ width: 80, height: 80, borderRadius: 'var(--radius-lg)', overflow: 'hidden', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', padding: 6 }}>
           <img
-            src="/favicon.png"
+            src="/logo.png"
             alt="CheckList ATM"
-            style={{ width: '115%', height: '115%', objectFit: 'cover', marginLeft: '-7.5%', marginTop: '-7.5%' }}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
         </div>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand-light)' }}>CheckList ATM</div>
@@ -74,8 +77,10 @@ export default function AdminLayout({ children }) {
             style={({ isActive }) => ({
               display: 'block', padding: '9px 20px', fontSize: 13, textDecoration: 'none',
               color: isActive ? 'var(--text-primary)' : hoveredLink === l.to ? 'var(--text-secondary)' : 'var(--text-muted)',
-              background: isActive ? 'var(--bg-tertiary)' : hoveredLink === l.to ? 'var(--hover-overlay)' : 'transparent',
+              background: isActive ? 'var(--selected-bg)' : hoveredLink === l.to ? 'var(--hover-overlay)' : 'transparent',
               borderLeft: isActive ? '3px solid var(--brand)' : '3px solid transparent',
+              fontWeight: isActive ? 700 : 400,
+              paddingLeft: isActive ? 17 : 20,
               transition: 'background 0.15s, color 0.15s',
             })}
           >
@@ -84,8 +89,17 @@ export default function AdminLayout({ children }) {
         ))}
       </nav>
       <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border-default)' }}>
-        <div style={{ fontSize: 11, color: 'var(--text-disabled)', marginBottom: 8, wordBreak: 'break-all' }}>
-          {session?.user?.email}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-disabled)', wordBreak: 'break-all', flex: 1, marginRight: 8 }}>
+            {session?.user?.email}
+          </div>
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, padding: '2px 4px', lineHeight: 1, opacity: 0.75, flexShrink: 0 }}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
         </div>
         <button
           onClick={handleLogout}
@@ -106,7 +120,7 @@ export default function AdminLayout({ children }) {
           to="/"
           style={{ display: 'block', marginTop: 8, fontSize: 11, color: 'var(--brand-light)', textDecoration: 'none', textAlign: 'center' }}
         >
-          Ir al Checklist
+          ← Ir al Inicio
         </NavLink>
       </div>
     </aside>

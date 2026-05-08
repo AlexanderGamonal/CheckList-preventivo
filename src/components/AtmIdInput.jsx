@@ -85,7 +85,7 @@ export default function AtmIdInput({ value, onChange, onAutofill, onNotFound, st
       />
       {status === 'found' && (
         <div style={{ position: 'absolute', fontSize: 10, color: '#16a34a', marginTop: 2, fontWeight: 600 }}>
-          ATM encontrado — datos cargados
+          ATM encontrado
         </div>
       )}
       {status === 'notfound' && (

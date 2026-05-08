@@ -50,7 +50,7 @@ export default function SectionBlock({ section, devices, updateDevice, accentCol
         </span>
       </button>
       {open && (
-        <div style={{ background: "#f1f5f9", padding: "12px 10px" }}>
+        <div style={{ background: "var(--bg-primary)", padding: "12px 10px", borderTop: "1px solid var(--border-subtle)" }}>
           {section.items.map((item, ii) => (
             <ItemCard
               key={ii}

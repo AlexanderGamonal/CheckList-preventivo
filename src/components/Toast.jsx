@@ -18,7 +18,7 @@ const ICONS = {
   ),
 };
 
-export default function Toast({ msg, type, onClose }) {
+export default function Toast({ msg, type, onClose, aboveBar }) {
   const bg =
     type === "ok" ? "#16a34a" : type === "err" ? "#dc2626" : "#2563eb";
 
@@ -30,7 +30,7 @@ export default function Toast({ msg, type, onClose }) {
   }, [type]);
 
   return (
-    <div className="toast no-print" style={{ background: bg }} role="status" aria-live="polite">
+    <div className={`toast no-print${aboveBar ? " toast--above-bar" : ""}`} style={{ background: bg }} role="status" aria-live="polite">
       {ICONS[type] ?? ICONS.info}
       <span>{msg}</span>
     </div>

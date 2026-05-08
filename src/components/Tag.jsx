@@ -10,9 +10,9 @@ export default function Tag({ label, active, color, onToggle }) {
         fontSize: 12,
         fontWeight: 700,
         cursor: "pointer",
-        border: "1.5px solid " + (active ? color : "#e2e8f0"),
-        background: active ? color : "#fff",
-        color: active ? "#fff" : "#94a3b8",
+        border: "1.5px solid " + (active ? color : "var(--border-default)"),
+        background: active ? color : "var(--bg-secondary)",
+        color: active ? "#fff" : "var(--text-muted)",
         transition: "all .15s",
         userSelect: "none",
       }}
