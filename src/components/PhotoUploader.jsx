@@ -70,8 +70,8 @@ export default function PhotoUploader({ photos = [], onChange, min = 1, max = 6,
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <span style={{
           fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-          color:       underMin ? '#ef4444' : '#22c55e',
-          background:  underMin ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)',
+          color:       underMin ? 'var(--status-critical)' : 'var(--status-ok)',
+          background:  underMin ? 'var(--status-critical-dim)' : 'var(--status-ok-dim)',
         }}>
           {count}/{max} {underMin ? `(mín. ${min})` : '✓'}
         </span>

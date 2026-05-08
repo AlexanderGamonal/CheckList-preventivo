@@ -150,6 +150,13 @@
   --shadow-action-green:    0 2px 8px rgba(22, 163, 74, 0.35);
 
   /* ----------------------------------------------------------
+     CAUCIÓN — Tierra desbalanceada / condición especial (violet)
+  ---------------------------------------------------------- */
+  --status-caution:        #7C3AED;
+  --status-caution-dim:    rgba(124, 58, 237, 0.10);
+  --status-caution-border: rgba(124, 58, 237, 0.25);
+
+  /* ----------------------------------------------------------
      Z-INDEX — Escala predecible
   ---------------------------------------------------------- */
   --z-base:    10;
@@ -198,6 +205,10 @@
   --status-info:        #0369A1;
   --status-info-dim:    rgba(3, 105, 161, 0.10);
   --status-info-border: rgba(3, 105, 161, 0.25);
+
+  --status-caution:        #6D28D9;
+  --status-caution-dim:    rgba(109, 40, 217, 0.08);
+  --status-caution-border: rgba(109, 40, 217, 0.25);
 
   /* Texto */
   --text-primary:   #0F172A;

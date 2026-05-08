@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const LBL = {
   display: "block",
-  fontSize: 10,
+  fontSize: 12,
   fontWeight: 700,
-  color: "#94a3b8",
+  color: "var(--text-muted)",
   textTransform: "uppercase",
   letterSpacing: "0.06em",
   marginBottom: 5,
@@ -38,17 +38,24 @@ function compressImage(file) {
 const MIN_PHOTOS = 5;
 
 export default function PhotoUpload({ label, photos, setPhotos }) {
+  const [loading, setLoading] = useState(false);
   const count = photos.length;
   const ok = count >= MIN_PHOTOS;
   const faltantes = Math.max(0, MIN_PHOTOS - count);
 
   const handleFiles = async (e) => {
     const files = Array.from(e.target.files);
-    for (const file of files) {
-      const src = await compressImage(file);
-      setPhotos((p) => [...p, { name: file.name, src }]);
+    if (!files.length) return;
+    setLoading(true);
+    try {
+      const compressed = await Promise.all(files.map(f => compressImage(f)));
+      setPhotos((p) => [...p, ...compressed.map((src, i) => ({ name: files[i].name, src }))]);
+    } finally {
+      setLoading(false);
+      e.target.value = '';
     }
   };
+
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
@@ -58,8 +65,8 @@ export default function PhotoUpload({ label, photos, setPhotos }) {
           fontWeight: 700,
           padding: "2px 8px",
           borderRadius: 20,
-          background: ok ? "#dcfce7" : "#fee2e2",
-          color: ok ? "#15803d" : "#b91c1c",
+          background: ok ? "var(--status-ok-dim)" : "var(--status-critical-dim)",
+          color: ok ? "var(--status-ok)" : "var(--status-critical)",
         }}>
           {ok ? `✓ ${count} fotos` : `${count}/${MIN_PHOTOS} — faltan ${faltantes}`}
         </span>
@@ -69,22 +76,24 @@ export default function PhotoUpload({ label, photos, setPhotos }) {
           display: "flex",
           alignItems: "center",
           gap: 10,
-          background: "#f8fafc",
-          border: `2px dashed ${ok ? "#86efac" : count > 0 ? "#fca5a5" : "#cbd5e1"}`,
+          background: "var(--bg-secondary)",
+          border: `2px dashed ${ok ? "var(--status-ok-border)" : count > 0 ? "var(--status-critical-border)" : "var(--border-default)"}`,
           borderRadius: 10,
           padding: "14px 16px",
-          cursor: "pointer",
+          cursor: loading ? "wait" : "pointer",
+          opacity: loading ? 0.7 : 1,
         }}
       >
-        <span style={{ fontSize: 24 }}>📷</span>
-        <span style={{ fontSize: 13, color: "#94a3b8" }}>
-          Toca para agregar fotos
+        <span style={{ fontSize: 24 }}>{loading ? '⏳' : '📷'}</span>
+        <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
+          {loading ? 'Comprimiendo…' : 'Toca para agregar fotos'}
         </span>
         <input
           type="file"
           accept="image/*"
           multiple
           onChange={handleFiles}
+          disabled={loading}
           style={{ display: "none" }}
         />
       </label>
@@ -107,7 +116,7 @@ export default function PhotoUpload({ label, photos, setPhotos }) {
                   height: 72,
                   objectFit: "cover",
                   borderRadius: 8,
-                  border: "2px solid #e2e8f0",
+                  border: "2px solid var(--border-default)",
                 }}
               />
               <button
@@ -118,7 +127,7 @@ export default function PhotoUpload({ label, photos, setPhotos }) {
                   position: "absolute",
                   top: -6,
                   right: -6,
-                  background: "#ef4444",
+                  background: "var(--status-critical)",
                   color: "#fff",
                   border: "none",
                   borderRadius: "50%",

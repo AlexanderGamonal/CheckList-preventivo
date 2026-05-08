@@ -700,7 +700,7 @@ export default function App() {
                 <button
                   onClick={() => {
                     if (!form.atmTipo || !form.marca) {
-                      setToast({ msg: "Selecciona tipo y marca del cajero", color: "#dc2626" });
+                      setToast({ msg: "Selecciona tipo y marca del cajero", type: 'err' });
                       return;
                     }
                     setTab(1);
@@ -761,10 +761,10 @@ export default function App() {
                 ].map((item, i) => {
                   const val = form.site[i] || "";
                   const E_COL_SITE = {
-                    Bueno: "#16a34a",
-                    Defectuoso: "#dc2626",
-                    Regular: "#d97706",
-                    "No Aplica": "#64748b",
+                    Bueno: "var(--status-ok)",
+                    Defectuoso: "var(--status-critical)",
+                    Regular: "var(--status-warn)",
+                    "No Aplica": "var(--status-offline)",
                   };
                   return (
                     <div
@@ -811,11 +811,11 @@ export default function App() {
                         }}
                       >
                         {[
-                          "Bueno",
-                          "Defectuoso",
-                          "Regular",
-                          "No Aplica",
-                        ].map((e) => (
+                          ["Bueno",      "✓", "var(--status-ok)"],
+                          ["Defectuoso", "✗", "var(--status-critical)"],
+                          ["Regular",    "⚠", "var(--status-warn)"],
+                          ["No Aplica",  "—", "var(--status-offline)"],
+                        ].map(([e, icon, col]) => (
                           <button
                             key={e}
                             onClick={() => {
@@ -825,21 +825,18 @@ export default function App() {
                             }}
                             style={{
                               padding: "7px 13px",
+                              minHeight: 44,
                               borderRadius: 8,
                               fontSize: 12,
                               fontWeight: 700,
                               cursor: "pointer",
-                              border:
-                                "1.5px solid " +
-                                (val === e ? E_COL_SITE[e] : "var(--border-default)"),
-                              background:
-                                val === e ? E_COL_SITE[e] : "var(--bg-secondary)",
+                              border: "1.5px solid " + (val === e ? col : "var(--border-default)"),
+                              background: val === e ? col : "var(--bg-secondary)",
                               color: val === e ? "#fff" : "var(--text-muted)",
                               transition: "all .15s",
                             }}
                           >
-                            {val === e ? "✓ " : ""}
-                            {e}
+                            {icon} {e}
                           </button>
                         ))}
                       </div>
@@ -868,7 +865,7 @@ export default function App() {
                     style={{
                       flex: 2,
                       padding: 12,
-                      background: "#3730a3",
+                      background: "var(--brand)",
                       color: "#fff",
                       border: "none",
                       borderRadius: 12,
@@ -1039,10 +1036,10 @@ export default function App() {
                               background:
                                 estNT === "err" &&
                                   !(estLN === "err" || estLT === "err")
-                                  ? "#7c3aed"
+                                  ? "var(--status-caution)"
                                   : hayErr
-                                    ? "#dc2626"
-                                    : "#16a34a",
+                                    ? "var(--status-critical)"
+                                    : "var(--status-ok)",
                               color: "#fff",
                             }}
                           >
@@ -1475,29 +1472,27 @@ export default function App() {
                     }}
                   >
                     {[
-                      ["Operativo", "#16a34a", "var(--status-ok-dim)"],
-                      ["Inoperativo", "#dc2626", "var(--status-critical-dim)"],
-                      ["Operativo con observaciones", "#d97706", "var(--status-warn-dim)"],
-                    ].map(([s, c, bg]) => (
+                      ["Operativo",                    "✓", "var(--status-ok)",       "var(--status-ok-dim)"],
+                      ["Inoperativo",                  "✗", "var(--status-critical)", "var(--status-critical-dim)"],
+                      ["Operativo con observaciones",  "⚠", "var(--status-warn)",     "var(--status-warn-dim)"],
+                    ].map(([s, icon, c, bg]) => (
                       <button
                         key={s}
                         onClick={() => upd("estFinal", s)}
                         style={{
                           padding: "13px 16px",
+                          minHeight: 44,
                           borderRadius: 10,
                           fontWeight: 700,
                           fontSize: 13,
                           cursor: "pointer",
-                          border:
-                            "2px solid " +
-                            (form.estFinal === s ? c : "var(--border-default)"),
+                          border: "2px solid " + (form.estFinal === s ? c : "var(--border-default)"),
                           background: form.estFinal === s ? bg : "var(--bg-secondary)",
                           color: form.estFinal === s ? c : "var(--text-muted)",
                           textAlign: "left",
                         }}
                       >
-                        {form.estFinal === s ? "✓ " : ""}
-                        {s}
+                        {icon} {s}
                       </button>
                     ))}
                   </div>
@@ -1744,7 +1739,7 @@ export default function App() {
                   return (
                     <>
                       {!formCompleto && (
-                        <div style={{ textAlign: 'center', fontSize: 11, color: '#f59e0b', marginBottom: 8, fontWeight: 600 }}>
+                        <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--status-warn)', marginBottom: 8, fontWeight: 600 }}>
                           {pendientes}/6 secciones completas — revisa las pestañas con indicador amarillo
                         </div>
                       )}

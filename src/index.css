@@ -25,8 +25,8 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px var(--brand-glow);
 }
 
 /* Spinner reutilizable */

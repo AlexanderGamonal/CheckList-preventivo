@@ -891,8 +891,8 @@ export default function AuditFormPage() {
         <Section icon="📸" title="Evidencias de Dispositivos" complete={sec8Complete}>
           {DEVICE_CFG.map(({ key, label, min, max }) => {
             const estado = form.devFotos[key].estado;
-            const estadoColor = estado === 'ok' ? '#16a34a' : estado === 'mantenimiento' ? '#D97706' : estado === 'repuesto' ? '#DC2626' : 'var(--text-disabled)';
-            const estadoBg    = estado === 'ok' ? 'rgba(22,163,74,0.08)' : estado === 'mantenimiento' ? 'rgba(217,119,6,0.08)' : estado === 'repuesto' ? 'rgba(220,38,38,0.08)' : 'var(--bg-secondary)';
+            const estadoColor = estado === 'ok' ? 'var(--status-ok)' : estado === 'mantenimiento' ? 'var(--status-warn)' : estado === 'repuesto' ? 'var(--status-critical)' : 'var(--text-disabled)';
+            const estadoBg    = estado === 'ok' ? 'var(--status-ok-dim)' : estado === 'mantenimiento' ? 'var(--status-warn-dim)' : estado === 'repuesto' ? 'var(--status-critical-dim)' : 'var(--bg-secondary)';
             return (
             <DevGroup key={key}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{label}</div>
@@ -979,14 +979,14 @@ export default function AuditFormPage() {
             padding: '13px 32px',
             borderRadius: 10,
             border: 'none',
-            background: (sending || progressPct < 100) ? 'var(--bg-tertiary)' : '#16a34a',
+            background: (sending || progressPct < 100) ? 'var(--bg-tertiary)' : 'var(--color-action-green)',
             color: (sending || progressPct < 100) ? 'var(--text-disabled)' : '#fff',
             fontSize: 15,
             fontWeight: 700,
             cursor: (sending || progressPct < 100) ? 'not-allowed' : 'pointer',
             opacity: (sending || progressPct < 100) ? 0.6 : 1,
             letterSpacing: '0.2px',
-            boxShadow: (sending || progressPct < 100) ? 'none' : '0 2px 8px rgba(22,163,74,0.35)',
+            boxShadow: (sending || progressPct < 100) ? 'none' : 'var(--shadow-action-green)',
             transition: 'opacity 0.15s, box-shadow 0.15s',
           }}
         >

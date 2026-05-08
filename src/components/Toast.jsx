@@ -20,7 +20,7 @@ const ICONS = {
 
 export default function Toast({ msg, type, onClose, aboveBar }) {
   const bg =
-    type === "ok" ? "#16a34a" : type === "err" ? "#dc2626" : "#2563eb";
+    type === "ok" ? "var(--color-action-green)" : type === "err" ? "var(--status-critical)" : "var(--brand)";
 
   React.useEffect(() => {
     if (type === "ok" || type === "err") {
