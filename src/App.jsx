@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from './hooks/useTheme.js';
 import Toast from './components/Toast.jsx';
 import SectionBlock from './components/SectionBlock.jsx';
-import PhotoUpload from './components/PhotoUpload.jsx';
+import PhotoUploader from './components/PhotoUploader.jsx';
 import { InstallButton } from './components/InstallPrompt.jsx';
 import PdfView from './components/PdfView.jsx';
 import AtmIdInput from './components/AtmIdInput.jsx';
@@ -63,8 +63,9 @@ export default function App() {
 
   const draft = loadDraft();
   const [form, setForm] = useState(draft?.form || initForm());
-  const [fotosAntes, setFotosAntes] = useState(draft?.fotosAntes || []);
-  const [fotosDespues, setFotosDespues] = useState(draft?.fotosDespues || []);
+  const normPhotos = (arr) => (arr || []).map(p => (typeof p === 'string' ? p : p?.src)).filter(Boolean);
+  const [fotosAntes, setFotosAntes] = useState(normPhotos(draft?.fotosAntes));
+  const [fotosDespues, setFotosDespues] = useState(normPhotos(draft?.fotosDespues));
   const [tab, setTab] = useState(draft?.tab || 0);
   const [toast, setToast] = useState(null);
   const [enviando, setEnviando] = useState(false);
@@ -1535,15 +1536,19 @@ export default function App() {
             {/* ══ TAB FOTOS ══ */}
             {tab === 5 && (
               <div>
-                <PhotoUpload
+                <PhotoUploader
                   label="📸 Antes del Mantenimiento"
                   photos={fotosAntes}
-                  setPhotos={setFotosAntes}
+                  onChange={setFotosAntes}
+                  min={5}
+                  max={20}
                 />
-                <PhotoUpload
+                <PhotoUploader
                   label="📸 Después del Mantenimiento"
                   photos={fotosDespues}
-                  setPhotos={setFotosDespues}
+                  onChange={setFotosDespues}
+                  min={5}
+                  max={20}
                 />
 
                 {/* Resumen */}
