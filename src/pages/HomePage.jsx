@@ -176,21 +176,6 @@ export default function HomePage() {
           );
         })}
       </div>
-
-      {/* ── Footer ── */}
-      <div style={{ marginTop: 32, textAlign: 'center' }}>
-        <a
-          href="/admin"
-          style={{
-            fontSize: 11, color: 'var(--text-disabled)',
-            textDecoration: 'none', letterSpacing: '0.3px',
-            transition: 'color 0.15s',
-          }}
-          onMouseEnter={e => e.target.style.color = 'var(--text-secondary)'}
-          onMouseLeave={e => e.target.style.color = 'var(--text-disabled)'}
-        >
-          Panel de Administración →
-        </a>
       </div>
     </div>
   );
