@@ -1,12 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { lookupAtm, searchAtmIds } from '../hooks/useAtmLookup.js';
 
-const INP = {
-  width: '100%', padding: '9px 12px', borderRadius: 8,
-  border: '1.5px solid #e2e8f0', background: '#f8fafc',
-  color: '#0f172a', fontSize: 13, outline: 'none', boxSizing: 'border-box',
-};
-
 export default function AtmIdInput({ value, onChange, onAutofill, onNotFound, style }) {
   const [suggestions, setSuggestions] = useState([]);
   const [status, setStatus] = useState(null); // null | 'found' | 'notfound' | 'loading'
@@ -72,6 +66,15 @@ export default function AtmIdInput({ value, onChange, onAutofill, onNotFound, st
 
   const borderColor = status === 'found' ? 'var(--status-ok)' : status === 'notfound' ? 'var(--status-warn)' : 'var(--border-default)';
 
+  const INP = {
+    width: '100%', padding: '9px 12px', borderRadius: 8,
+    border: `1.5px solid ${borderColor}`,
+    background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
+    fontSize: 13, outline: 'none', boxSizing: 'border-box',
+    fontFamily: 'var(--font-body)',
+  };
+
   return (
     <div ref={containerRef} style={{ position: 'relative', ...style }}>
       <input
@@ -80,7 +83,7 @@ export default function AtmIdInput({ value, onChange, onAutofill, onNotFound, st
         onChange={handleChange}
         onBlur={handleBlur}
         placeholder="Ej: BBVA-0001 · SBP-001 · LHPE0001 · 100000000001"
-        style={{ ...INP, borderColor }}
+        style={INP}
         autoComplete="off"
       />
       {status === 'found' && (
@@ -96,8 +99,11 @@ export default function AtmIdInput({ value, onChange, onAutofill, onNotFound, st
       {showDropdown && suggestions.length > 0 && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000,
-          background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.12)', maxHeight: 240, overflowY: 'auto',
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 8,
+          boxShadow: 'var(--shadow-md)',
+          maxHeight: 240, overflowY: 'auto',
         }}>
           {suggestions.map(s => (
             <div
@@ -105,14 +111,14 @@ export default function AtmIdInput({ value, onChange, onAutofill, onNotFound, st
               onMouseDown={() => handleSelect(s.id_atm)}
               style={{
                 padding: '8px 12px', cursor: 'pointer', fontSize: 12,
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: '1px solid var(--border-subtle)',
               }}
-              onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-              onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
             >
-              <span style={{ fontWeight: 700, color: '#0f172a' }}>{s.id_atm}</span>
-              <span style={{ color: '#64748b', marginLeft: 8 }}>{s.punto}</span>
-              <span style={{ color: '#94a3b8', marginLeft: 6, fontSize: 10 }}>{s.cliente}</span>
+              <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{s.id_atm}</span>
+              <span style={{ color: 'var(--text-disabled)', marginLeft: 8 }}>{s.punto}</span>
+              <span style={{ color: 'var(--text-muted)', marginLeft: 6, fontSize: 10 }}>{s.cliente}</span>
             </div>
           ))}
         </div>
