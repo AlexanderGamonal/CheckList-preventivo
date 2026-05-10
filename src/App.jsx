@@ -353,6 +353,7 @@ export default function App() {
               position: "sticky",
               top: 0,
               zIndex: "var(--z-sticky)",
+              borderBottom: "1px solid var(--border-subtle)",
             }}
           >
             <div
@@ -374,7 +375,8 @@ export default function App() {
                   <p
                     style={{
                       color: "var(--text-primary)",
-                      fontWeight: 800,
+                      fontFamily: "var(--font-heading)",
+                      fontWeight: 700,
                       fontSize: 14,
                       lineHeight: 1.2,
                     }}
