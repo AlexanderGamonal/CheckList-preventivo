@@ -498,26 +498,26 @@ export default function AuditFormPage() {
 
       {/* ── Topbar ── siempre oscuro */}
       <div style={{
-        background: '#0F172A', borderBottom: '1px solid rgba(148,163,184,0.12)',
+        background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-subtle)',
         padding: isMobile ? '10px 14px' : '12px 24px',
         display: 'flex', alignItems: 'center', gap: 12,
         position: 'sticky', top: 0, zIndex: 30,
       }}>
         <button onClick={() => progressPct > 0 ? setShowLeaveModal(true) : navigate('/')}
-          style={{ background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.15)', color: '#94A3B8', cursor: 'pointer', padding: '5px 7px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+          style={{ background: 'var(--hover-overlay)', border: '1px solid var(--border-default)', color: 'var(--text-muted)', cursor: 'pointer', padding: '5px 7px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#F8FAFC', fontFamily: 'var(--font-heading)' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
             Acta de Auditoría
           </div>
-          <div style={{ fontSize: 11, color: '#475569' }}>Recepción de equipos ATM</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Recepción de equipos ATM</div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: progressColor }}>{progressPct}%</span>
-            <div style={{ width: 64, height: 5, borderRadius: 99, background: 'rgba(148,163,184,0.24)', overflow: 'hidden' }}>
+            <div style={{ width: 64, height: 5, borderRadius: 99, background: 'var(--border-strong)', overflow: 'hidden' }}>
               <div style={{
                 height: '100%', width: progressPct + '%', background: progressColor,
                 borderRadius: 99, transition: 'width 0.3s ease, background 0.3s ease',
