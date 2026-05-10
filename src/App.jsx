@@ -167,6 +167,7 @@ export default function App() {
     0,
   );
   const pct = total > 0 ? Math.round((filled / total) * 100) : 0;
+  const progressColor = pct >= 100 ? 'var(--status-ok)' : pct >= 50 ? 'var(--status-warn)' : 'var(--status-critical)';
 
   const accentBg = tipoObj?.color || "#1e3a5f";
   const TABS = [
@@ -372,104 +373,26 @@ export default function App() {
                     style={{ background: 'var(--hover-overlay)', border: '1px solid var(--border-default)', color: 'var(--text-muted)', cursor: 'pointer', padding: '5px 7px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
-                  <p
-                    style={{
-                      color: "var(--text-primary)",
-                      fontFamily: "var(--font-heading)",
-                      fontWeight: 700,
-                      fontSize: 14,
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    Check List Preventivo ATM{form.cliente ? ` — ${form.cliente}` : ""}
-                  </p>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>Check List MP</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Selecciona el tipo de cajero</div>
+                  </div>
                 </div>
-                <p
-                  style={{
-                    color: tipoObj ? tipoObj.color : "var(--text-muted)",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    marginTop: 2,
-                  }}
-                >
-                  {tipoObj
-                    ? tipoObj.emoji + " " + tipoObj.label
-                    : "Selecciona tipo de cajero"}
-                  {form.punto && (
-                    <span style={{ color: "var(--text-muted)" }}>
-                      {" "}
-                      · {form.punto}
-                    </span>
-                  )}
-                </p>
               </div>
-              <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <button
-                    onClick={toggleTheme}
-                    title={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-                    style={{
-                      background: "none", border: "none", cursor: "pointer",
-                      fontSize: 18, padding: "2px 4px", lineHeight: 1, opacity: 0.75,
-                    }}
-                  >
-                    {theme === "dark" ? "☀️" : "🌙"}
-                  </button>
-                  <InstallButton />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: progressColor }}>{pct}%</span>
+                  <div style={{ width: 64, height: 5, borderRadius: 99, background: 'var(--border-strong)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: pct + '%', background: progressColor, borderRadius: 99, transition: 'width 0.3s ease, background 0.3s ease' }} />
+                  </div>
                 </div>
-                {form.atmTipo && form.marca && (
-                  <>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        justifyContent: "flex-end",
-                      }}
-                    >
-                      <div
-                        style={{
-                          background: "var(--bg-tertiary)",
-                          borderRadius: 20,
-                          height: 6,
-                          width: 80,
-                          overflow: "hidden",
-                        }}
-                      >
-                        <div
-                          style={{
-                            height: "100%",
-                            width: pct + "%",
-                            background:
-                              pct === 100
-                                ? "var(--status-ok)"
-                                : tipoObj?.color || "var(--brand)",
-                            borderRadius: 20,
-                            transition: "width .4s",
-                          }}
-                        />
-                      </div>
-                      <span
-                        style={{
-                          color: pct === 100 ? "var(--status-ok)" : "var(--brand-light)",
-                          fontSize: 12,
-                          fontWeight: 800,
-                        }}
-                      >
-                        {pct}%
-                      </span>
-                    </div>
-                    <p
-                      style={{
-                        color: "var(--text-disabled)",
-                        fontSize: 10,
-                        marginTop: 2,
-                      }}
-                    >
-                      {filled}/{total} ítems
-                    </p>
-                  </>
-                )}
+                <button
+                  onClick={toggleTheme}
+                  title={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, padding: '2px 4px', lineHeight: 1, opacity: 0.75 }}
+                >
+                  {theme === "dark" ? "☀️" : "🌙"}
+                </button>
               </div>
             </div>
 
