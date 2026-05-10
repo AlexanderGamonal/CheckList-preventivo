@@ -348,7 +348,7 @@ export default function App() {
           {/* HEADER — siempre oscuro */}
           <div
             style={{
-              background: "#0F172A",
+              background: "var(--bg-primary)",
               padding: "14px 14px 0",
               position: "sticky",
               top: 0,
@@ -368,12 +368,12 @@ export default function App() {
                   style={{ display: "flex", alignItems: "center", gap: 8 }}
                 >
                   <button onClick={() => pct > 0 ? setShowLeaveModal(true) : navigate('/')}
-                    style={{ background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.15)', color: '#94A3B8', cursor: 'pointer', padding: '5px 7px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+                    style={{ background: 'var(--hover-overlay)', border: '1px solid var(--border-default)', color: 'var(--text-muted)', cursor: 'pointer', padding: '5px 7px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
                   <p
                     style={{
-                      color: "#F8FAFC",
+                      color: "var(--text-primary)",
                       fontWeight: 800,
                       fontSize: 14,
                       lineHeight: 1.2,
@@ -459,7 +459,7 @@ export default function App() {
                     </div>
                     <p
                       style={{
-                        color: "#475569",
+                        color: "var(--text-disabled)",
                         fontSize: 10,
                         marginTop: 2,
                       }}
@@ -484,15 +484,16 @@ export default function App() {
                     fontSize: 11,
                     fontWeight: 700,
                     whiteSpace: "nowrap",
-                    background: tab === i ? "#334155" : hoveredTab === i ? "rgba(255,255,255,0.06)" : "transparent",
-                    color: tab === i ? "#F8FAFC" : hoveredTab === i ? "#CBD5E1" : "#94A3B8",
+                    background: tab === i ? "var(--bg-tertiary)" : hoveredTab === i ? "var(--hover-overlay)" : "transparent",
+                    color: tab === i ? "var(--text-primary)" : hoveredTab === i ? "var(--text-secondary)" : "var(--text-muted)",
                     border: "none",
+                    borderBottom: tab === i ? "2px solid var(--brand)" : "2px solid transparent",
                     cursor: "pointer",
                     borderRadius: "8px 8px 0 0",
                     display: "flex",
                     alignItems: "center",
                     gap: 4,
-                    transition: "background 0.15s, color 0.15s",
+                    transition: "background 0.15s, color 0.15s, border-color 0.15s",
                   }}
                 >
                   {t}
@@ -921,7 +922,7 @@ export default function App() {
                     <p
                       style={{
                         fontSize: 11,
-                        color: "#a78bfa",
+                        color: "var(--status-caution)",
                         marginTop: 2,
                       }}
                     >
@@ -967,7 +968,7 @@ export default function App() {
                         fontSize: 10,
                         fontWeight: 700,
                         background: "var(--status-info-dim)",
-                        color: "#a78bfa",
+                        color: "var(--status-caution)",
                         border: "1px solid var(--status-info-border)",
                         borderRadius: 20,
                         padding: "2px 8px",
@@ -1090,7 +1091,7 @@ export default function App() {
                                 ? "var(--status-ok)"
                                 : est === "err"
                                   ? isNT
-                                    ? "#a78bfa"
+                                    ? "var(--status-caution)"
                                     : "var(--status-critical)"
                                   : "var(--text-primary)";
                             return (
@@ -1099,7 +1100,7 @@ export default function App() {
                                   style={{
                                     ...LBL,
                                     textAlign: "center",
-                                    color: isNT ? "#a78bfa" : "var(--text-muted)",
+                                    color: isNT ? "var(--status-caution)" : "var(--text-muted)",
                                   }}
                                 >
                                   {l}
@@ -1251,7 +1252,7 @@ export default function App() {
                           style={{
                             fontSize: 13,
                             fontWeight: 800,
-                            color: "#a78bfa",
+                            color: "var(--status-caution)",
                             marginBottom: 3,
                           }}
                         >
@@ -1760,10 +1761,10 @@ export default function App() {
                           fontSize: 16,
                           cursor: deshabilitado ? "not-allowed" : "pointer",
                           background: enviando
-                            ? "#475569"
+                            ? "var(--text-disabled)"
                             : !formCompleto
-                              ? "#334155"
-                              : marcaObj?.color || "#0f172a",
+                              ? "var(--bg-tertiary)"
+                              : marcaObj?.color || "var(--brand-dark)",
                           color: !formCompleto ? "var(--text-disabled)" : "#fff",
                           boxShadow: formCompleto ? "0 4px 15px rgba(0,0,0,.3)" : "none",
                           transition: "background .2s",

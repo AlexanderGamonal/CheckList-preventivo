@@ -12,7 +12,7 @@ export default function SectionBlock({ section, devices, updateDevice, accentCol
       style={{
         borderRadius: 12,
         overflow: "hidden",
-        boxShadow: "0 2px 8px rgba(0,0,0,.08)",
+        boxShadow: "var(--shadow-sm)",
         marginBottom: 10,
       }}
     >
@@ -24,7 +24,7 @@ export default function SectionBlock({ section, devices, updateDevice, accentCol
           alignItems: "center",
           justifyContent: "space-between",
           padding: "13px 16px",
-          background: done ? "#14532d" : accentColor || "#1e3a5f",
+          background: done ? 'var(--color-action-green)' : accentColor || 'var(--brand)',
           color: "#fff",
           border: "none",
           cursor: "pointer",
