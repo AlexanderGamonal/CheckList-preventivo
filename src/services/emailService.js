@@ -38,12 +38,13 @@ export async function sendNotificationEmail(form, pdfArrayBuffer) {
   return true;
 }
 
-export async function sendAuditoriaEmail(form, pdfArrayBuffer) {
+export async function sendAuditoriaEmail(form, pdfArrayBuffer, onStep) {
   const summary = buildAuditoriaEmailSummary(form);
   const sanitize = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9\-_]/g, '-').replace(/-+/g, '-');
   const filename = `Auditoria-${sanitize(form.idAtm || 'ATM')}-${form.fecha || 'sin-fecha'}.pdf`;
   const storagePath = `temp/${Date.now()}-${filename}`;
 
+  onStep?.('Subiendo PDF...');
   const { error: uploadError } = await supabase.storage
     .from('pdf-attachments')
     .upload(storagePath, new Uint8Array(pdfArrayBuffer), {
@@ -52,6 +53,7 @@ export async function sendAuditoriaEmail(form, pdfArrayBuffer) {
     });
   if (uploadError) throw new Error('Error subiendo PDF: ' + uploadError.message);
 
+  onStep?.('Enviando correo...');
   const { error } = await supabase.functions.invoke('send-email', {
     body: {
       subject: `Acta de Auditoria ${form.idAtm} — ${form.fecha || ''}`,
