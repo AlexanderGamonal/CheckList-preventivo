@@ -490,7 +490,10 @@ export default function AuditPdfView({ form }) {
           key: `cassette${i + 1}`, label: `Cassette ${i + 1}`,
         }));
 
+        const esOficina = (f.punto || '').toLowerCase().includes('oficina');
         const ALL_DEVICES = [
+          { key: 'fasciaPanel', label: 'Fascia y Pantalla' },
+          !esOficina && { key: 'gabineteCom', label: 'Gabinete de Comunicación' },
           !isDeposito && { key: 'dispensador', label: 'Dispensador' },
           (isDeposito || isMulti) && { key: 'aceptador', label: 'Aceptador' },
           ...CASSETTES_DEV,
