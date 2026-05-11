@@ -366,10 +366,25 @@ export default function AuditFormPage() {
   const [sending, setSending] = useState(false);
   const [sendStep, setSendStep] = useState('');
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [storageError, setStorageError] = useState(false);
 
   useEffect(() => {
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(form)); } catch {
-      setToast({ msg: '⚠ Sin espacio disponible: el borrador no pudo guardarse', type: 'err' });
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+      setStorageError(false);
+    } catch {
+      setStorageError(true);
+      // Fallback: guardar sin fotos para preservar al menos los campos de texto
+      try {
+        const lite = {
+          ...form,
+          voltajesPhotos: [],
+          devFotos: Object.fromEntries(
+            Object.entries(form.devFotos).map(([k, v]) => [k, { ...v, photos: [] }])
+          ),
+        };
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(lite));
+      } catch { /* sin espacio ni para la versión lite */ }
     }
   }, [form]);
 
@@ -559,6 +574,18 @@ export default function AuditFormPage() {
         </div>
 
       </div>
+
+      {/* Banner de almacenamiento lleno */}
+      {storageError && (
+        <div style={{
+          background: 'var(--status-warn)', color: '#fff',
+          padding: '8px 16px', fontSize: 12, fontWeight: 600,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span>⚠</span>
+          <span>Almacenamiento lleno — las fotos no se guardarán si recargas. Los datos del formulario sí están guardados. Puedes enviar normalmente.</span>
+        </div>
+      )}
 
       {/* ── Cuerpo ── */}
       <div style={{ maxWidth: 640, margin: '0 auto', padding: isMobile ? '12px 12px' : '20px 24px' }}>
