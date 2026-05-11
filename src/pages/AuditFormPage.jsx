@@ -60,21 +60,23 @@ export const INITIAL = {
   voltajesPhotos: [],
   // ── Evidencias de dispositivos ──
   devFotos: {
-    dispensador: { estado: '', obs: '', photos: [] },
-    aceptador:   { estado: '', obs: '', photos: [] },
-    cassette1:   { estado: '', obs: '', photos: [] },
-    cassette2:   { estado: '', obs: '', photos: [] },
-    cassette3:   { estado: '', obs: '', photos: [] },
-    cassette4:   { estado: '', obs: '', photos: [] },
-    cassette5:   { estado: '', obs: '', photos: [] },
-    shutter:     { estado: '', obs: '', photos: [] },
-    lectora:     { estado: '', obs: '', photos: [] },
-    impresora:   { estado: '', obs: '', photos: [] },
-    epp:         { estado: '', obs: '', photos: [] },
-    cpu:         { estado: '', obs: '', photos: [] },
-    powerSupply: { estado: '', obs: '', photos: [] },
-    miscelaneos: { estado: '', obs: '', photos: [] },
-    cableado:    { estado: '', obs: '', photos: [] },
+    fasciaPanel:  { estado: '', obs: '', photos: [] },
+    gabineteCom:  { estado: '', obs: '', photos: [] },
+    dispensador:  { estado: '', obs: '', photos: [] },
+    aceptador:    { estado: '', obs: '', photos: [] },
+    cassette1:    { estado: '', obs: '', photos: [] },
+    cassette2:    { estado: '', obs: '', photos: [] },
+    cassette3:    { estado: '', obs: '', photos: [] },
+    cassette4:    { estado: '', obs: '', photos: [] },
+    cassette5:    { estado: '', obs: '', photos: [] },
+    shutter:      { estado: '', obs: '', photos: [] },
+    lectora:      { estado: '', obs: '', photos: [] },
+    impresora:    { estado: '', obs: '', photos: [] },
+    epp:          { estado: '', obs: '', photos: [] },
+    cpu:          { estado: '', obs: '', photos: [] },
+    powerSupply:  { estado: '', obs: '', photos: [] },
+    miscelaneos:  { estado: '', obs: '', photos: [] },
+    cableado:     { estado: '', obs: '', photos: [] },
   },
   obsGenerales: '',
 };
@@ -449,16 +451,18 @@ export default function AuditFormPage() {
 
   const BASE_DEVICES = [
     { key: 'shutter',     label: 'Shutter',        min: 2, max: 3 },
-    { key: 'lectora',     label: 'Lectora',         min: 3, max: 6 },
+    { key: 'lectora',     label: 'Lectora',         min: 2, max: 6 },
     { key: 'impresora',   label: 'Impresora',       min: 2, max: 6 },
-    { key: 'epp',         label: 'EPP (Teclado)',   min: 3, max: 6 },
+    { key: 'epp',         label: 'EPP (Teclado)',   min: 2, max: 6 },
     { key: 'cpu',         label: 'CPU',             min: 2, max: 6 },
     { key: 'powerSupply', label: 'Power Supply',    min: 2, max: 3 },
     { key: 'miscelaneos', label: 'Misceláneos',     min: 1, max: 3 },
     { key: 'cableado',    label: 'Cableado',        min: 3, max: 6 },
   ];
-  const DISP  = { key: 'dispensador', label: 'Dispensador', min: 3, max: 6 };
-  const ACEPT = { key: 'aceptador',   label: 'Aceptador',   min: 3, max: 6 };
+  const DISP         = { key: 'dispensador',  label: 'Dispensador',              min: 3, max: 6 };
+  const ACEPT        = { key: 'aceptador',    label: 'Aceptador',                min: 3, max: 6 };
+  const FASCIA       = { key: 'fasciaPanel',  label: 'Fascia y Pantalla',        min: 1, max: 2 };
+  const GABINETE_COM = { key: 'gabineteCom',  label: 'Gabinete de Comunicación', min: 1, max: 3 };
 
   // Cassettes dinámicos según marca (4 para NCR/GRG/Hyosung, 5 para Diebold/otros)
   const marcaLower  = (form.marcaEquipo || '').toLowerCase();
@@ -470,10 +474,14 @@ export default function AuditFormPage() {
     min: 1, max: 2,
   }));
 
+  // Gabinete de comunicación solo aplica cuando el punto NO es una oficina
+  const esOficina = (form.punto || '').toLowerCase().includes('oficina');
+  const EXTERIOR  = [FASCIA, ...(esOficina ? [] : [GABINETE_COM])];
+
   const DEVICE_CFG =
-    form.tipoAtm === 'deposito'     ? [ACEPT,       ...CASSETTES, ...BASE_DEVICES] :
-    form.tipoAtm === 'multifuncion' ? [DISP, ACEPT, ...CASSETTES, ...BASE_DEVICES] :
-                                      [DISP,        ...CASSETTES, ...BASE_DEVICES];
+    form.tipoAtm === 'deposito'     ? [...EXTERIOR, ACEPT,       ...CASSETTES, ...BASE_DEVICES] :
+    form.tipoAtm === 'multifuncion' ? [...EXTERIOR, DISP, ACEPT, ...CASSETTES, ...BASE_DEVICES] :
+                                      [...EXTERIOR, DISP,        ...CASSETTES, ...BASE_DEVICES];
 
   const OPT_LECTOR = [{ value: 'sankio', label: 'Sankio' }, { value: 'hitachi', label: 'Hitachi' }, { value: 'otro', label: 'Otro' }];
   const OPT_IMP = [{ value: 'toshiba', label: 'Toshiba' }, { value: 'epson', label: 'Epson' }, { value: 'otro', label: 'Otro' }];
