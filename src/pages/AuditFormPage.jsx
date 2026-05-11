@@ -364,6 +364,7 @@ export default function AuditFormPage() {
   });
   const [toast, setToast] = useState(null);
   const [sending, setSending] = useState(false);
+  const [sendStep, setSendStep] = useState('');
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   useEffect(() => {
@@ -414,17 +415,17 @@ export default function AuditFormPage() {
       return;
     }
     setSending(true);
-    setToast({ msg: 'Generando PDF...', type: 'info' });
+    setSendStep('Generando PDF...');
     try {
       const { generatePDF } = await import('../services/pdfService.js');
       const idSafe   = (form.idAtm || 'ATM').replace(/[\\/:*?"<>|]/g, '_');
       const filename = `Auditoria_${idSafe}_${form.fecha || 'sin-fecha'}`;
       const pdfBuffer = await generatePDF('audit-pdf-area', filename, { download: true });
 
-      setToast({ msg: 'Guardando y enviando correo...', type: 'info' });
       saveAuditoria(form).catch(() => {});
-      await sendAuditoriaEmail(form, pdfBuffer);
+      await sendAuditoriaEmail(form, pdfBuffer, setSendStep);
 
+      setSendStep('✓ Correo enviado');
       setToast({ msg: '✓ PDF generado y correo enviado correctamente', type: 'ok' });
       localStorage.removeItem(DRAFT_KEY);
       setForm(INITIAL);
@@ -432,6 +433,7 @@ export default function AuditFormPage() {
       setToast({ msg: 'Error al enviar: ' + (e.message || 'intente nuevamente'), type: 'err' });
     } finally {
       setSending(false);
+      setSendStep('');
     }
   }
 
@@ -503,6 +505,21 @@ export default function AuditFormPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', fontFamily: 'var(--font-body)', color: 'var(--text-secondary)', paddingBottom: 80 }}>
+
+      {/* Overlay pantalla completa durante el envío — cubre el PDF renderizado */}
+      {sending && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 100000,
+          background: 'var(--bg-primary)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: 20,
+        }}>
+          <div className="spinner" style={{ width: 36, height: 36, borderWidth: 3 }} />
+          <p style={{ color: 'var(--text-primary)', fontSize: 15, fontWeight: 700, textAlign: 'center', maxWidth: 280 }}>
+            {sendStep}
+          </p>
+        </div>
+      )}
 
       {/* ── Topbar ── siempre oscuro */}
       <div style={{

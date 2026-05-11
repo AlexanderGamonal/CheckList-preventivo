@@ -53,18 +53,19 @@ export async function generatePDF(containerId, filename, { download = true } = {
     visibility: element.style.visibility,
     zIndex:     element.style.zIndex,
   };
+  // Mover off-screen pero visible para que html2canvas pueda capturar
   element.style.position   = 'fixed';
-  element.style.left       = '0';
+  element.style.left       = '-9999px';
   element.style.top        = '0';
   element.style.visibility = 'visible';
-  element.style.zIndex     = '99999';
+  element.style.zIndex     = '-1';
 
   // Esperar dos frames para que el navegador pinte el elemento antes de capturar
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
   let pdfBuffer;
   try {
-    const pdf = await buildPDF(containerId, 2.0, 0.92);
+    const pdf = await buildPDF(containerId, 1.5, 0.88);
     if (download) pdf.save(filename + '.pdf');
     pdfBuffer = pdf.output('arraybuffer');
   } finally {
