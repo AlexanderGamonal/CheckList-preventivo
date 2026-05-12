@@ -48,11 +48,12 @@ export const INITIAL = {
   cpu: '',
   cpuOtro: '',
   pantalla: '',
-  memoriaRAM: '',
-  capacidadSSD: '',
+  memoriaRAM: '8',
+  capacidadSSD: '250',
   shutterAntiFraude: '',
   sistemaEntintado: '',
   tipoNose: '',
+  tipoPresentador: '',
   site: { camaras: '', aireAcondicionado: '', iluminacion: '', excesoPolvp: '' },
   siteObs: { camaras: '', aireAcondicionado: '', iluminacion: '', excesoPolvp: '' },
   // ── Voltajes ──
@@ -389,6 +390,11 @@ export default function AuditFormPage() {
   }, [form]);
 
   const set = useCallback((f, v) => setForm(p => ({ ...p, [f]: v })), []);
+
+  // Auto-fill fecha con la fecha de hoy al montar (solo si está vacía)
+  useEffect(() => {
+    setForm(p => p.fecha ? p : { ...p, fecha: new Date().toISOString().split('T')[0] });
+  }, []);
   const setN = useCallback((parent, f, v) =>
     setForm(p => ({ ...p, [parent]: { ...p[parent], [f]: v } })), []);
   const setVoltaje = useCallback((f, v) =>
@@ -432,6 +438,7 @@ export default function AuditFormPage() {
       cpu:          cpuVal           || p.cpu,
       cpuOtro:      cpuOtroVal       || p.cpuOtro,
       direccion:    atm.direccion    || p.direccion,
+      horaInicio:   p.horaInicio     || new Date().toTimeString().slice(0, 5),
     }));
   }, []);
 
@@ -444,6 +451,12 @@ export default function AuditFormPage() {
       setToast({ msg: 'El ATM debe estar registrado en la base de datos', type: 'err' });
       return;
     }
+    // Auto-fill horaFin si está vacía
+    if (!form.horaFin) {
+      set('horaFin', new Date().toTimeString().slice(0, 5));
+      await new Promise(r => setTimeout(r, 0));
+    }
+
     setSending(true);
     setSendStep('Generando PDF...');
     try {
@@ -497,8 +510,12 @@ export default function AuditFormPage() {
   const GABINETE_COM = { key: 'gabineteCom',  label: 'Gabinete de Comunicación', min: 1, max: 3 };
 
   // Cassettes dinámicos según marca (4 para NCR/GRG/Hyosung, 5 para Diebold/otros)
-  const marcaLower  = (form.marcaEquipo || '').toLowerCase();
-  const is4Cassette = ['ncr', 'grg', 'hyosung'].some(m => marcaLower.includes(m));
+  const marcaLower         = (form.marcaEquipo || '').toLowerCase();
+  const modeloLower        = (form.modeloEquipo || '').toLowerCase();
+  const is4Cassette        = ['ncr', 'grg', 'hyosung'].some(m => marcaLower.includes(m));
+  const isNCR              = marcaLower.includes('ncr');
+  const isNoseModel        = modeloLower.includes('ss23') || modeloLower.includes('ss27');
+  const isPresentadorModel = modeloLower.includes('ss22') || modeloLower.includes('ss26');
   const cassetteCount = is4Cassette ? 4 : 5;
   const CASSETTES = Array.from({ length: cassetteCount }, (_, i) => ({
     key:   `cassette${i + 1}`,
@@ -520,6 +537,7 @@ export default function AuditFormPage() {
   const OPT_EPP = [{ value: 'v2', label: 'V2' }, { value: 'v3', label: 'V3' }, { value: 'v4', label: 'V4' }, { value: 'v5', label: 'V5' }, { value: 'v7bsc', label: 'V7 BSC' }, { value: 'v7pci', label: 'V7 PCI' }];
   const OPT_CPU = [{ value: 'misano', label: 'Misano' }, { value: 'canyon', label: 'Canyon' }, { value: 'estoril', label: 'Estoril' }, { value: 'skylake', label: 'Skylake' }, { value: 'voyaguer', label: 'Voyaguer' }, { value: 'otro', label: 'Otro' }];
   const OPT_NOSE = [{ value: 'short', label: 'Short' }, { value: 'middle', label: 'Middle' }, { value: 'long', label: 'Long' }];
+  const OPT_PRESENTADOR = [{ value: 'canon_corto', label: 'Cañón Corto' }, { value: 'canon_largo', label: 'Cañón Largo' }];
 
   const PRUEBAS_ITEMS = [
     { key: 'consultaSaldos', label: 'Consulta de saldos con voucher' },
@@ -876,10 +894,18 @@ export default function AuditFormPage() {
             </div>
           </DevGroup>
 
-          <div>
-            <Label>Tipo de Nose</Label>
-            <StyledSelect value={form.tipoNose} onChange={v => set('tipoNose', v)} options={OPT_NOSE} />
-          </div>
+          {isNCR && isNoseModel && (
+            <div>
+              <Label>Tipo de Nose</Label>
+              <StyledSelect value={form.tipoNose} onChange={v => set('tipoNose', v)} options={OPT_NOSE} />
+            </div>
+          )}
+          {isNCR && isPresentadorModel && (
+            <div>
+              <Label>Tipo de Presentador</Label>
+              <StyledSelect value={form.tipoPresentador} onChange={v => set('tipoPresentador', v)} options={OPT_PRESENTADOR} />
+            </div>
+          )}
         </Section>
 
         {/* ══ 6. ESTADO DEL SITE ══ */}

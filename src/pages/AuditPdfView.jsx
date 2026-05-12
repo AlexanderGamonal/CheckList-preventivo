@@ -440,12 +440,27 @@ export default function AuditPdfView({ form }) {
             <CBLabel checked={f.sistemaEntintado === 'no'} label="No" />
           </DevRow>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 6, marginBottom: 2 }}>
-            <span style={{ fontSize: FS, fontWeight: 600, minWidth: 130 }}>Tipo de Nose :</span>
-            <CBLabel checked={f.tipoNose === 'short'} label="Short" />
-            <CBLabel checked={f.tipoNose === 'middle'} label="Middle" />
-            <CBLabel checked={f.tipoNose === 'long'} label="Long" />
-          </div>
+          {(() => {
+            const marcaL  = (f.marcaEquipo || '').toLowerCase();
+            const modeloL = (f.modeloEquipo || '').toLowerCase();
+            const isNcr   = marcaL.includes('ncr');
+            if (isNcr && (modeloL.includes('ss23') || modeloL.includes('ss27'))) return (
+              <DevRow>
+                <span style={{ fontSize: FS, fontWeight: 600, minWidth: 130 }}>Tipo de Nose :</span>
+                <CBLabel checked={f.tipoNose === 'short'} label="Short" />
+                <CBLabel checked={f.tipoNose === 'middle'} label="Middle" />
+                <CBLabel checked={f.tipoNose === 'long'} label="Long" />
+              </DevRow>
+            );
+            if (isNcr && (modeloL.includes('ss22') || modeloL.includes('ss26'))) return (
+              <DevRow>
+                <span style={{ fontSize: FS, fontWeight: 600, minWidth: 130 }}>Tipo de Presentador :</span>
+                <CBLabel checked={f.tipoPresentador === 'canon_corto'} label="Cañón Corto" />
+                <CBLabel checked={f.tipoPresentador === 'canon_largo'} label="Cañón Largo" />
+              </DevRow>
+            );
+            return null;
+          })()}
 
           {/* ── ESTADO DEL SITE ── */}
           <SecTitle title="ESTADO DEL SITE" />
