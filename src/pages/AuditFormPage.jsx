@@ -397,7 +397,6 @@ export default function AuditFormPage() {
     setForm(p => ({ ...p, devFotos: { ...p.devFotos, [device]: { ...p.devFotos[device], [field]: value } } })), []);
 
   const handleAtmAutofill = useCallback(atm => {
-    // Normaliza el tipo de ATM desde la BD a los valores de los pills
     const tipoMap = {
       dispensador:  'retiro',
       retiro:       'retiro',
@@ -409,14 +408,30 @@ export default function AuditFormPage() {
     const rawTipo = (atm.atmTipo || '').toLowerCase().replace(/[óo]/g, 'o').replace(/\s+/g, '');
     const tipoAtm = tipoMap[rawTipo] || '';
 
+    // Mapear cpu_modelo (texto libre de BD) al valor del dropdown
+    const cpuNorm = (atm.cpuModelo || '').toLowerCase().trim();
+    const CPU_OPTS = ['misano', 'canyon', 'estoril', 'skylake', 'voyaguer'];
+    const cpuVal     = CPU_OPTS.includes(cpuNorm) ? cpuNorm : (cpuNorm ? 'otro' : '');
+    const cpuOtroVal = cpuVal === 'otro' ? (atm.cpuModelo || '') : '';
+
     setForm(p => ({
       ...p,
-      atmDbId:      atm.atmDbId || p.atmDbId,
+      atmDbId:      atm.atmDbId      || p.atmDbId,
       punto:        atm.punto        || p.punto,
       cliente:      atm.cliente      || p.cliente,
       marcaEquipo:  atm.marca        || p.marcaEquipo,
       modeloEquipo: atm.modelo       || p.modeloEquipo,
       tipoAtm:      tipoAtm          || p.tipoAtm,
+      nroSerie:     atm.nroSerie     || p.nroSerie,
+      ipEquipo:     atm.ipEquipo     || p.ipEquipo,
+      mascaraRed:   atm.mascaraRed   || p.mascaraRed,
+      gateway:      atm.gateway      || p.gateway,
+      dns1:         atm.dns1         || p.dns1,
+      dns2:         atm.dns2         || p.dns2,
+      software:     atm.softwareAtm  || p.software,
+      cpu:          cpuVal           || p.cpu,
+      cpuOtro:      cpuOtroVal       || p.cpuOtro,
+      direccion:    atm.direccion    || p.direccion,
     }));
   }, []);
 
@@ -503,7 +518,7 @@ export default function AuditFormPage() {
   const OPT_LECTOR = [{ value: 'sankio', label: 'Sankio' }, { value: 'hitachi', label: 'Hitachi' }, { value: 'otro', label: 'Otro' }];
   const OPT_IMP = [{ value: 'toshiba', label: 'Toshiba' }, { value: 'epson', label: 'Epson' }, { value: 'otro', label: 'Otro' }];
   const OPT_EPP = [{ value: 'v2', label: 'V2' }, { value: 'v3', label: 'V3' }, { value: 'v4', label: 'V4' }, { value: 'v5', label: 'V5' }, { value: 'v7bsc', label: 'V7 BSC' }, { value: 'v7pci', label: 'V7 PCI' }];
-  const OPT_CPU = [{ value: 'misano', label: 'Misano' }, { value: 'canyon', label: 'Canyon' }, { value: 'estoril', label: 'Estoril' }, { value: 'voyaguer', label: 'Voyaguer' }, { value: 'otro', label: 'Otro' }];
+  const OPT_CPU = [{ value: 'misano', label: 'Misano' }, { value: 'canyon', label: 'Canyon' }, { value: 'estoril', label: 'Estoril' }, { value: 'skylake', label: 'Skylake' }, { value: 'voyaguer', label: 'Voyaguer' }, { value: 'otro', label: 'Otro' }];
   const OPT_NOSE = [{ value: 'short', label: 'Short' }, { value: 'middle', label: 'Middle' }, { value: 'long', label: 'Long' }];
 
   const PRUEBAS_ITEMS = [
