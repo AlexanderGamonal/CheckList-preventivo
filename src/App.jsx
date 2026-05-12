@@ -69,9 +69,11 @@ export default function App() {
   const [tab, setTab] = useState(draft?.tab || 0);
   const [toast, setToast] = useState(null);
   const [enviando, setEnviando] = useState(false);
+  const [sendStep, setSendStep] = useState('');
   const [atmNotFound, setAtmNotFound] = useState(false);
   const [hoveredTab, setHoveredTab] = useState(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [storageError, setStorageError] = useState(false);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [tab]);
 
@@ -79,8 +81,13 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, fotosAntes, fotosDespues, tab }));
+      setStorageError(false);
     } catch {
-      setToast({ msg: '⚠ Sin espacio disponible: el borrador no pudo guardarse', type: 'err' });
+      setStorageError(true);
+      // Fallback: guardar sin fotos para preservar al menos los campos de texto
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, fotosAntes: [], fotosDespues: [], tab }));
+      } catch { /* sin espacio ni para la versión lite */ }
     }
   }, [form, fotosAntes, fotosDespues, tab]);
 
@@ -267,15 +274,15 @@ export default function App() {
     const filename = "MP-" + puntoSlug + "-" + idSlug;
 
     setEnviando(true);
-    setToast({ msg: "Generando PDF…", type: "info" });
+    setSendStep("Generando PDF…");
     try {
       const { generatePDF } = await import('./services/pdfService.js');
       const pdfBase64 = await generatePDF("pdf-root", filename);
-      setToast({ msg: "Enviando correo…", type: "info" });
       saveMantenimiento(form, sections).catch((e) =>
         console.error("DB save:", e),
       );
-      await sendNotificationEmail(form, pdfBase64);
+      await sendNotificationEmail(form, pdfBase64, setSendStep);
+      setSendStep("✓ Correo enviado");
       setToast({ msg: "✓ PDF generado y correo enviado", type: "ok" });
       // Limpiar borrador y restablecer formulario
       clearDraft();
@@ -291,6 +298,7 @@ export default function App() {
       });
     } finally {
       setEnviando(false);
+      setSendStep('');
     }
   }
 
@@ -346,6 +354,22 @@ export default function App() {
 
         {/* UI pantalla */}
         <div className="screen-ui no-print" style={{ display: "block" }}>
+
+          {/* Overlay pantalla completa durante el envío */}
+          {enviando && (
+            <div style={{
+              position: 'fixed', inset: 0, zIndex: 100000,
+              background: 'var(--bg-primary)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 20,
+            }}>
+              <div className="spinner" style={{ width: 36, height: 36, borderWidth: 3 }} />
+              <p style={{ color: 'var(--text-primary)', fontSize: 15, fontWeight: 700, textAlign: 'center', maxWidth: 280 }}>
+                {sendStep}
+              </p>
+            </div>
+          )}
+
           {/* HEADER — siempre oscuro */}
           <div
             style={{
@@ -430,6 +454,18 @@ export default function App() {
               ))}
             </div>
           </div>
+
+          {/* Banner almacenamiento lleno */}
+          {storageError && (
+            <div style={{
+              background: 'var(--status-warn)', color: '#fff',
+              padding: '8px 16px', fontSize: 12, fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <span>⚠</span>
+              <span>Almacenamiento lleno — las fotos no se guardarán si recargas. Los datos del formulario sí están guardados. Puedes enviar normalmente.</span>
+            </div>
+          )}
 
           <div
             style={{
