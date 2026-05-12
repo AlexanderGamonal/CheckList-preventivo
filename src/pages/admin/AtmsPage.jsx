@@ -4,6 +4,7 @@ import AdminLayout from '../../admin/AdminLayout.jsx';
 import { useIsMobile } from '../../hooks/useIsMobile.js';
 import { supabase } from '../../lib/supabase.js';
 import Toast from '../../components/Toast.jsx';
+import { clearAtmCache } from '../../hooks/useAtmLookup.js';
 
 const TH = { padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #334155' };
 const TD = { padding: '10px 14px', fontSize: 13, color: '#e2e8f0', borderBottom: '1px solid #0f172a' };
@@ -34,6 +35,14 @@ export default function AtmsPage() {
   const [togglingId, setTogglingId] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
   const [toast, setToast] = useState(null);
+
+  // --- Net/hardware CSV update state ---
+  const [showNetModal, setShowNetModal] = useState(false);
+  const [netStep, setNetStep] = useState('pick');
+  const [netRows, setNetRows] = useState([]);
+  const [netUpdating, setNetUpdating] = useState(false);
+  const [netResults, setNetResults] = useState(null);
+  const netFileRef = useRef(null);
 
   // --- Import state ---
   const [showImportModal, setShowImportModal] = useState(false);
@@ -284,6 +293,75 @@ export default function AtmsPage() {
     loadAll();
   }
 
+  // ── Net/hardware CSV update ───────────────────────────────────
+  function openNetModal() {
+    setNetStep('pick');
+    setNetRows([]);
+    setNetResults(null);
+    setShowNetModal(true);
+    setTimeout(() => netFileRef.current?.click(), 100);
+  }
+
+  async function handleNetFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const text = await file.text();
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) return;
+    const rows = lines.slice(1).map(line => {
+      const parts = line.split(';');
+      return {
+        id_atm:       (parts[0] || '').trim().toUpperCase(),
+        nro_serie:    (parts[1] || '').trim(),
+        ip_equipo:    (parts[2] || '').trim(),
+        mascara_red:  (parts[3] || '').trim(),
+        gateway:      (parts[4] || '').trim(),
+        dns1:         (parts[5] || '').trim(),
+        dns2:         (parts[6] || '').trim(),
+        cpu_modelo:   (parts[7] || '').trim(),
+        software_atm: (parts[8] || '').trim(),
+        direccion:    parts.slice(9).join(';').trim(),
+      };
+    }).filter(r => r.id_atm);
+    setNetRows(rows);
+    setNetStep('preview');
+  }
+
+  async function handleNetConfirm() {
+    setNetUpdating(true);
+    const results = { ok: 0, skipped: 0, errors: [] };
+    const BATCH = 20;
+    for (let i = 0; i < netRows.length; i += BATCH) {
+      await Promise.all(netRows.slice(i, i + BATCH).map(async r => {
+        const { error } = await supabase.from('atms').update({
+          nro_serie:    r.nro_serie    || null,
+          ip_equipo:    r.ip_equipo    || null,
+          mascara_red:  r.mascara_red  || null,
+          gateway:      r.gateway      || null,
+          dns1:         r.dns1         || null,
+          dns2:         r.dns2         || null,
+          cpu_modelo:   r.cpu_modelo   || null,
+          software_atm: r.software_atm || null,
+          direccion:    r.direccion    || null,
+        }).eq('id_atm', r.id_atm);
+        if (error) {
+          if (error.code === '42703') {
+            results.errors.push({ id_atm: r.id_atm, msg: '⚠ Columnas no encontradas — ejecuta primero el ALTER TABLE en SQL Editor' });
+          } else {
+            results.errors.push({ id_atm: r.id_atm, msg: error.message });
+          }
+        } else {
+          results.ok++;
+        }
+      }));
+    }
+    clearAtmCache();
+    setNetResults(results);
+    setNetStep('results');
+    setNetUpdating(false);
+  }
+
   const filtered = atms.filter(a =>
     a.id_atm.toLowerCase().includes(search.toLowerCase()) ||
     a.punto.toLowerCase().includes(search.toLowerCase())
@@ -300,7 +378,13 @@ export default function AtmsPage() {
           <h1 style={{ color: '#f8fafc', fontSize: 22, fontWeight: 700 }}>ATMs</h1>
           <p style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>Gestion de cajeros automaticos</p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            onClick={openNetModal}
+            style={{ padding: '9px 18px', borderRadius: 8, border: '1.5px solid #1d4ed8', background: '#1e3a5f', color: '#93c5fd', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          >
+            Actualizar datos de red
+          </button>
           <button
             onClick={openImportModal}
             style={{ padding: '9px 18px', borderRadius: 8, border: '1.5px solid #334155', background: '#0f172a', color: '#94a3b8', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
@@ -546,8 +630,91 @@ export default function AtmsPage() {
         </div>
       )}
 
+      {/* Net/hardware CSV update modal */}
+      {showNetModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#1e293b', borderRadius: 16, padding: 28, width: '100%', maxWidth: netStep === 'preview' ? 760 : 460, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+
+            {netStep === 'pick' && (
+              <>
+                <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 10 }}>Actualizar datos de red / hardware</h2>
+                <p style={{ color: '#94a3b8', fontSize: 12, marginBottom: 10 }}>Carga el CSV con punto y coma (;) con estas columnas en orden:</p>
+                <div style={{ background: '#0f172a', borderRadius: 8, padding: '10px 14px', marginBottom: 10, fontSize: 11, fontFamily: 'monospace', color: '#60a5fa', lineHeight: 1.8 }}>
+                  ID ATM · N° SERIE · IP EQUIPO · MASCARA DE RED · GATEWAY · DNS 1 · DNS 2 · CPU · SOFTWARE ATM · DIRECCION
+                </div>
+                <p style={{ color: '#475569', fontSize: 11, marginBottom: 20 }}>Solo actualiza registros existentes. Los IDs que no estén en la BD se omiten. <strong style={{ color: '#f59e0b' }}>Requiere haber ejecutado el ALTER TABLE en SQL Editor previamente.</strong></p>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                  <button onClick={() => setShowNetModal(false)} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#334155', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
+                  <button onClick={() => netFileRef.current?.click()} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#1d4ed8', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Seleccionar CSV</button>
+                </div>
+              </>
+            )}
+
+            {netStep === 'preview' && (
+              <>
+                <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Vista previa — {netRows.length} registros</h2>
+                <div style={{ maxHeight: 380, overflowY: 'auto', borderRadius: 8, border: '1px solid #334155' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        {['ID ATM', 'N° Serie', 'IP Equipo', 'CPU', 'Software', 'Dirección'].map(h => (
+                          <th key={h} style={{ ...TH, position: 'sticky', top: 0, background: '#0f172a', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {netRows.map((r, i) => (
+                        <tr key={i}>
+                          <td style={{ ...TD, fontFamily: 'monospace', color: '#60a5fa' }}>{r.id_atm}</td>
+                          <td style={TD}>{r.nro_serie}</td>
+                          <td style={{ ...TD, fontFamily: 'monospace' }}>{r.ip_equipo}</td>
+                          <td style={TD}>{r.cpu_modelo}</td>
+                          <td style={TD}>{r.software_atm}</td>
+                          <td style={{ ...TD, fontSize: 11, color: '#94a3b8', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.direccion}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div style={{ display: 'flex', gap: 12, marginTop: 20, justifyContent: 'flex-end' }}>
+                  <button onClick={() => setShowNetModal(false)} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#334155', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
+                  <button onClick={handleNetConfirm} disabled={netUpdating} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: netUpdating ? '#334155' : '#1d4ed8', color: netUpdating ? '#64748b' : '#fff', fontSize: 13, fontWeight: 700, cursor: netUpdating ? 'not-allowed' : 'pointer' }}>
+                    {netUpdating ? 'Actualizando...' : `Actualizar ${netRows.length} ATMs`}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {netStep === 'results' && netResults && (
+              <>
+                <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Actualización completada</h2>
+                <div style={{ marginBottom: 12 }}>
+                  <span style={{ color: '#22c55e', fontSize: 15, fontWeight: 700 }}>✓ {netResults.ok} ATMs actualizados</span>
+                </div>
+                {netResults.errors.length > 0 && (
+                  <>
+                    <div style={{ color: '#f87171', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>✗ {netResults.errors.length} errores:</div>
+                    <div style={{ maxHeight: 200, overflowY: 'auto', background: '#0f172a', borderRadius: 8, padding: 12 }}>
+                      {netResults.errors.map((e, i) => (
+                        <div key={i} style={{ color: '#fca5a5', fontSize: 11, marginBottom: 4 }}>
+                          <strong>{e.id_atm}</strong>: {e.msg}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24 }}>
+                  <button onClick={() => setShowNetModal(false)} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#1d4ed8', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Cerrar</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Hidden file input */}
       <input ref={importFileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={handleImportFile} />
+      <input ref={netFileRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleNetFile} />
     </AdminLayout>
   );
 }
