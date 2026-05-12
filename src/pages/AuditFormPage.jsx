@@ -336,6 +336,8 @@ export default function AuditFormPage() {
       }
       if (!saved.sistemaOperativo) saved.sistemaOperativo = 'Windows 10';
       if (!('tipoAtm' in saved)) saved.tipoAtm = '';
+      if (!saved.memoriaRAM)   saved.memoriaRAM   = '8';
+      if (!saved.capacidadSSD) saved.capacidadSSD = '250';
       // Migrar campos de voltaje viejos (Fase1/2/3 → LT/LN/NT)
       if (saved.voltajes?.atmFase1 !== undefined) {
         saved.voltajes = {
@@ -438,7 +440,11 @@ export default function AuditFormPage() {
       cpu:          cpuVal           || p.cpu,
       cpuOtro:      cpuOtroVal       || p.cpuOtro,
       direccion:    atm.direccion    || p.direccion,
-      horaInicio:   p.horaInicio     || new Date().toTimeString().slice(0, 5),
+      // Siempre renovar fecha y hora al elegir/cambiar el ATM
+      fecha:        new Date().toISOString().split('T')[0],
+      horaInicio:   new Date().toTimeString().slice(0, 5),
+      memoriaRAM:   p.memoriaRAM    || '8',
+      capacidadSSD: p.capacidadSSD  || '250',
     }));
   }, []);
 
