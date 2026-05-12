@@ -2,13 +2,13 @@ import { supabase } from '../lib/supabase.js';
 import { buildEmailSummary } from './mantenimientoService.js';
 import { buildAuditoriaEmailSummary } from './auditoriaService.js';
 
-export async function sendNotificationEmail(form, pdfArrayBuffer) {
+export async function sendNotificationEmail(form, pdfArrayBuffer, onStep) {
   const summary = buildEmailSummary(form);
   const sanitize = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9\-_]/g, '-').replace(/-+/g, '-');
   const filename = `MP-${sanitize(form.punto)}-${form.idAtm}.pdf`;
   const storagePath = `temp/${Date.now()}-${filename}`;
 
-  // 1. Subir PDF a Storage (evita límite de body JSON)
+  onStep?.('Subiendo PDF…');
   const { error: uploadError } = await supabase.storage
     .from('pdf-attachments')
     .upload(storagePath, new Uint8Array(pdfArrayBuffer), {
@@ -17,7 +17,7 @@ export async function sendNotificationEmail(form, pdfArrayBuffer) {
     });
   if (uploadError) throw new Error('Error subiendo PDF: ' + uploadError.message);
 
-  // 2. Llamar al Edge Function solo con la ruta (sin base64 pesado)
+  onStep?.('Enviando correo…');
   const { data, error } = await supabase.functions.invoke('send-email', {
     body: {
       subject: `Mantenimiento ATM ${form.idAtm} — ${form.fecha}`,
