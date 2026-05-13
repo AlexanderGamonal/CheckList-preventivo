@@ -27,11 +27,12 @@ async function compressToWebP(file, maxW = 1200, maxH = 900, quality = 0.82) {
      label    – string (opcional)
    ────────────────────────────────────────── */
 export default function PhotoUploader({ photos = [], onChange, min = 1, max = 6, label }) {
-  const inputRef = useRef();
+  const cameraRef  = useRef();
+  const galleryRef = useRef();
   const [loading, setLoading] = useState(false);
 
-  async function handleFiles(e) {
-    const files = Array.from(e.target.files);
+  async function handleFiles(fileList) {
+    const files = Array.from(fileList);
     if (!files.length) return;
     const slots = max - photos.length;
     if (slots <= 0) return;
@@ -43,7 +44,6 @@ export default function PhotoUploader({ photos = [], onChange, min = 1, max = 6,
       console.error('Error comprimiendo imagen:', err);
     } finally {
       setLoading(false);
-      e.target.value = '';
     }
   }
 
@@ -51,9 +51,9 @@ export default function PhotoUploader({ photos = [], onChange, min = 1, max = 6,
     onChange(photos.filter((_, i) => i !== idx));
   }
 
-  const count  = photos.length;
+  const count   = photos.length;
   const underMin = count < min;
-  const atMax  = count >= max;
+  const atMax   = count >= max;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -66,40 +66,70 @@ export default function PhotoUploader({ photos = [], onChange, min = 1, max = 6,
         </div>
       )}
 
-      {/* Contador + botón */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      {/* Contador + botones */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span style={{
           fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-          color:       underMin ? 'var(--status-critical)' : 'var(--status-ok)',
-          background:  underMin ? 'var(--status-critical-dim)' : 'var(--status-ok-dim)',
+          color:      underMin ? 'var(--status-critical)' : 'var(--status-ok)',
+          background: underMin ? 'var(--status-critical-dim)' : 'var(--status-ok-dim)',
         }}>
           {count}/{max} {underMin ? `(mín. ${min})` : '✓'}
         </span>
 
         {!atMax && (
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => inputRef.current?.click()}
-            style={{
-              padding: '6px 14px', borderRadius: 8,
-              border: '1.5px dashed var(--brand)',
-              background: 'var(--brand-subtle)', color: 'var(--brand-light)',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              opacity: loading ? 0.6 : 1, transition: 'opacity 0.15s',
-            }}
-          >
-            {loading ? '⏳ Comprimiendo…' : '📷 Agregar foto'}
-          </button>
+          <>
+            {/* Primario — abre cámara trasera directamente en móvil */}
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => cameraRef.current?.click()}
+              style={{
+                padding: '6px 14px', borderRadius: 8,
+                border: '1.5px solid var(--brand)',
+                background: 'var(--brand-subtle)', color: 'var(--brand-light)',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                opacity: loading ? 0.6 : 1, transition: 'opacity 0.15s',
+              }}
+            >
+              {loading ? '⏳ Comprimiendo…' : '📷 Cámara'}
+            </button>
+
+            {/* Secundario — selector de galería */}
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => galleryRef.current?.click()}
+              style={{
+                padding: '6px 14px', borderRadius: 8,
+                border: '1.5px dashed var(--border-default)',
+                background: 'var(--bg-secondary)', color: 'var(--text-muted)',
+                fontSize: 12, fontWeight: 400, cursor: 'pointer',
+                opacity: loading ? 0.6 : 1, transition: 'opacity 0.15s',
+              }}
+            >
+              🖼️ Galería
+            </button>
+          </>
         )}
 
+        {/* Input cámara — capture="environment" fuerza cámara trasera en móvil */}
         <input
-          ref={inputRef}
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: 'none' }}
+          onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
+        />
+
+        {/* Input galería — multiple permite seleccionar varias a la vez */}
+        <input
+          ref={galleryRef}
           type="file"
           accept="image/*"
           multiple
           style={{ display: 'none' }}
-          onChange={handleFiles}
+          onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
         />
       </div>
 
