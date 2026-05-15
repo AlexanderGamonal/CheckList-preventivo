@@ -111,8 +111,14 @@ function DecisionBadge({ decision }) {
   );
 }
 
-function DecisionSelector({ auditoriaId, current, recommended, onSelect }) {
+function DecisionSelector({ auditoriaId, current, recommended, onSelect, repuestosLabels = [] }) {
   const DEC_ICONS = { ACEPTAR: '✓', OBSERVAR: '⚠', RECHAZAR: '✕' };
+
+  function buildTitle(d, isRec) {
+    if (d === 'OBSERVAR' && repuestosLabels.length > 0)
+      return `OBSERVAR · Repuesto: ${repuestosLabels.join(', ')}`;
+    return `${d}${isRec ? ' · recomendado por algoritmo' : ''}`;
+  }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <div style={{ display: 'flex', gap: 3 }}>
@@ -124,7 +130,7 @@ function DecisionSelector({ auditoriaId, current, recommended, onSelect }) {
             <button
               key={d}
               onClick={() => onSelect(auditoriaId, d)}
-              title={`${d}${isRec ? ' · recomendado por algoritmo' : ''}`}
+              title={buildTitle(d, isRec)}
               style={{
                 padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
                 border: active
@@ -772,6 +778,7 @@ function TabEjecutiva({ enriched, counts, fallasCounts, criticos, loading, onVer
                               current={r.decision}
                               recommended={r.recommended}
                               onSelect={onSelect}
+                              repuestosLabels={Object.entries(r.dispositivos_estado || {}).filter(([,d]) => d.estado === 'repuesto').map(([k]) => DEV_LABELS[k] || k)}
                             />
                           </td>
                           <td style={{ ...CELL }}>
@@ -996,6 +1003,7 @@ function TabLista({ enriched, loading, onVerDetalle, onSelect }) {
                     current={r.decision}
                     recommended={r.recommended}
                     onSelect={onSelect}
+                    repuestosLabels={Object.entries(r.dispositivos_estado || {}).filter(([,d]) => d.estado === 'repuesto').map(([k]) => DEV_LABELS[k] || k)}
                   />
                 </td>
                 <td style={CELL}>
