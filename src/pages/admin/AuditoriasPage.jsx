@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import AdminLayout from '../../admin/AdminLayout.jsx';
 import { getAuditorias } from '../../services/auditoriaService.js';
+import * as XLSX from 'xlsx';
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer,
@@ -862,6 +863,37 @@ function TabLista({ enriched, loading, onVerDetalle, onSelect }) {
     a.click(); URL.revokeObjectURL(url);
   }
 
+  function exportarExcel() {
+    const data = filtered.map(r => ({
+      'Fecha':                  r.fecha || '',
+      'ID ATM':                 r.id_atm || '',
+      'Tipo':                   TIPO_LABELS[r.tipo_atm] || r.tipo_atm || '',
+      'Punto':                  r.punto_texto || '',
+      'Marca':                  r.marca_texto || '',
+      'Modelo':                 r.modelo_texto || '',
+      'Cliente':                r.cliente_texto || '',
+      'Equipo OK':              r.equipo_funcionando === true ? 'Sí' : r.equipo_funcionando === false ? 'No' : '',
+      'Pruebas OK':             r.pruebas_exitosas   === true ? 'Sí' : r.pruebas_exitosas   === false ? 'No' : '',
+      'Score':                  r.score ?? '',
+      'Decisión':               r.decision || '',
+      'Dispositivos Repuesto':  Object.entries(r.dispositivos_estado || {}).filter(([, d]) => d.estado === 'repuesto').map(([k]) => DEV_LABELS[k] || k).join(', '),
+      'Dispositivos Manto.':    Object.entries(r.dispositivos_estado || {}).filter(([, d]) => d.estado === 'mantenimiento').map(([k]) => DEV_LABELS[k] || k).join(', '),
+      'Obs. Generales':         r.obs_generales || '',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 14 }, { wch: 13 }, { wch: 28 },
+      { wch: 12 }, { wch: 15 }, { wch: 16 }, { wch: 9 },
+      { wch: 10 }, { wch: 7  }, { wch: 10 }, { wch: 32 },
+      { wch: 25 }, { wch: 45 },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Auditorías');
+    XLSX.writeFile(wb, `auditorias_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Filtros */}
@@ -930,7 +962,7 @@ function TabLista({ enriched, loading, onVerDetalle, onSelect }) {
           Limpiar
         </button>
 
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           <button
             onClick={exportarCSV} disabled={filtered.length === 0}
             style={{
@@ -942,6 +974,19 @@ function TabLista({ enriched, loading, onVerDetalle, onSelect }) {
             }}
           >
             ⬇ CSV
+          </button>
+          <button
+            onClick={exportarExcel} disabled={filtered.length === 0}
+            style={{
+              padding: '7px 16px', borderRadius: 8,
+              border: '1px solid rgba(22,163,74,0.4)',
+              background: 'rgba(22,163,74,0.08)', color: '#16a34a',
+              fontSize: 12, fontWeight: 600,
+              cursor: filtered.length === 0 ? 'not-allowed' : 'pointer',
+              opacity: filtered.length === 0 ? 0.5 : 1,
+            }}
+          >
+            ⬇ Excel
           </button>
         </div>
       </div>
