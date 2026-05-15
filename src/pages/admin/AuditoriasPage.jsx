@@ -88,7 +88,7 @@ function calcularDecision(a) {
   const score     = calcularScore(a);
   const devs      = Object.values(a.dispositivos_estado || {});
   const repuestos = devs.filter(d => d.estado === 'repuesto').length;
-  if (score >= 75 && repuestos >= 4) return { decision: 'OBSERVAR', score };
+  if (score >= 75 && repuestos >= 1) return { decision: 'OBSERVAR', score };
   if (score >= 75)                   return { decision: 'ACEPTAR',  score };
   if (score >= 50)                   return { decision: 'OBSERVAR', score };
   return                                    { decision: 'RECHAZAR', score };
@@ -588,7 +588,7 @@ function LeyendaModal({ onClose }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {[
                 ['✓ ACEPTAR',  'Score ≥ 75 pts',            '#16a34a', 'El equipo está en buenas condiciones para ser recibido'],
-                ['⚠ OBSERVAR', 'Score 50–74 pts',           '#d97706', 'El equipo presenta fallas pero puede aceptarse con seguimiento. También aplica si score ≥ 75 pero hay ≥ 4 dispositivos con repuesto.'],
+                ['⚠ OBSERVAR', 'Score 50–74 pts',           '#d97706', 'El equipo presenta fallas pero puede aceptarse con seguimiento. También aplica si score ≥ 75 pero hay al menos 1 dispositivo que requiere repuesto.'],
                 ['✕ RECHAZAR', 'Score < 50 pts',            '#dc2626', 'El equipo requiere intervención mayor antes de ser aceptado'],
               ].map(([dec, criterio, col, desc]) => (
                 <div key={dec} style={ROW}>
