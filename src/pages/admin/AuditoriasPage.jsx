@@ -111,6 +111,48 @@ function DecisionBadge({ decision }) {
   );
 }
 
+function DecisionSelector({ auditoriaId, current, recommended, onSelect }) {
+  const DEC_ICONS = { ACEPTAR: '✓', OBSERVAR: '⚠', RECHAZAR: '✕' };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <div style={{ display: 'flex', gap: 3 }}>
+        {['ACEPTAR', 'OBSERVAR', 'RECHAZAR'].map(d => {
+          const active = current === d;
+          const isRec  = recommended === d;
+          const c = DECISION_COLORS[d];
+          return (
+            <button
+              key={d}
+              onClick={() => onSelect(auditoriaId, d)}
+              title={`${d}${isRec ? ' · recomendado por algoritmo' : ''}`}
+              style={{
+                padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
+                border: active
+                  ? `2px solid ${c.border}`
+                  : isRec
+                    ? `1.5px dashed ${c.border}`
+                    : '1.5px solid var(--border-subtle)',
+                background: active ? c.bg : 'transparent',
+                color: active ? c.fg : isRec ? c.fg : 'var(--text-disabled)',
+                fontSize: 13, fontWeight: active ? 800 : isRec ? 600 : 400,
+                opacity: active ? 1 : isRec ? 0.65 : 0.3,
+                transition: 'all 0.12s',
+              }}
+            >
+              {DEC_ICONS[d]}
+            </button>
+          );
+        })}
+      </div>
+      {current !== recommended && (
+        <div style={{ fontSize: 9, color: 'var(--text-disabled)', letterSpacing: '0.2px' }}>
+          alg: {DEC_ICONS[recommended]} · editado
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ScoreCircle({ score, decision }) {
   const c = DECISION_COLORS[decision] || { fg: 'var(--text-disabled)', bg: 'transparent', border: 'transparent' };
   return (
@@ -274,7 +316,8 @@ function VoltRow({ label, value, tierra }) {
 }
 
 function AuditDetail({ auditoria: a, onClose }) {
-  const { decision, score } = calcularDecision(a);
+  const score    = a.score    ?? calcularScore(a);
+  const decision = a.decision ?? calcularDecision(a).decision;
   const ig   = a.info_general || {};
   const devs = a.dispositivos_estado || {};
   const volt = a.voltajes || {};
@@ -445,9 +488,141 @@ function AuditDetail({ auditoria: a, onClose }) {
   );
 }
 
+// ── Leyenda Modal ──────────────────────────────────────────────────────────────
+
+function LeyendaModal({ onClose }) {
+  const ROW  = { display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '6px 20px', padding: '6px 0', borderBottom: '1px solid var(--border-subtle)' };
+  const LBL  = { fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' };
+  const VAL  = { fontSize: 12, color: 'var(--text-muted)' };
+  const H3   = { fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid var(--border-subtle)', marginTop: 0 };
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 16px', overflowY: 'auto' }}
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div style={{ background: 'var(--bg-primary)', borderRadius: 16, border: '1px solid var(--border-default)', width: '100%', maxWidth: 560, boxShadow: '0 25px 60px rgba(0,0,0,0.5)', marginBottom: 40 }}>
+        {/* Header */}
+        <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>ℹ Guía de métricas</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Cómo se calcula el score y qué significa cada indicador</div>
+          </div>
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: 'var(--bg-tertiary)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+        </div>
+
+        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* Score */}
+          <div>
+            <h3 style={H3}>Algoritmo de puntuación (0–100 pts)</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {[
+                ['Equipo funcionando',         '+25 pts', 'El equipo encendió y respondió correctamente'],
+                ['Pruebas en línea exitosas',  '+25 pts', 'Las transacciones de prueba se ejecutaron sin error'],
+                ['Dispositivos OK',            'hasta +40 pts', 'Se descuentan puntos por fallas en dispositivos (ver tabla abajo)'],
+                ['Voltajes en rango',          '+10 pts', 'Todos los voltajes medidos dentro del rango aceptable'],
+              ].map(([k, v, desc]) => (
+                <div key={k} style={ROW}>
+                  <div>
+                    <div style={LBL}>{k}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-disabled)', marginTop: 2 }}>{desc}</div>
+                  </div>
+                  <div style={{ ...VAL, fontWeight: 700, color: 'var(--brand-light)', alignSelf: 'center' }}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Dispositivos */}
+          <div>
+            <h3 style={H3}>Deducción por estado de dispositivos</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {[
+                ['✓ OK',              '0 pts',   'ok',   'Dispositivo en correcto funcionamiento'],
+                ['⚠ Mantenimiento',   '−3 pts',  'warn', 'Requiere servicio técnico programado'],
+                ['✕ Requiere repuesto','−8 pts',  'crit', 'Requiere reposición de componente físico'],
+              ].map(([estado, pts, color, desc]) => {
+                const colors = { ok: '#16a34a', warn: '#d97706', crit: '#dc2626' };
+                return (
+                  <div key={estado} style={ROW}>
+                    <div>
+                      <div style={{ ...LBL, color: colors[color] }}>{estado}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-disabled)', marginTop: 2 }}>{desc}</div>
+                    </div>
+                    <div style={{ ...VAL, fontWeight: 700, alignSelf: 'center', color: colors[color] }}>{pts}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-disabled)', marginTop: 8, fontStyle: 'italic' }}>
+              La deducción máxima por dispositivos es 40 pts (el mínimo de esta categoría es 0).
+            </div>
+          </div>
+
+          {/* Voltajes */}
+          <div>
+            <h3 style={H3}>Rangos de voltaje aceptables (ATM y UPS)</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {[
+                ['L-T  (Línea — Tierra)',  '209 – 231 V', '±5% de 220 V nominal'],
+                ['L-N  (Línea — Neutro)',  '209 – 231 V', '±5% de 220 V nominal'],
+                ['N-T  (Neutro — Tierra)', '≤ 4 V',       'Valores más altos indican problemas de tierra eléctrica'],
+              ].map(([m, rango, nota]) => (
+                <div key={m} style={ROW}>
+                  <div>
+                    <div style={{ ...LBL, fontFamily: 'var(--font-mono)' }}>{m}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-disabled)', marginTop: 2 }}>{nota}</div>
+                  </div>
+                  <div style={{ ...VAL, fontFamily: 'var(--font-mono)', fontWeight: 700, alignSelf: 'center' }}>{rango}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-disabled)', marginTop: 8, fontStyle: 'italic' }}>
+              Si cualquier lectura está fuera de rango, el ítem de voltajes no suma los 10 pts.
+            </div>
+          </div>
+
+          {/* Decisiones */}
+          <div>
+            <h3 style={H3}>Criterios de decisión</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {[
+                ['✓ ACEPTAR',  'Score ≥ 75 pts',            '#16a34a', 'El equipo está en buenas condiciones para ser recibido'],
+                ['⚠ OBSERVAR', 'Score 50–74 pts',           '#d97706', 'El equipo presenta fallas pero puede aceptarse con seguimiento. También aplica si score ≥ 75 pero hay ≥ 4 dispositivos con repuesto.'],
+                ['✕ RECHAZAR', 'Score < 50 pts',            '#dc2626', 'El equipo requiere intervención mayor antes de ser aceptado'],
+              ].map(([dec, criterio, col, desc]) => (
+                <div key={dec} style={ROW}>
+                  <div>
+                    <div style={{ ...LBL, color: col }}>{dec}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-disabled)', marginTop: 2 }}>{desc}</div>
+                  </div>
+                  <div style={{ ...VAL, fontFamily: 'var(--font-mono)', fontWeight: 700, alignSelf: 'center', color: col }}>{criterio}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Selector */}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, padding: '14px 16px', border: '1px solid var(--border-default)' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 6 }}>Sobre el selector de decisión (✓ ⚠ ✕)</div>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.7 }}>
+              <li>El botón coloreado y sólido es la decisión actual.</li>
+              <li>El botón con <strong>borde punteado</strong> es la recomendación del algoritmo.</li>
+              <li>Haz clic en cualquier botón para cambiar la decisión según tu criterio experto.</li>
+              <li>Si cambias la decisión, verás "alg: X · editado" debajo del selector.</li>
+              <li>Los cambios son solo para esta sesión y no se guardan en la base de datos.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Tab 1: Vista Ejecutiva ─────────────────────────────────────────────────────
 
-function TabEjecutiva({ enriched, counts, fallasCounts, criticos, loading, onVerDetalle }) {
+function TabEjecutiva({ enriched, counts, fallasCounts, criticos, loading, onVerDetalle, onSelect }) {
   if (loading) return (
     <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-disabled)', fontSize: 14 }}>
       Cargando datos...
@@ -546,7 +721,7 @@ function TabEjecutiva({ enriched, counts, fallasCounts, criticos, loading, onVer
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 620 }}>
                   <thead>
                     <tr>
-                      {['ID ATM', 'Punto', 'Marca / Modelo', 'Score', 'Fallas', 'Observaciones', ''].map(h => (
+                      {['ID ATM', 'Punto', 'Marca / Modelo', 'Score', 'Fallas', 'Observaciones', 'Decisión', ''].map(h => (
                         <th key={h} style={HEAD}>{h}</th>
                       ))}
                     </tr>
@@ -586,10 +761,18 @@ function TabEjecutiva({ enriched, counts, fallasCounts, criticos, loading, onVer
                               )}
                             </div>
                           </td>
-                          <td style={{ ...CELL, fontSize: 12, color: 'var(--text-muted)', maxWidth: 220 }}>
+                          <td style={{ ...CELL, fontSize: 12, color: 'var(--text-muted)', maxWidth: 200 }}>
                             {r.obs_generales
                               ? r.obs_generales.slice(0, 90) + (r.obs_generales.length > 90 ? '…' : '')
                               : '—'}
+                          </td>
+                          <td style={CELL}>
+                            <DecisionSelector
+                              auditoriaId={r.id}
+                              current={r.decision}
+                              recommended={r.recommended}
+                              onSelect={onSelect}
+                            />
                           </td>
                           <td style={{ ...CELL }}>
                             <button
@@ -629,7 +812,7 @@ function TabEjecutiva({ enriched, counts, fallasCounts, criticos, loading, onVer
 
 // ── Tab 2: Lista de ATMs ───────────────────────────────────────────────────────
 
-function TabLista({ enriched, loading, onVerDetalle }) {
+function TabLista({ enriched, loading, onVerDetalle, onSelect }) {
   const [search,          setSearch]          = useState('');
   const [filtroDecision,  setFiltroDecision]  = useState('TODOS');
   const [filtroMarca,     setFiltroMarca]     = useState('');
@@ -807,7 +990,14 @@ function TabLista({ enriched, loading, onVerDetalle }) {
                    <span style={{ color: 'var(--text-disabled)' }}>—</span>}
                 </td>
                 <td style={{ ...CELL, textAlign: 'center' }}><ScoreCircle score={r.score} decision={r.decision} /></td>
-                <td style={CELL}><DecisionBadge decision={r.decision} /></td>
+                <td style={CELL}>
+                  <DecisionSelector
+                    auditoriaId={r.id}
+                    current={r.decision}
+                    recommended={r.recommended}
+                    onSelect={onSelect}
+                  />
+                </td>
                 <td style={CELL}>
                   <button
                     onClick={() => onVerDetalle(r)}
@@ -831,11 +1021,15 @@ function TabLista({ enriched, loading, onVerDetalle }) {
 // ── Main Page ──────────────────────────────────────────────────────────────────
 
 export default function AuditoriasPage() {
-  const [rows,    setRows]    = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
-  const [tab,     setTab]     = useState(0);
-  const [detail,  setDetail]  = useState(null);
+  const [rows,       setRows]       = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState(null);
+  const [tab,        setTab]        = useState(0);
+  const [detail,     setDetail]     = useState(null);
+  const [overrides,  setOverrides]  = useState({});
+  const [showLeyenda, setShowLeyenda] = useState(false);
+
+  const setOverride = useCallback((id, dec) => setOverrides(p => ({ ...p, [id]: dec })), []);
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
@@ -851,18 +1045,27 @@ export default function AuditoriasPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const enriched = useMemo(() => rows.map(r => ({ ...r, ...calcularDecision(r) })), [rows]);
+  const enriched = useMemo(() => rows.map(r => {
+    const { decision: recommended, score } = calcularDecision(r);
+    return { ...r, recommended, score };
+  }), [rows]);
+
+  const displayed = useMemo(() => enriched.map(r => ({
+    ...r,
+    decision: overrides[r.id] != null ? overrides[r.id] : r.recommended,
+    overridden: overrides[r.id] != null && overrides[r.id] !== r.recommended,
+  })), [enriched, overrides]);
 
   const counts = useMemo(() => ({
-    total:    enriched.length,
-    ACEPTAR:  enriched.filter(r => r.decision === 'ACEPTAR').length,
-    OBSERVAR: enriched.filter(r => r.decision === 'OBSERVAR').length,
-    RECHAZAR: enriched.filter(r => r.decision === 'RECHAZAR').length,
-  }), [enriched]);
+    total:    displayed.length,
+    ACEPTAR:  displayed.filter(r => r.decision === 'ACEPTAR').length,
+    OBSERVAR: displayed.filter(r => r.decision === 'OBSERVAR').length,
+    RECHAZAR: displayed.filter(r => r.decision === 'RECHAZAR').length,
+  }), [displayed]);
 
   const fallasCounts = useMemo(() => {
     const map = {};
-    enriched.forEach(a => {
+    displayed.forEach(a => {
       Object.entries(a.dispositivos_estado || {}).forEach(([key, d]) => {
         if (d.estado === 'repuesto' || d.estado === 'mantenimiento') {
           if (!map[key]) map[key] = { repuesto: 0, manto: 0 };
@@ -875,11 +1078,11 @@ export default function AuditoriasPage() {
       .map(([k, c]) => ({ name: DEV_LABELS[k] || k, ...c, total: c.repuesto + c.manto }))
       .sort((a, b) => b.total - a.total)
       .slice(0, 8);
-  }, [enriched]);
+  }, [displayed]);
 
   const criticos = useMemo(() =>
-    enriched.filter(r => r.decision === 'RECHAZAR').sort((a, b) => a.score - b.score),
-    [enriched]
+    displayed.filter(r => r.decision === 'RECHAZAR').sort((a, b) => a.score - b.score),
+    [displayed]
   );
 
   return (
@@ -895,17 +1098,30 @@ export default function AuditoriasPage() {
               Recomendaciones ACEPTAR / OBSERVAR / RECHAZAR para equipos ATM auditados
             </p>
           </div>
-          <button
-            onClick={fetchData} disabled={loading}
-            style={{
-              padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-default)',
-              background: 'var(--bg-tertiary)', color: 'var(--text-muted)',
-              fontSize: 13, cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1,
-            }}
-          >
-            ⟳ {loading ? 'Cargando…' : 'Recargar'}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setShowLeyenda(true)}
+              style={{
+                padding: '8px 16px', borderRadius: 8,
+                border: '1px solid var(--border-brand)',
+                background: 'var(--brand-subtle)', color: 'var(--brand-light)',
+                fontSize: 13, cursor: 'pointer',
+              }}
+            >
+              ℹ Guía de métricas
+            </button>
+            <button
+              onClick={fetchData} disabled={loading}
+              style={{
+                padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-default)',
+                background: 'var(--bg-tertiary)', color: 'var(--text-muted)',
+                fontSize: 13, cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+              }}
+            >
+              ⟳ {loading ? 'Cargando…' : 'Recargar'}
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -949,16 +1165,17 @@ export default function AuditoriasPage() {
 
         {tab === 0 && (
           <TabEjecutiva
-            enriched={enriched} counts={counts}
+            enriched={displayed} counts={counts}
             fallasCounts={fallasCounts} criticos={criticos}
-            loading={loading} onVerDetalle={setDetail}
+            loading={loading} onVerDetalle={setDetail} onSelect={setOverride}
           />
         )}
         {tab === 1 && (
-          <TabLista enriched={enriched} loading={loading} onVerDetalle={setDetail} />
+          <TabLista enriched={displayed} loading={loading} onVerDetalle={setDetail} onSelect={setOverride} />
         )}
 
         {detail && <AuditDetail auditoria={detail} onClose={() => setDetail(null)} />}
+        {showLeyenda && <LeyendaModal onClose={() => setShowLeyenda(false)} />}
       </div>
     </AdminLayout>
   );
