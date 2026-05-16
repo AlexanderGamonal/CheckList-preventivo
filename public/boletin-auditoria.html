@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Boletín Técnico — Acta de Auditoría ATM</title>
+<title>Instructivo — Acta de Auditoría ATM</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
 
@@ -16,8 +16,8 @@
 
   body {
     font-family: 'Inter', Arial, sans-serif;
-    background: #111111;
-    color: #fff;
+    background: #ffffff;
+    color: #111;
     width: 210mm;
     height: 297mm;
     overflow: hidden;
@@ -31,14 +31,14 @@
     height: 297mm;
     display: flex;
     flex-direction: column;
-    background: #111111;
+    background: #ffffff;
     position: relative;
     overflow: hidden;
   }
 
   /* ── HEADER ── */
   .header {
-    background: #111111;
+    background: #ffffff;
     border-bottom: 3px solid #F5A500;
     padding: 10px 20px;
     display: flex;
@@ -56,7 +56,7 @@
     font-size: 11px;
     font-weight: 900;
     letter-spacing: 3px;
-    color: #fff;
+    color: #111;
   }
   .header-center {
     position: absolute;
@@ -66,11 +66,12 @@
     pointer-events: none;
   }
   .header-title {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 900;
-    color: #fff;
-    letter-spacing: 1px;
-    line-height: 1.1;
+    color: #111;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    text-transform: uppercase;
   }
   .header-subtitle {
     font-size: 10px;
@@ -83,7 +84,7 @@
 
   /* ── ALERT BANNER ── */
   .alert-banner {
-    background: linear-gradient(90deg, #1e1e1e 0%, #252525 100%);
+    background: rgba(245,165,0,0.07);
     border-left: 4px solid #F5A500;
     padding: 10px 20px;
     display: flex;
@@ -97,14 +98,14 @@
   .alert-text strong {
     font-size: 11.5px;
     font-weight: 800;
-    color: #F5A500;
+    color: #111;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     display: block;
   }
   .alert-text span {
     font-size: 10.5px;
-    color: #bbb;
+    color: #444;
     line-height: 1.45;
   }
 
@@ -120,13 +121,13 @@
 
   /* ── CARDS ── */
   .card {
-    background: #1c1c1c;
-    border: 1px solid #2a2a2a;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
     overflow: hidden;
   }
   .card-header {
-    background: #222;
+    background: #f5f5f5;
     border-bottom: 2px solid #F5A500;
     padding: 6px 12px;
     display: flex;
@@ -163,7 +164,7 @@
     height: 22px;
     border-radius: 50%;
     background: #F5A500;
-    color: #111;
+    color: #fff;
     font-size: 11px;
     font-weight: 900;
     display: flex;
@@ -175,20 +176,20 @@
   .step-content strong {
     font-size: 11px;
     font-weight: 700;
-    color: #fff;
+    color: #111;
     display: block;
     line-height: 1.3;
   }
   .step-content span {
     font-size: 10px;
-    color: #888;
+    color: #555;
     line-height: 1.35;
   }
   .step-tag {
     display: inline-block;
-    background: rgba(245,165,0,0.15);
-    color: #F5A500;
-    border: 1px solid rgba(245,165,0,0.3);
+    background: rgba(245,165,0,0.12);
+    color: #c47f00;
+    border: 1px solid rgba(245,165,0,0.4);
     font-size: 8px;
     font-weight: 700;
     padding: 1px 6px;
@@ -204,32 +205,32 @@
     font-size: 10px;
   }
   .volt-table th {
-    background: #2a2a2a;
-    color: #888;
+    background: #f0f0f0;
+    color: #666;
     font-size: 8.5px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     padding: 5px 8px;
     text-align: left;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #ddd;
   }
   .volt-table td {
     padding: 5px 8px;
-    border-bottom: 1px solid #222;
-    color: #ccc;
+    border-bottom: 1px solid #eee;
+    color: #444;
     font-size: 10px;
   }
   .volt-table tr:last-child td { border-bottom: none; }
   .volt-table td.mono {
     font-family: 'Courier New', monospace;
     font-weight: 700;
-    color: #fff;
+    color: #111;
   }
   .tag-ok {
     display: inline-block;
-    background: rgba(22,163,74,0.15);
-    color: #4ade80;
+    background: rgba(22,163,74,0.10);
+    color: #16a34a;
     border: 1px solid rgba(22,163,74,0.3);
     font-size: 8px;
     font-weight: 700;
@@ -238,13 +239,13 @@
   }
   .volt-note {
     font-size: 9px;
-    color: #666;
+    color: #555;
     margin-top: 7px;
     line-height: 1.4;
-    padding: 5px 8px;
-    background: #161616;
+    padding: 6px 8px;
+    background: #f8f8f8;
     border-radius: 4px;
-    border-left: 2px solid #333;
+    border-left: 2px solid #ddd;
   }
 
   /* ── PHOTO TIPS ── */
@@ -268,11 +269,11 @@
   }
   .photo-item p {
     font-size: 10.5px;
-    color: #ccc;
+    color: #444;
     line-height: 1.4;
   }
   .photo-item p strong {
-    color: #fff;
+    color: #111;
     font-weight: 700;
   }
   .photo-min-badge {
@@ -282,7 +283,7 @@
     justify-content: center;
   }
   .badge-min {
-    background: #2a2a2a;
+    background: #f5f5f5;
     border: 1px solid #F5A500;
     border-radius: 6px;
     padding: 4px 10px;
@@ -297,7 +298,7 @@
   }
   .badge-min .lbl {
     font-size: 8px;
-    color: #888;
+    color: #777;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
@@ -313,18 +314,18 @@
     gap: 8px;
     align-items: flex-start;
     padding: 7px 8px;
-    background: #161616;
+    background: #f8f8f8;
     border-radius: 5px;
-    border-left: 2px solid #333;
+    border-left: 2px solid #ddd;
   }
   .obs-tip.highlight { border-left-color: #F5A500; }
   .obs-tip-icon { font-size: 12px; flex-shrink: 0; }
   .obs-tip p {
     font-size: 10px;
-    color: #bbb;
+    color: #444;
     line-height: 1.4;
   }
-  .obs-tip p strong { color: #fff; }
+  .obs-tip p strong { color: #111; }
 
   /* ── DECISION STRIP ── */
   .decision-strip {
@@ -332,13 +333,13 @@
     display: flex;
     gap: 8px;
     align-items: center;
-    background: #161616;
-    border-top: 1px solid #2a2a2a;
+    background: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
   }
   .dec-label {
     font-size: 8.5px;
     font-weight: 700;
-    color: #666;
+    color: #888;
     text-transform: uppercase;
     letter-spacing: 1px;
     white-space: nowrap;
@@ -355,21 +356,21 @@
     flex: 1;
     justify-content: center;
   }
-  .dec-pill.ok   { background: rgba(22,163,74,0.15); color: #4ade80; border: 1px solid rgba(22,163,74,0.3); }
-  .dec-pill.warn { background: rgba(245,165,0,0.15);  color: #F5A500; border: 1px solid rgba(245,165,0,0.3); }
-  .dec-pill.bad  { background: rgba(220,38,38,0.15);  color: #f87171; border: 1px solid rgba(220,38,38,0.3); }
+  .dec-pill.ok   { background: rgba(22,163,74,0.10); color: #16a34a; border: 1px solid rgba(22,163,74,0.3); }
+  .dec-pill.warn { background: rgba(245,165,0,0.12);  color: #b45309; border: 1px solid rgba(245,165,0,0.4); }
+  .dec-pill.bad  { background: rgba(220,38,38,0.10);  color: #dc2626; border: 1px solid rgba(220,38,38,0.3); }
   .dec-pill .dec-icon { font-size: 12px; }
   .dec-pill small {
     font-size: 8px;
     font-weight: 400;
     color: inherit;
-    opacity: 0.7;
+    opacity: 0.75;
     white-space: nowrap;
   }
 
   /* ── FOOTER ── */
   .footer {
-    background: #111;
+    background: #fff;
     border-top: 2px solid #F5A500;
     padding: 5px 20px;
     display: flex;
@@ -378,10 +379,10 @@
   }
   .footer-left {
     font-size: 8px;
-    color: #555;
+    color: #aaa;
   }
   .footer-left span {
-    color: #888;
+    color: #777;
     font-weight: 600;
   }
   .footer-right {
@@ -393,7 +394,7 @@
     font-size: 10px;
     font-weight: 900;
     letter-spacing: 2px;
-    color: #fff;
+    color: #111;
   }
 
   /* ── PRINT ── */
@@ -410,24 +411,18 @@
   <div class="header">
     <div class="header-logo">
       <svg width="46" height="46" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
-        <!-- outer circle -->
         <circle cx="26" cy="26" r="24" fill="none" stroke="#F5A500" stroke-width="2.2"/>
-        <!-- equator -->
         <line x1="2" y1="26" x2="50" y2="26" stroke="#F5A500" stroke-width="1.6"/>
-        <!-- latitude lines -->
         <ellipse cx="26" cy="16" rx="19.5" ry="5.8" fill="none" stroke="#F5A500" stroke-width="1.3"/>
         <ellipse cx="26" cy="36" rx="19.5" ry="5.8" fill="none" stroke="#F5A500" stroke-width="1.3"/>
-        <!-- prime meridian -->
         <line x1="26" y1="2" x2="26" y2="50" stroke="#F5A500" stroke-width="1.6"/>
-        <!-- longitude curves -->
         <path d="M26,2 Q9,26 26,50"  fill="none" stroke="#F5A500" stroke-width="1.3"/>
         <path d="M26,2 Q43,26 26,50" fill="none" stroke="#F5A500" stroke-width="1.3"/>
       </svg>
       <div class="brand-name">PROSEGUR</div>
     </div>
     <div class="header-center">
-      <div class="header-title">BOLETÍN TÉCNICO</div>
-      <div class="header-subtitle">Instructivo — Acta de Auditoría ATM</div>
+      <div class="header-title">Instructivo — Acta de Auditoría ATM</div>
     </div>
   </div>
 
@@ -436,8 +431,8 @@
     <div class="alert-icon">🔍</div>
     <div class="alert-text">
       <strong>Objetivo del acta: levantamiento de información</strong>
-      <span>La auditoría registra el estado actual del equipo ATM. <b style="color:#fff">No se realiza mantenimiento</b> durante este proceso.
-      De esta información depende si el equipo será <b style="color:#F5A500">aceptado o no</b> por el equipo técnico para su incorporación al servicio.</span>
+      <span>La auditoría registra el estado actual del equipo ATM. <b style="color:#111;font-weight:800">No se realiza mantenimiento</b> durante este proceso.
+      De esta información depende si el equipo será <b style="color:#b45309;font-weight:800">aceptado o no</b> por el equipo técnico para su incorporación al servicio.</span>
     </div>
   </div>
 
@@ -486,8 +481,8 @@
               <div class="step-num">4</div>
               <div class="step-content">
                 <strong>Evalúa cada dispositivo</strong>
-                <span>Para cada componente selecciona: <b style="color:#4ade80">OK</b> /
-                <b style="color:#F5A500">Mantenimiento</b> / <b style="color:#f87171">Requiere Repuesto</b>.
+                <span>Para cada componente selecciona: <b style="color:#16a34a">OK</b> /
+                <b style="color:#b45309">Mantenimiento</b> / <b style="color:#dc2626">Requiere Repuesto</b>.
                 Agrega observación si el estado no es OK.</span>
               </div>
             </div>
@@ -505,8 +500,8 @@
               <div class="step-num">6</div>
               <div class="step-content">
                 <strong>Evidencias fotográficas <span class="step-tag">📷 OBLIGATORIO</span></strong>
-                <span>Captura fotos del estado actual. Usa el botón <b style="color:#fff">Cámara</b> para foto
-                directa o <b style="color:#fff">Galería</b> para subir desde el dispositivo.</span>
+                <span>Captura fotos del estado actual. Usa el botón <b style="color:#111">Cámara</b> para foto
+                directa o <b style="color:#111">Galería</b> para subir desde el dispositivo.</span>
               </div>
             </div>
 
@@ -554,25 +549,25 @@
             </thead>
             <tbody>
               <tr>
-                <td>L-T &nbsp;<small style="color:#555">(Línea – Tierra)</small></td>
+                <td>L-T &nbsp;<small style="color:#999">(Línea – Tierra)</small></td>
                 <td class="mono">209 – 231 V</td>
                 <td><span class="tag-ok">✓ OK</span></td>
               </tr>
               <tr>
-                <td>L-N &nbsp;<small style="color:#555">(Línea – Neutro)</small></td>
+                <td>L-N &nbsp;<small style="color:#999">(Línea – Neutro)</small></td>
                 <td class="mono">209 – 231 V</td>
                 <td><span class="tag-ok">✓ OK</span></td>
               </tr>
               <tr>
-                <td>N-T &nbsp;<small style="color:#555">(Neutro – Tierra)</small></td>
+                <td>N-T &nbsp;<small style="color:#999">(Neutro – Tierra)</small></td>
                 <td class="mono">≤ 4 V</td>
                 <td><span class="tag-ok">✓ OK</span></td>
               </tr>
             </tbody>
           </table>
           <div class="volt-note">
-            ⚡ Mide <b style="color:#fff">ATM y UPS por separado</b>. La cámara para fotografiar el multímetro
-            <b style="color:#fff">se habilita únicamente cuando alguna medida está fuera del rango aceptable</b>.
+            ⚡ Mide <b style="color:#111">ATM y UPS por separado</b>. La cámara para fotografiar el multímetro
+            <b style="color:#111">se habilita únicamente cuando alguna medida está fuera del rango aceptable</b>.
             Si los valores son correctos, el formulario continúa sin solicitar foto.
           </div>
         </div>
@@ -619,8 +614,8 @@
               <span class="num">6</span>
               <span class="lbl">máx. por sección</span>
             </div>
-            <div class="badge-min" style="border-color:#f87171;">
-              <span class="num" style="color:#f87171;">📷</span>
+            <div class="badge-min" style="border-color:#dc2626;">
+              <span class="num" style="color:#dc2626;">📷</span>
               <span class="lbl">cámara trasera</span>
             </div>
           </div>
