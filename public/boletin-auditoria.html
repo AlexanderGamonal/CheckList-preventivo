@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Boletín Técnico — Acta de Auditoría ATM</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', Arial, sans-serif;
+    background: #111111;
+    color: #fff;
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* ── LAYOUT ── */
+  .page {
+    width: 210mm;
+    height: 297mm;
+    display: flex;
+    flex-direction: column;
+    background: #111111;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: #111111;
+    border-bottom: 3px solid #F5A500;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-globe {
+    width: 36px;
+    height: 36px;
+    border: 2.5px solid #F5A500;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #F5A500;
+    flex-shrink: 0;
+  }
+  .brand-name {
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #fff;
+  }
+  .header-center {
+    flex: 1;
+    text-align: center;
+  }
+  .header-title {
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 1px;
+    line-height: 1.1;
+  }
+  .header-subtitle {
+    font-size: 10px;
+    font-weight: 600;
+    color: #F5A500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .header-badge {
+    background: #F5A500;
+    color: #111;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 6px 10px;
+    border-radius: 4px;
+    text-align: center;
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+
+  /* ── ALERT BANNER ── */
+  .alert-banner {
+    background: linear-gradient(90deg, #1e1e1e 0%, #252525 100%);
+    border-left: 4px solid #F5A500;
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .alert-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .alert-text strong {
+    font-size: 11px;
+    font-weight: 800;
+    color: #F5A500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+  }
+  .alert-text span {
+    font-size: 10px;
+    color: #bbb;
+    line-height: 1.4;
+  }
+
+  /* ── BODY GRID ── */
+  .body-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    padding: 10px 16px 8px;
+    gap: 10px;
+    overflow: hidden;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: #1c1c1c;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .card-header {
+    background: #222;
+    border-bottom: 2px solid #F5A500;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-icon {
+    font-size: 14px;
+  }
+  .card-title {
+    font-size: 10px;
+    font-weight: 800;
+    color: #F5A500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .card-body {
+    padding: 10px 12px;
+  }
+
+  /* ── STEPS ── */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .step {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #F5A500;
+    color: #111;
+    font-size: 10px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-content strong {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #fff;
+    display: block;
+    line-height: 1.3;
+  }
+  .step-content span {
+    font-size: 9.5px;
+    color: #888;
+    line-height: 1.3;
+  }
+  .step-tag {
+    display: inline-block;
+    background: rgba(245,165,0,0.15);
+    color: #F5A500;
+    border: 1px solid rgba(245,165,0,0.3);
+    font-size: 8px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  /* ── VOLTAGE TABLE ── */
+  .volt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+  }
+  .volt-table th {
+    background: #2a2a2a;
+    color: #888;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 5px 8px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+  }
+  .volt-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #222;
+    color: #ccc;
+    font-size: 10px;
+  }
+  .volt-table tr:last-child td { border-bottom: none; }
+  .volt-table td.mono {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: #fff;
+  }
+  .tag-ok {
+    display: inline-block;
+    background: rgba(22,163,74,0.15);
+    color: #4ade80;
+    border: 1px solid rgba(22,163,74,0.3);
+    font-size: 8px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .volt-note {
+    font-size: 9px;
+    color: #666;
+    margin-top: 7px;
+    line-height: 1.4;
+    padding: 5px 8px;
+    background: #161616;
+    border-radius: 4px;
+    border-left: 2px solid #333;
+  }
+
+  /* ── PHOTO TIPS ── */
+  .photo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .photo-item {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .photo-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #F5A500;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .photo-item p {
+    font-size: 10px;
+    color: #ccc;
+    line-height: 1.4;
+  }
+  .photo-item p strong {
+    color: #fff;
+    font-weight: 700;
+  }
+  .photo-min-badge {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: center;
+  }
+  .badge-min {
+    background: #2a2a2a;
+    border: 1px solid #F5A500;
+    border-radius: 6px;
+    padding: 4px 10px;
+    text-align: center;
+  }
+  .badge-min .num {
+    font-size: 16px;
+    font-weight: 900;
+    color: #F5A500;
+    display: block;
+    line-height: 1;
+  }
+  .badge-min .lbl {
+    font-size: 8px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── OBS TIPS ── */
+  .obs-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .obs-tip {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 5px 8px;
+    background: #161616;
+    border-radius: 5px;
+    border-left: 2px solid #333;
+  }
+  .obs-tip.highlight { border-left-color: #F5A500; }
+  .obs-tip-icon { font-size: 12px; flex-shrink: 0; }
+  .obs-tip p {
+    font-size: 9.5px;
+    color: #bbb;
+    line-height: 1.4;
+  }
+  .obs-tip p strong { color: #fff; }
+
+  /* ── DECISION STRIP ── */
+  .decision-strip {
+    padding: 7px 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: #161616;
+    border-top: 1px solid #2a2a2a;
+  }
+  .dec-label {
+    font-size: 8.5px;
+    font-weight: 700;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    margin-right: 4px;
+  }
+  .dec-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 9.5px;
+    font-weight: 700;
+    flex: 1;
+    justify-content: center;
+  }
+  .dec-pill.ok   { background: rgba(22,163,74,0.15); color: #4ade80; border: 1px solid rgba(22,163,74,0.3); }
+  .dec-pill.warn { background: rgba(245,165,0,0.15);  color: #F5A500; border: 1px solid rgba(245,165,0,0.3); }
+  .dec-pill.bad  { background: rgba(220,38,38,0.15);  color: #f87171; border: 1px solid rgba(220,38,38,0.3); }
+  .dec-pill .dec-icon { font-size: 12px; }
+  .dec-pill small {
+    font-size: 7.5px;
+    font-weight: 400;
+    color: inherit;
+    opacity: 0.7;
+    white-space: nowrap;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: #111;
+    border-top: 2px solid #F5A500;
+    padding: 5px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-left {
+    font-size: 8px;
+    color: #555;
+  }
+  .footer-left span {
+    color: #888;
+    font-weight: 600;
+  }
+  .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .footer-right .globe {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid #F5A500;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #F5A500;
+  }
+  .footer-right .brand {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #fff;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    body { width: 210mm; height: 297mm; }
+    .page { page-break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-brand">
+      <div class="brand-globe">🌐</div>
+      <div class="brand-name">PROSEGUR</div>
+    </div>
+    <div class="header-center">
+      <div class="header-title">BOLETÍN TÉCNICO</div>
+      <div class="header-subtitle">Instructivo — Acta de Auditoría ATM</div>
+    </div>
+    <div class="header-badge">N° 06<br>MAYO 2025</div>
+  </div>
+
+  <!-- ALERT BANNER -->
+  <div class="alert-banner">
+    <div class="alert-icon">🔍</div>
+    <div class="alert-text">
+      <strong>Objetivo del acta: levantamiento de información</strong>
+      <span>La auditoría registra el estado actual del equipo ATM. <b style="color:#fff">No se realiza mantenimiento</b> durante este proceso.
+      La información levantada determina las acciones correctivas a programar.</span>
+    </div>
+  </div>
+
+  <!-- BODY GRID -->
+  <div class="body-grid">
+
+    <!-- COLUMNA IZQUIERDA -->
+    <div style="display:flex; flex-direction:column; gap:10px;">
+
+      <!-- FLUJO DE TRABAJO -->
+      <div class="card" style="flex:1;">
+        <div class="card-header">
+          <span class="card-icon">📋</span>
+          <span class="card-title">Flujo de trabajo</span>
+        </div>
+        <div class="card-body">
+          <div class="steps">
+
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-content">
+                <strong>Ingresa el ID ATM <span class="step-tag">✦ AUTOCOMPLETADO</span></strong>
+                <span>El sistema rellena automáticamente: punto, cliente, marca, modelo,
+                N° serie, IP, gateway, DNS y dirección. Verifica los datos antes de continuar.</span>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-content">
+                <strong>Confirma fecha y hora de inicio</strong>
+                <span>Se autocompletan al seleccionar el ID. Corrígelos si es necesario.</span>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-content">
+                <strong>Estado general del equipo</strong>
+                <span>¿Equipo encendido y funcionando? ¿Pruebas en línea exitosas?
+                Registra el resultado y añade observación si corresponde.</span>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-num">4</div>
+              <div class="step-content">
+                <strong>Evalúa cada dispositivo</strong>
+                <span>Para cada componente selecciona: <b style="color:#4ade80">OK</b> /
+                <b style="color:#F5A500">Mantenimiento</b> / <b style="color:#f87171">Requiere Repuesto</b>.
+                Agrega observación si el estado no es OK.</span>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-num">5</div>
+              <div class="step-content">
+                <strong>Medición de voltajes <span class="step-tag">📐 VER TABLA →</span></strong>
+                <span>Registra L-T, L-N y N-T del ATM y del UPS. Un valor fuera de rango
+                descuenta puntos del score final.</span>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-num">6</div>
+              <div class="step-content">
+                <strong>Evidencias fotográficas <span class="step-tag">📷 OBLIGATORIO</span></strong>
+                <span>Captura fotos del estado actual. Usa el botón <b style="color:#fff">Cámara</b> para foto
+                directa o <b style="color:#fff">Galería</b> para subir desde el dispositivo.</span>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-num">7</div>
+              <div class="step-content">
+                <strong>Observaciones generales</strong>
+                <span>Documenta todo hallazgo relevante: instalación eléctrica, condición
+                del site, anomalías visibles. Cada detalle cuenta para la decisión final.</span>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-num">8</div>
+              <div class="step-content">
+                <strong>Enviar acta</strong>
+                <span>La hora de fin se registra automáticamente. Se genera el PDF y se
+                envía por correo al equipo técnico.</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUMNA DERECHA -->
+    <div style="display:flex; flex-direction:column; gap:10px;">
+
+      <!-- VOLTAJES -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">⚡</span>
+          <span class="card-title">Rangos de voltaje aceptables</span>
+        </div>
+        <div class="card-body">
+          <table class="volt-table">
+            <thead>
+              <tr>
+                <th>Medición</th>
+                <th>Rango OK</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>L-T &nbsp;<small style="color:#555">(Línea – Tierra)</small></td>
+                <td class="mono">209 – 231 V</td>
+                <td><span class="tag-ok">✓ OK</span></td>
+              </tr>
+              <tr>
+                <td>L-N &nbsp;<small style="color:#555">(Línea – Neutro)</small></td>
+                <td class="mono">209 – 231 V</td>
+                <td><span class="tag-ok">✓ OK</span></td>
+              </tr>
+              <tr>
+                <td>N-T &nbsp;<small style="color:#555">(Neutro – Tierra)</small></td>
+                <td class="mono">≤ 4 V</td>
+                <td><span class="tag-ok">✓ OK</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="volt-note">
+            ⚡ Mide <b style="color:#fff">ATM y UPS por separado</b>. Si algún valor está fuera de rango,
+            el equipo requiere revisión eléctrica del site. Fotografía el multímetro mostrando la lectura.
+          </div>
+        </div>
+      </div>
+
+      <!-- EVIDENCIAS FOTOGRÁFICAS -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📷</span>
+          <span class="card-title">Evidencias fotográficas</span>
+        </div>
+        <div class="card-body">
+          <div class="photo-list">
+            <div class="photo-item">
+              <div class="photo-dot"></div>
+              <p><strong>Vista general del equipo</strong> — exterior y panel frontal.</p>
+            </div>
+            <div class="photo-item">
+              <div class="photo-dot"></div>
+              <p><strong>Placa de identificación</strong> — confirma N° de serie y modelo.</p>
+            </div>
+            <div class="photo-item">
+              <div class="photo-dot"></div>
+              <p><strong>Dispositivos con falla</strong> — captura el componente afectado
+              mostrando claramente el daño o desgaste.</p>
+            </div>
+            <div class="photo-item">
+              <div class="photo-dot"></div>
+              <p><strong>Lectura del multímetro</strong> — pantalla visible con el valor
+              medido en L-T, L-N y N-T.</p>
+            </div>
+            <div class="photo-item">
+              <div class="photo-dot"></div>
+              <p><strong>Condición del site</strong> — gabinete eléctrico, cableado,
+              temperatura ambiente y estado del local.</p>
+            </div>
+          </div>
+          <div class="photo-min-badge">
+            <div class="badge-min">
+              <span class="num">1</span>
+              <span class="lbl">mín. general</span>
+            </div>
+            <div class="badge-min">
+              <span class="num">6</span>
+              <span class="lbl">máx. por sección</span>
+            </div>
+            <div class="badge-min" style="border-color:#f87171;">
+              <span class="num" style="color:#f87171;">📷</span>
+              <span class="lbl">cámara trasera</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OBSERVACIONES -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📝</span>
+          <span class="card-title">Observaciones — ¿qué registrar?</span>
+        </div>
+        <div class="card-body">
+          <div class="obs-tips">
+            <div class="obs-tip highlight">
+              <div class="obs-tip-icon">⚠️</div>
+              <p><strong>Anomalías fuera del formulario:</strong> ruidos, olores,
+              calor excesivo, humedad, daños en carcasa o billetes.</p>
+            </div>
+            <div class="obs-tip highlight">
+              <div class="obs-tip-icon">🔌</div>
+              <p><strong>Instalación eléctrica:</strong> tomacorrientes en mal estado,
+              cables expuestos, tierra deficiente.</p>
+            </div>
+            <div class="obs-tip">
+              <div class="obs-tip-icon">🏢</div>
+              <p><strong>Condición del site:</strong> temperatura, limpieza, acceso restringido,
+              señalización de seguridad.</p>
+            </div>
+            <div class="obs-tip">
+              <div class="obs-tip-icon">💬</div>
+              <p><strong>Información del local:</strong> horarios de atención, responsable
+              del local, historial de incidentes conocidos.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DECISION STRIP -->
+  <div class="decision-strip">
+    <span class="dec-label">Decisión final del sistema</span>
+    <div class="dec-pill ok">
+      <span class="dec-icon">✓</span>
+      ACEPTAR
+      <small>Score ≥ 75 · sin repuestos</small>
+    </div>
+    <div class="dec-pill warn">
+      <span class="dec-icon">⚠</span>
+      OBSERVAR
+      <small>Score 50-74 · o con repuesto</small>
+    </div>
+    <div class="dec-pill bad">
+      <span class="dec-icon">✕</span>
+      RECHAZAR
+      <small>Score &lt; 50 pts</small>
+    </div>
+    <span style="font-size:8px; color:#555; margin-left:4px; max-width:120px; line-height:1.3;">
+      El score lo calcula el sistema automáticamente según los datos ingresados.
+    </span>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-left">
+      Uso interno · GICE — Sistema de Gestión de Inspección y Control de Equipos ·
+      <span>Prosegur Cash Perú</span>
+    </div>
+    <div class="footer-right">
+      <div class="globe">🌐</div>
+      <div class="brand">PROSEGUR</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
