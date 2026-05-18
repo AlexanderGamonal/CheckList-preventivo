@@ -864,29 +864,59 @@ function TabLista({ enriched, loading, onVerDetalle, onSelect }) {
   }
 
   function exportarExcel() {
+    const KW = ['repuesto', 'reemplaz', 'cambi', 'desgast', 'deteriora', 'roto', 'falla', 'dañad', 'gastado', 'partido', 'quebrad'];
+    const hasKW = t => !!t && t !== 'ok' && KW.some(k => t.toLowerCase().includes(k));
+
+    const buildRepuestos = r => {
+      const items = [];
+      const devs = r.dispositivos_estado || {};
+
+      // Dispositivos explícitamente marcados como repuesto
+      Object.entries(devs).forEach(([k, d]) => {
+        if (d.estado === 'repuesto') {
+          const obs = d.obs && d.obs !== 'ok' ? ` — "${d.obs}"` : '';
+          items.push((DEV_LABELS[k] || k) + obs);
+        }
+      });
+
+      // Dispositivos en mantenimiento cuya obs menciona palabras clave
+      Object.entries(devs).forEach(([k, d]) => {
+        if (d.estado === 'mantenimiento' && hasKW(d.obs))
+          items.push(`${DEV_LABELS[k] || k} [manto.]: "${d.obs}"`);
+      });
+
+      // Observaciones de otros campos
+      if (hasKW(r.equipo_funcionando_obs)) items.push(`Estado equipo: "${r.equipo_funcionando_obs}"`);
+      if (hasKW(r.pruebas_exitosas_obs))   items.push(`Pruebas línea: "${r.pruebas_exitosas_obs}"`);
+      if (r.pruebas_linea_obs)
+        Object.values(r.pruebas_linea_obs).forEach(v => { if (hasKW(v)) items.push(`Prueba: "${v}"`); });
+      if (hasKW(r.obs_generales))          items.push(`Obs. generales: "${r.obs_generales}"`);
+
+      return items.join('\n') || '—';
+    };
+
     const data = filtered.map(r => ({
-      'Fecha':                  r.fecha || '',
-      'ID ATM':                 r.id_atm || '',
-      'Tipo':                   TIPO_LABELS[r.tipo_atm] || r.tipo_atm || '',
-      'Punto':                  r.punto_texto || '',
-      'Marca':                  r.marca_texto || '',
-      'Modelo':                 r.modelo_texto || '',
-      'Cliente':                r.cliente_texto || '',
-      'Equipo OK':              r.equipo_funcionando === true ? 'Sí' : r.equipo_funcionando === false ? 'No' : '',
-      'Pruebas OK':             r.pruebas_exitosas   === true ? 'Sí' : r.pruebas_exitosas   === false ? 'No' : '',
-      'Score':                  r.score ?? '',
-      'Decisión':               r.decision || '',
-      'Dispositivos Repuesto':  Object.entries(r.dispositivos_estado || {}).filter(([, d]) => d.estado === 'repuesto').map(([k]) => DEV_LABELS[k] || k).join(', '),
-      'Dispositivos Manto.':    Object.entries(r.dispositivos_estado || {}).filter(([, d]) => d.estado === 'mantenimiento').map(([k]) => DEV_LABELS[k] || k).join(', '),
-      'Obs. Generales':         r.obs_generales || '',
+      'Fecha':                   r.fecha || '',
+      'ID ATM':                  r.id_atm || '',
+      'Punto':                   r.punto_texto || '',
+      'Marca':                   r.marca_texto || '',
+      'Modelo':                  r.modelo_texto || '',
+      'Equipo OK':               r.equipo_funcionando === true ? 'Sí' : r.equipo_funcionando === false ? 'No' : '',
+      'Pruebas OK':              r.pruebas_exitosas   === true ? 'Sí' : r.pruebas_exitosas   === false ? 'No' : '',
+      'Decisión':                r.decision || '',
+      'Repuestos Requeridos':    buildRepuestos(r),
+      'Requiere Mantenimiento':  Object.entries(r.dispositivos_estado || {})
+                                   .filter(([, d]) => d.estado === 'mantenimiento')
+                                   .map(([k]) => DEV_LABELS[k] || k).join(', ') || '—',
+      'Obs. Generales':          r.obs_generales || '',
     }));
 
     const ws = XLSX.utils.json_to_sheet(data);
     ws['!cols'] = [
-      { wch: 12 }, { wch: 14 }, { wch: 13 }, { wch: 28 },
-      { wch: 12 }, { wch: 15 }, { wch: 16 }, { wch: 9 },
-      { wch: 10 }, { wch: 7  }, { wch: 10 }, { wch: 32 },
-      { wch: 25 }, { wch: 45 },
+      { wch: 12 }, { wch: 14 }, { wch: 28 },
+      { wch: 13 }, { wch: 16 }, { wch: 9  },
+      { wch: 10 }, { wch: 10 }, { wch: 55 },
+      { wch: 38 }, { wch: 50 },
     ];
 
     const wb = XLSX.utils.book_new();
