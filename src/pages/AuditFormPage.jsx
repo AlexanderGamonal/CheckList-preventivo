@@ -486,20 +486,7 @@ export default function AuditFormPage() {
     }
   }
 
-  const sec1Complete = !!(form.idAtm && form.fecha && form.punto);
-  const sec2Complete = !!form.equipoFuncionando;
-  const sec3Complete = !!(form.pruebas.consultaSaldos && form.pruebas.retiroEfectivo && form.pruebas.depositoEfectivo);
-  const sec4Complete = !!(form.ipEquipo && form.sistemaOperativo);
-  const sec5Complete = !!(form.lectorTarjetas && form.cpu);
-  const sec6Complete = !!(form.site.camaras && form.site.iluminacion);
-  const sec7Complete = !!(form.voltajes.atmLT || form.voltajes.atmLN || form.voltajes.atmNT);
-  const sec8Complete = Object.values(form.devFotos).some(d => d.photos.length > 0);
-
-  const allSecs = [sec1Complete, sec2Complete, sec3Complete, sec4Complete, sec5Complete, sec6Complete, sec7Complete, sec8Complete];
-  const completedCount = allSecs.filter(Boolean).length;
-  const progressPct = Math.round((completedCount / allSecs.length) * 100);
-  const progressColor = progressPct === 100 ? 'var(--status-ok)' : 'var(--brand)';
-
+  // ── Configuración de dispositivos (necesaria para sec8Complete) ──
   const BASE_DEVICES = [
     { key: 'shutter',     label: 'Shutter',        min: 2, max: 3 },
     { key: 'lectora',     label: 'Lectora',         min: 2, max: 6 },
@@ -537,6 +524,25 @@ export default function AuditFormPage() {
     form.tipoAtm === 'deposito'     ? [...EXTERIOR, ACEPT,       ...CASSETTES, ...BASE_DEVICES] :
     form.tipoAtm === 'multifuncion' ? [...EXTERIOR, DISP, ACEPT, ...CASSETTES, ...BASE_DEVICES] :
                                       [...EXTERIOR, DISP,        ...CASSETTES, ...BASE_DEVICES];
+
+  // ── Secciones requeridas para habilitar el envío ──
+  const sec1Complete = !!(form.idAtm && form.fecha && form.punto);
+  const sec2Complete = !!form.equipoFuncionando;
+  const sec3Complete = !!(form.pruebas.consultaSaldos && form.pruebas.retiroEfectivo && form.pruebas.depositoEfectivo);
+  const sec4Complete = !!(form.ipEquipo && form.sistemaOperativo);
+  const sec5Complete = !!(form.lectorTarjetas && form.cpu);
+  const sec6Complete = !!(form.site.camaras && form.site.iluminacion);
+  // Solo voltajes ATM son obligatorios (los tres); UPS es opcional
+  const sec7Complete = !!(form.voltajes.atmLT && form.voltajes.atmLN && form.voltajes.atmNT);
+  // Fotos: cada sección de dispositivo debe cumplir su mínimo requerido
+  const sec8Complete = DEVICE_CFG.every(d => (form.devFotos[d.key]?.photos?.length ?? 0) >= d.min);
+  // Observaciones generales: obligatorio
+  const sec9Complete = !!(form.obsGenerales && form.obsGenerales.trim());
+
+  const allSecs = [sec1Complete, sec2Complete, sec3Complete, sec4Complete, sec5Complete, sec6Complete, sec7Complete, sec8Complete, sec9Complete];
+  const completedCount = allSecs.filter(Boolean).length;
+  const progressPct = Math.round((completedCount / allSecs.length) * 100);
+  const progressColor = progressPct === 100 ? 'var(--status-ok)' : 'var(--brand)';
 
   const OPT_LECTOR = [{ value: 'sankio', label: 'Sankio' }, { value: 'hitachi', label: 'Hitachi' }, { value: 'otro', label: 'Otro' }];
   const OPT_IMP = [{ value: 'toshiba', label: 'Toshiba' }, { value: 'epson', label: 'Epson' }, { value: 'otro', label: 'Otro' }];
