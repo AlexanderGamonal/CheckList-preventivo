@@ -846,13 +846,24 @@ function TabLista({ enriched, loading, onVerDetalle, onSelect }) {
   }), [enriched, search, filtroDecision, filtroMarca, filtroDesde, filtroHasta]);
 
   function exportarCSV() {
-    const headers = ['Fecha', 'ID ATM', 'Tipo', 'Punto', 'Marca', 'Modelo', 'Cliente', 'Equipo OK', 'Pruebas OK', 'Score', 'Decisión', 'Obs. Generales'];
+    const headers = [
+      'Fecha', 'ID ATM', 'Tipo', 'Punto', 'Marca', 'Modelo', 'Cliente',
+      'IP Equipo', 'Máscara Red', 'Gateway', 'DNS 1', 'DNS 2', 'S.O.', 'Software',
+      'Equipo OK', 'Pruebas OK', 'Score', 'Decisión', 'Obs. Generales',
+    ];
     const lines = filtered.map(r => [
       r.fecha || '', r.id_atm || '',
       TIPO_LABELS[r.tipo_atm] || r.tipo_atm || '',
       r.punto_texto || '', r.marca_texto || '', r.modelo_texto || '', r.cliente_texto || '',
-      r.equipo_funcionando === true ? 'Sí' : r.equipo_funcionando === false ? 'No' : '',
-      r.pruebas_exitosas   === true ? 'Sí' : r.pruebas_exitosas   === false ? 'No' : '',
+      r.info_general?.ipEquipo      || '',
+      r.info_general?.mascaraRed    || '',
+      r.info_general?.gateway       || '',
+      r.info_general?.dns1          || '',
+      r.info_general?.dns2          || '',
+      r.info_general?.sistemaOperativo || '',
+      r.info_general?.software      || '',
+      r.equipo_funcionando === true  ? 'Sí' : r.equipo_funcionando === false  ? 'No' : '',
+      r.pruebas_exitosas   === true  ? 'Sí' : r.pruebas_exitosas   === false  ? 'No' : '',
       r.score ?? '', r.decision || '', r.obs_generales || '',
     ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
     const csv = [headers.join(','), ...lines].join('\n');
@@ -901,6 +912,13 @@ function TabLista({ enriched, loading, onVerDetalle, onSelect }) {
       'Punto':                   r.punto_texto || '',
       'Marca':                   r.marca_texto || '',
       'Modelo':                  r.modelo_texto || '',
+      'IP Equipo':               r.info_general?.ipEquipo         || '',
+      'Máscara Red':             r.info_general?.mascaraRed       || '',
+      'Gateway':                 r.info_general?.gateway          || '',
+      'DNS 1':                   r.info_general?.dns1             || '',
+      'DNS 2':                   r.info_general?.dns2             || '',
+      'S.O.':                    r.info_general?.sistemaOperativo || '',
+      'Software':                r.info_general?.software         || '',
       'Equipo OK':               r.equipo_funcionando === true ? 'Sí' : r.equipo_funcionando === false ? 'No' : '',
       'Pruebas OK':              r.pruebas_exitosas   === true ? 'Sí' : r.pruebas_exitosas   === false ? 'No' : '',
       'Decisión':                r.decision || '',
@@ -914,9 +932,11 @@ function TabLista({ enriched, loading, onVerDetalle, onSelect }) {
     const ws = XLSX.utils.json_to_sheet(data);
     ws['!cols'] = [
       { wch: 12 }, { wch: 14 }, { wch: 28 },
-      { wch: 13 }, { wch: 16 }, { wch: 9  },
-      { wch: 10 }, { wch: 10 }, { wch: 55 },
-      { wch: 38 }, { wch: 50 },
+      { wch: 13 }, { wch: 16 }, { wch: 16 },
+      { wch: 14 }, { wch: 14 }, { wch: 12 },
+      { wch: 12 }, { wch: 18 }, { wch: 16 },
+      { wch: 9  }, { wch: 10 }, { wch: 10 },
+      { wch: 55 }, { wch: 38 }, { wch: 50 },
     ];
 
     const wb = XLSX.utils.book_new();
