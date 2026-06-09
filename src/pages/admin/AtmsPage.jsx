@@ -306,24 +306,66 @@ export default function AtmsPage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    const text = await file.text();
-    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length < 2) return;
-    const rows = lines.slice(1).map(line => {
-      const parts = line.split(';');
-      return {
-        id_atm:       (parts[0] || '').trim().toUpperCase(),
-        nro_serie:    (parts[1] || '').trim(),
-        ip_equipo:    (parts[2] || '').trim(),
-        mascara_red:  (parts[3] || '').trim(),
-        gateway:      (parts[4] || '').trim(),
-        dns1:         (parts[5] || '').trim(),
-        dns2:         (parts[6] || '').trim(),
-        cpu_modelo:   (parts[7] || '').trim(),
-        software_atm: (parts[8] || '').trim(),
-        direccion:    parts.slice(9).join(';').trim(),
+
+    const isXlsx = /\.(xlsx|xls)$/i.test(file.name);
+    let rows;
+
+    if (isXlsx) {
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (data.length < 2) return;
+      const hdrs = data[0].map(h => String(h).toLowerCase().trim());
+      const col = (...names) => {
+        for (const n of names) { const i = hdrs.findIndex(h => h.includes(n)); if (i >= 0) return i; }
+        return -1;
       };
-    }).filter(r => r.id_atm);
+      const byHeader = col('id atm', 'id_atm') >= 0;
+      rows = data.slice(1).map(row => byHeader ? ({
+        id_atm:       String(row[col('id atm','id_atm')]          || '').trim().toUpperCase(),
+        nro_serie:    String(row[col('serie','nro_serie')]         || '').trim(),
+        ip_equipo:    String(row[col('ip equipo','ip_equipo','ip')]|| '').trim(),
+        mascara_red:  String(row[col('mascara','máscara')]         || '').trim(),
+        gateway:      String(row[col('gateway')]                   || '').trim(),
+        dns1:         String(row[col('dns 1','dns1')]              || '').trim(),
+        dns2:         String(row[col('dns 2','dns2')]              || '').trim(),
+        cpu_modelo:   String(row[col('cpu')]                       || '').trim(),
+        software_atm: String(row[col('software')]                  || '').trim(),
+        direccion:    String(row[col('direccion','dirección')]     || '').trim(),
+      }) : ({
+        id_atm:       String(row[0] || '').trim().toUpperCase(),
+        nro_serie:    String(row[1] || '').trim(),
+        ip_equipo:    String(row[2] || '').trim(),
+        mascara_red:  String(row[3] || '').trim(),
+        gateway:      String(row[4] || '').trim(),
+        dns1:         String(row[5] || '').trim(),
+        dns2:         String(row[6] || '').trim(),
+        cpu_modelo:   String(row[7] || '').trim(),
+        software_atm: String(row[8] || '').trim(),
+        direccion:    String(row[9] || '').trim(),
+      })).filter(r => r.id_atm);
+    } else {
+      const text = await file.text();
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length < 2) return;
+      rows = lines.slice(1).map(line => {
+        const parts = line.split(';');
+        return {
+          id_atm:       (parts[0] || '').trim().toUpperCase(),
+          nro_serie:    (parts[1] || '').trim(),
+          ip_equipo:    (parts[2] || '').trim(),
+          mascara_red:  (parts[3] || '').trim(),
+          gateway:      (parts[4] || '').trim(),
+          dns1:         (parts[5] || '').trim(),
+          dns2:         (parts[6] || '').trim(),
+          cpu_modelo:   (parts[7] || '').trim(),
+          software_atm: (parts[8] || '').trim(),
+          direccion:    parts.slice(9).join(';').trim(),
+        };
+      }).filter(r => r.id_atm);
+    }
+
     setNetRows(rows);
     setNetStep('preview');
   }
@@ -638,14 +680,14 @@ export default function AtmsPage() {
             {netStep === 'pick' && (
               <>
                 <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 10 }}>Actualizar datos de red / hardware</h2>
-                <p style={{ color: '#94a3b8', fontSize: 12, marginBottom: 10 }}>Carga el CSV con punto y coma (;) con estas columnas en orden:</p>
+                <p style={{ color: '#94a3b8', fontSize: 12, marginBottom: 10 }}>Carga un <strong style={{ color: '#f8fafc' }}>CSV (separado por ;)</strong> o un <strong style={{ color: '#f8fafc' }}>Excel (.xlsx)</strong> con estas columnas:</p>
                 <div style={{ background: '#0f172a', borderRadius: 8, padding: '10px 14px', marginBottom: 10, fontSize: 11, fontFamily: 'monospace', color: '#60a5fa', lineHeight: 1.8 }}>
                   ID ATM · N° SERIE · IP EQUIPO · MASCARA DE RED · GATEWAY · DNS 1 · DNS 2 · CPU · SOFTWARE ATM · DIRECCION
                 </div>
                 <p style={{ color: '#475569', fontSize: 11, marginBottom: 20 }}>Solo actualiza registros existentes. Los IDs que no estén en la BD se omiten. <strong style={{ color: '#f59e0b' }}>Requiere haber ejecutado el ALTER TABLE en SQL Editor previamente.</strong></p>
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
                   <button onClick={() => setShowNetModal(false)} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#334155', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
-                  <button onClick={() => netFileRef.current?.click()} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#1d4ed8', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Seleccionar CSV</button>
+                  <button onClick={() => netFileRef.current?.click()} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#1d4ed8', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Seleccionar archivo</button>
                 </div>
               </>
             )}
@@ -714,7 +756,7 @@ export default function AtmsPage() {
 
       {/* Hidden file input */}
       <input ref={importFileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={handleImportFile} />
-      <input ref={netFileRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleNetFile} />
+      <input ref={netFileRef} type="file" accept=".csv,.xlsx,.xls" style={{ display: 'none' }} onChange={handleNetFile} />
     </AdminLayout>
   );
 }
