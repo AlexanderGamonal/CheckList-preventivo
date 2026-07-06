@@ -14,6 +14,16 @@ const CARDS = [
     draftKey: 'checklist_draft',
   },
   {
+    to: '/checklist-c2d',
+    icon: '🧾',
+    title: 'Check List MP C2D',
+    subtitle: 'Cash Today',
+    description: 'Evaluación de componentes específicos del equipo C2D.',
+    accent: '#8b5cf6',
+    accentDim: 'rgba(139,92,246,0.12)',
+    draftKey: 'c2d_draft',
+  },
+  {
     to: '/auditoria',
     icon: '📝',
     title: 'Acta de Auditoría',
