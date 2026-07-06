@@ -19,6 +19,8 @@ const SetPasswordPage      = lazy(() => import('./pages/admin/SetPasswordPage.js
 const ResetDatosPage       = lazy(() => import('./pages/admin/ResetDatosPage.jsx'));
 const ColorSystemPreview   = lazy(() => import('./pages/ColorSystemPreview.jsx'));
 const AuditoriasPage       = lazy(() => import('./pages/admin/AuditoriasPage.jsx'));
+const C2dFormPage          = lazy(() => import('./pages/C2dFormPage.jsx'));
+const C2dPage              = lazy(() => import('./pages/admin/C2dPage.jsx'));
 const SpecsPage            = lazy(() => import('./pages/SpecsPage.jsx'));
 
 function PageLoader() {
@@ -44,6 +46,7 @@ export default function AppRouter() {
 
         {/* Módulos públicos */}
         <Route path="/checklist" element={<ChecklistApp />} />
+        <Route path="/checklist-c2d" element={<C2dFormPage />} />
         <Route path="/auditoria" element={<AuditFormPage />} />
 
         {/* PDF preview */}
@@ -57,6 +60,9 @@ export default function AppRouter() {
         } />
         <Route path="/admin/mantenimientos" element={
           <ProtectedRoute><MantenimientosPage /></ProtectedRoute>
+        } />
+        <Route path="/admin/mantenimientos-c2d" element={
+          <ProtectedRoute><C2dPage /></ProtectedRoute>
         } />
         <Route path="/admin/auditorias" element={
           <ProtectedRoute><AuditoriasPage /></ProtectedRoute>

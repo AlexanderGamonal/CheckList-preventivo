@@ -6,9 +6,10 @@ import { useAuth } from '../hooks/useAuth.js';
 import { useIsMobile } from '../hooks/useIsMobile.js';
 
 const LINKS_ALL = [
-  { to: '/admin/dashboard',       label: 'Dashboard' },
-  { to: '/admin/mantenimientos',  label: 'Mantenimientos' },
-  { to: '/admin/auditorias',      label: 'Auditorías' },
+  { to: '/admin/dashboard',            label: 'Dashboard' },
+  { to: '/admin/mantenimientos',       label: 'Mantenimientos' },
+  { to: '/admin/mantenimientos-c2d',   label: 'C2D' },
+  { to: '/admin/auditorias',           label: 'Auditorías' },
 ];
 
 const LINKS_SUPERADMIN = [
