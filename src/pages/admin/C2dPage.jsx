@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import AdminLayout from '../../admin/AdminLayout.jsx';
 import { supabase } from '../../lib/supabase.js';
-import { C2D_COMPONENT_LABELS, C2D_ESTADO_LABELS } from '../../services/c2dService.js';
+import { C2D_DEVICE_LABELS, C2D_ESTADO_LABELS } from '../../services/c2dService.js';
 
 const TH = { padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #334155', whiteSpace: 'nowrap' };
 const TD = { padding: '10px 14px', fontSize: 13, color: '#e2e8f0', whiteSpace: 'nowrap' };
@@ -15,26 +15,26 @@ const ESTADO_COLORS = {
   malo:        '#ef4444',
 };
 
-function estadoFinal(comp) {
-  const estados = Object.values(comp || {}).map(c => c?.estado).filter(Boolean);
+function estadoFinal(disp) {
+  const estados = Object.values(disp || {}).map(c => c?.estado).filter(Boolean);
   if (!estados.length) return null;
   if (estados.some(e => e === 'malo'))        return 'malo';
   if (estados.some(e => e === 'observacion')) return 'observacion';
   return 'operativo';
 }
 
-function contarPorEstado(comp) {
+function contarPorEstado(disp) {
   const counts = { operativo: 0, observacion: 0, malo: 0 };
-  Object.values(comp || {}).forEach(c => {
+  Object.values(disp || {}).forEach(c => {
     if (c?.estado && counts[c.estado] !== undefined) counts[c.estado]++;
   });
   return counts;
 }
 
-function componentesConFalla(comp) {
-  return Object.entries(comp || {})
+function dispositivosConFalla(disp) {
+  return Object.entries(disp || {})
     .filter(([, c]) => c?.estado === 'malo' || c?.estado === 'observacion')
-    .map(([k, c]) => `${C2D_COMPONENT_LABELS[k] || k}${c.obs ? ` (${c.obs})` : ''}`)
+    .map(([k, c]) => `${C2D_DEVICE_LABELS[k] || k}${c.obs ? ` (${c.obs})` : ''}`)
     .join(', ');
 }
 
@@ -60,7 +60,7 @@ export default function C2dPage() {
     setLoading(true);
     let q = supabase
       .from('mantenimientos_c2d')
-      .select('id, created_at, fecha, hora_inicio, hora_fin, id_atm_texto, punto_texto, nro_serie, marca_texto, modelo_texto, tecnico_id, tecnico_nombre, tecnico_num, tiene_cash_control, voltajes, voltajes_fuera_rango, componentes, obs_generales')
+      .select('id, created_at, fecha, hora_inicio, hora_fin, id_atm_texto, punto_texto, nro_serie, marca_texto, modelo_texto, tecnico_id, tecnico_nombre, tecnico_num, tiene_cash_control, voltajes, voltajes_fuera_rango, dispositivos, obs_generales')
       .order('created_at', { ascending: false })
       .limit(200);
     if (filtros.desde)                       q = q.gte('fecha', filtros.desde);
@@ -85,10 +85,10 @@ export default function C2dPage() {
     setExporting(true);
     try {
       const data = rows.map(r => {
-        const counts = contarPorEstado(r.componentes);
+        const counts = contarPorEstado(r.dispositivos);
         return {
           'Fecha':             r.fecha || '',
-          'ID ATM':            r.id_atm_texto || '',
+          'ID C2D':            r.id_atm_texto || '',
           'Punto':             r.punto_texto || '',
           'N° Serie':          r.nro_serie || '',
           'Marca':             r.marca_texto || '',
@@ -105,7 +105,7 @@ export default function C2dPage() {
           'Operativos':        counts.operativo,
           'Con Observación':   counts.observacion,
           'Malos / Falla':     counts.malo,
-          'Componentes con falla': componentesConFalla(r.componentes) || '—',
+          'Dispositivos con falla': dispositivosConFalla(r.dispositivos) || '—',
           'Obs. Generales':    r.obs_generales || '',
         };
       });
@@ -130,7 +130,7 @@ export default function C2dPage() {
   }
 
   const stats = useMemo(() => {
-    const finales = rows.map(r => estadoFinal(r.componentes));
+    const finales = rows.map(r => estadoFinal(r.dispositivos));
     return {
       total:       rows.length,
       operativos:  finales.filter(e => e === 'operativo').length,
@@ -171,7 +171,7 @@ export default function C2dPage() {
             <input type="date" value={filtros.hasta} onChange={e => setFiltros(p => ({ ...p, hasta: e.target.value }))} style={INPUT_STYLE} />
           </div>
           <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>ID ATM</label>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>ID C2D</label>
             <input type="text" placeholder="Buscar..." value={filtros.id_atm} onChange={e => setFiltros(p => ({ ...p, id_atm: e.target.value }))} style={{ ...INPUT_STYLE, minWidth: 140 }} />
           </div>
           <div>
@@ -227,7 +227,7 @@ export default function C2dPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
           <thead>
             <tr style={{ background: '#0f172a' }}>
-              {['Fecha', 'ID ATM', 'Punto', 'Marca', 'Técnico', 'CC', 'Volt', 'Estado', 'Comp. con falla', ''].map(h => (
+              {['Fecha', 'ID C2D', 'Punto', 'Marca', 'Técnico', 'CC', 'Volt', 'Estado', 'Disp. con falla', ''].map(h => (
                 <th key={h} style={TH}>{h}</th>
               ))}
             </tr>
@@ -241,8 +241,8 @@ export default function C2dPage() {
             ) : rows.length === 0 ? (
               <tr><td colSpan={10} style={{ ...TD, textAlign: 'center', color: '#64748b', padding: 40 }}>Sin resultados</td></tr>
             ) : rows.map((r, i) => {
-              const final    = estadoFinal(r.componentes);
-              const fallas   = componentesConFalla(r.componentes);
+              const final    = estadoFinal(r.dispositivos);
+              const fallas   = dispositivosConFalla(r.dispositivos);
               const isHovered = hoveredRow === r.id;
               const rowBg = isHovered ? '#263548' : (i % 2 === 0 ? '#1e293b' : '#172033');
               return (
@@ -302,10 +302,10 @@ export default function C2dPage() {
               {detalle.voltajes_fuera_rango && <div style={{ marginTop: 8, color: '#ef4444', fontWeight: 600, fontSize: 12 }}>⚠ Fuera de rango</div>}
             </DetalleSection>
 
-            <DetalleSection title="Componentes">
-              {Object.entries(detalle.componentes || {}).map(([k, c]) => (
+            <DetalleSection title="Dispositivos">
+              {Object.entries(detalle.dispositivos || {}).map(([k, c]) => (
                 <div key={k} style={{ display: 'flex', gap: 10, marginBottom: 8, fontSize: 13 }}>
-                  <span style={{ minWidth: 190, color: '#94a3b8' }}>{C2D_COMPONENT_LABELS[k] || k}:</span>
+                  <span style={{ minWidth: 190, color: '#94a3b8' }}>{C2D_DEVICE_LABELS[k] || k}:</span>
                   <span style={{ color: ESTADO_COLORS[c.estado] || '#64748b', fontWeight: 600 }}>{C2D_ESTADO_LABELS[c.estado] || '—'}</span>
                   <span style={{ color: '#64748b', fontSize: 12 }}>({c.num_fotos_antes || 0}A / {c.num_fotos_despues || 0}D)</span>
                   {c.obs && <span style={{ flex: 1, color: '#cbd5e1', fontStyle: 'italic' }}>— {c.obs}</span>}

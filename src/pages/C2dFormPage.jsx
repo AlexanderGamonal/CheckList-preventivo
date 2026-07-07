@@ -18,15 +18,14 @@ const PHOTOS_MAX = 3;
 const VOLT_PHOTOS_MIN = 1;
 const VOLT_PHOTOS_MAX = 4;
 
-const COMPONENT_KEYS = ['cashToday', 'validador', 'mecanismos', 'tomasElectricas', 'gabinete', 'routerTeldat'];
-const COMPONENT_LABELS = {
-  cashToday:       'Cash Today (equipo general)',
-  validador:       'Validador',
-  mecanismos:      'Mecanismos y sensores',
-  tomasElectricas: 'Tomas eléctricas',
-  gabinete:        'Gabinete',
-  routerTeldat:    'Router y Teldat',
-  cashControl:     'Cash Control',
+const DEVICE_KEYS = ['cashToday', 'validador', 'mecanismos', 'gabinete', 'routerTeldat'];
+const DEVICE_LABELS = {
+  cashToday:    'Cash Today (equipo general)',
+  validador:    'Validador',
+  mecanismos:   'Mecanismos y sensores',
+  gabinete:     'Gabinete',
+  routerTeldat: 'Router y Teldat',
+  cashControl:  'Cash Control',
 };
 
 const VOLT_BLOCKS = [
@@ -59,15 +58,14 @@ export const INITIAL = {
     transformador: { ln: '', lt: '', nt: '' },
   },
   voltajesPhotos: [],
-  // Componentes con antes/después
+  // Dispositivos con antes/después
   devFotos: {
-    cashToday:       { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
-    validador:       { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
-    mecanismos:      { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
-    tomasElectricas: { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
-    gabinete:        { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
-    routerTeldat:    { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
-    cashControl:     { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
+    cashToday:    { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
+    validador:    { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
+    mecanismos:   { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
+    gabinete:     { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
+    routerTeldat: { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
+    cashControl:  { estado: '', obs: '', fotosAntes: [], fotosDespues: [] },
   },
   obsGenerales: '',
 };
@@ -347,11 +345,11 @@ export default function C2dFormPage() {
 
   async function handleEnviarPDF() {
     if (!form.idAtm || !form.fecha) {
-      setToast({ msg: 'Complete ID ATM y Fecha antes de enviar', type: 'err' });
+      setToast({ msg: 'Complete ID C2D y Fecha antes de enviar', type: 'err' });
       return;
     }
     if (!form.atmDbId) {
-      setToast({ msg: 'El ATM debe estar registrado en la base de datos', type: 'err' });
+      setToast({ msg: 'El equipo C2D debe estar registrado en la base de datos', type: 'err' });
       return;
     }
     if (!form.tecnicoId) {
@@ -390,32 +388,30 @@ export default function C2dFormPage() {
   // ── Validación de secciones ──
   const sec1Complete = !!(form.tecnicoId && form.horaInicio);
   const sec2Complete = !!(form.idAtm && form.atmDbId && form.fecha && form.punto && form.nroSerie && form.marcaEquipo && form.modeloEquipo);
-  const sec3Complete = form.tieneCashControl === 'si' || form.tieneCashControl === 'no';
 
-  const componenteCompleto = (dev) =>
-    !!(dev.estado) && (dev.fotosAntes?.length ?? 0) >= PHOTOS_MIN && (dev.fotosDespues?.length ?? 0) >= PHOTOS_MIN;
+  const dispositivoCompleto = (dev) =>
+    !!(dev?.estado) && (dev.fotosAntes?.length ?? 0) >= PHOTOS_MIN && (dev.fotosDespues?.length ?? 0) >= PHOTOS_MIN;
 
-  const componentesFijosComplete = COMPONENT_KEYS.every(k => componenteCompleto(form.devFotos[k]));
+  const dispositivosFijosCompletos = DEVICE_KEYS.every(k => dispositivoCompleto(form.devFotos[k]));
+  const cashControlSwitchOk = form.tieneCashControl === 'si' || form.tieneCashControl === 'no';
+  const cashControlEvalOk =
+    form.tieneCashControl === 'no' ? true
+    : form.tieneCashControl === 'si' ? dispositivoCompleto(form.devFotos.cashControl)
+    : false;
+  const secDispositivosComplete = cashControlSwitchOk && dispositivosFijosCompletos && cashControlEvalOk;
 
   const voltajesFueraDeRango = computeVoltajesFueraDeRango(form.voltajes);
   const voltajesEquipoComplete = !!(form.voltajes.equipo.lt && form.voltajes.equipo.ln && form.voltajes.equipo.nt);
   const voltajesPhotosOk = !voltajesFueraDeRango || (form.voltajesPhotos?.length ?? 0) >= VOLT_PHOTOS_MIN;
   const secVoltajesComplete = voltajesEquipoComplete && voltajesPhotosOk;
 
-  const secCashControlComplete =
-    form.tieneCashControl === 'no' ? true
-    : form.tieneCashControl === 'si' ? componenteCompleto(form.devFotos.cashControl)
-    : false;
-
   const secObsComplete = !!(form.obsGenerales && form.obsGenerales.trim());
 
   const allSecs = [
     sec1Complete,             // Técnico
-    sec2Complete,             // ATM
-    sec3Complete,             // Cash Control switch
-    componentesFijosComplete, // 6 componentes fijos
+    sec2Complete,             // C2D
+    secDispositivosComplete,  // Dispositivos (switch + fijos + condicional)
     secVoltajesComplete,      // Voltajes
-    secCashControlComplete,   // Cash Control eval (condicional)
     secObsComplete,           // Obs. generales
   ];
   const completedCount = allSecs.filter(Boolean).length;
@@ -529,15 +525,15 @@ export default function C2dFormPage() {
           </div>
         </Section>
 
-        {/* ══ 2. IDENTIFICACIÓN ATM ══ */}
-        <Section icon="🗂" title="Identificación del ATM" complete={sec2Complete}>
+        {/* ══ 2. IDENTIFICACIÓN C2D ══ */}
+        <Section icon="🗂" title="Identificación del C2D" complete={sec2Complete}>
           <div>
-            <Label>ID ATM *</Label>
+            <Label>ID C2D *</Label>
             <AtmIdInput value={form.idAtm} onChange={v => set('idAtm', v)} onAutofill={handleAtmAutofill} />
           </div>
           <div>
             <Label>Punto / Agencia</Label>
-            <TextInput value={form.punto} onChange={v => set('punto', v)} placeholder="Auto-completa desde ID ATM" />
+            <TextInput value={form.punto} onChange={v => set('punto', v)} placeholder="Auto-completa desde ID C2D" />
           </div>
           <div>
             <Label>N° Serie</Label>
@@ -545,38 +541,50 @@ export default function C2dFormPage() {
           </div>
           <Row2>
             <div>
-              <Label>Marca</Label>
+              <Label>Marca del equipo</Label>
               <TextInput value={form.marcaEquipo} onChange={v => set('marcaEquipo', v)} placeholder="—" />
             </div>
             <div>
-              <Label>Modelo</Label>
+              <Label>Modelo del equipo</Label>
               <TextInput value={form.modeloEquipo} onChange={v => set('modeloEquipo', v)} placeholder="—" />
             </div>
           </Row2>
         </Section>
 
-        {/* ══ 3. CASH CONTROL SWITCH ══ */}
-        <Section icon="💰" title="¿El ATM tiene Cash Control?" complete={sec3Complete}>
-          <div>
-            <Label>¿Cash Control instalado en este ATM?</Label>
+        {/* ══ 3. DISPOSITIVOS ══ */}
+        <Section icon="🔧" title="Dispositivos" complete={secDispositivosComplete}>
+          {/* Switch Cash Control primero */}
+          <div style={{
+            padding: 12, borderRadius: 8,
+            background: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-subtle)',
+            display: 'flex', flexDirection: 'column', gap: 8,
+          }}>
+            <Label>¿Cash Control instalado en este equipo?</Label>
             <SiNo value={form.tieneCashControl} onChange={v => set('tieneCashControl', v)} />
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              Si selecciona <b>Sí</b>, se habilitará el bloque Cash Control al final de esta sección.
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-            Si selecciona <b>Sí</b>, aparecerá una sección adicional al final para evaluar el Cash Control.
-          </div>
-        </Section>
 
-        {/* ══ 4. COMPONENTES ══ */}
-        <Section icon="🔧" title="Componentes evaluados (1–6)" complete={componentesFijosComplete}>
-          {COMPONENT_KEYS.map(k => (
+          {DEVICE_KEYS.map(k => (
             <ComponenteBlock
               key={k}
               deviceKey={k}
-              label={COMPONENT_LABELS[k]}
+              label={DEVICE_LABELS[k]}
               dev={form.devFotos[k]}
               setDevField={setDevField}
             />
           ))}
+
+          {form.tieneCashControl === 'si' && (
+            <ComponenteBlock
+              deviceKey="cashControl"
+              label={DEVICE_LABELS.cashControl}
+              dev={form.devFotos.cashControl}
+              setDevField={setDevField}
+            />
+          )}
         </Section>
 
         {/* ══ 5. VOLTAJES ══ */}
@@ -610,19 +618,7 @@ export default function C2dFormPage() {
           )}
         </Section>
 
-        {/* ══ 6. CASH CONTROL (condicional) ══ */}
-        {form.tieneCashControl === 'si' && (
-          <Section icon="💰" title="Cash Control" complete={secCashControlComplete}>
-            <ComponenteBlock
-              deviceKey="cashControl"
-              label={COMPONENT_LABELS.cashControl}
-              dev={form.devFotos.cashControl}
-              setDevField={setDevField}
-            />
-          </Section>
-        )}
-
-        {/* ══ 7. OBSERVACIONES GENERALES ══ */}
+        {/* ══ 5. OBSERVACIONES GENERALES ══ */}
         <Section icon="📝" title="Observaciones Generales" complete={secObsComplete}>
           <div>
             <Label>Observaciones generales del mantenimiento *</Label>
