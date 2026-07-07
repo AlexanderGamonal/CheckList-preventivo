@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS mantenimientos_c2d (
   voltajes              JSONB,   -- { equipo:{ln,lt,nt}, ups:{...}, transformador:{...} }
   voltajes_fuera_rango  BOOLEAN, -- true si algún valor de cualquier bloque salió de rango
 
-  componentes           JSONB,   -- { cashToday:{estado,obs,num_fotos_antes,num_fotos_despues}, ... }
+  dispositivos          JSONB,   -- { cashToday:{estado,obs,num_fotos_antes,num_fotos_despues}, ... }
 
   obs_generales         TEXT
 );

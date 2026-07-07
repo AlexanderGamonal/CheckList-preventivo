@@ -1,5 +1,5 @@
 import React from 'react';
-import { C2D_COMPONENT_LABELS, C2D_ESTADO_LABELS, computeVoltajesFueraDeRango } from '../services/c2dService.js';
+import { C2D_DEVICE_KEYS, C2D_DEVICE_LABELS, C2D_ESTADO_LABELS, computeVoltajesFueraDeRango } from '../services/c2dService.js';
 import { VOLT_MIN, VOLT_MAX, NT_MAX, voltEstadoCampo } from '../constants/voltages.js';
 
 /* ══════════════════════════════════════════════════
@@ -181,9 +181,8 @@ function ComponentBlock({ keyId, label, dev, showPhotos }) {
 }
 
 export default function C2dPdfView({ form }) {
-  const componentKeys = ['cashToday', 'validador', 'mecanismos', 'tomasElectricas', 'gabinete', 'routerTeldat'];
   const showCashControl = form.tieneCashControl === 'si';
-  const allKeys = showCashControl ? [...componentKeys, 'cashControl'] : componentKeys;
+  const allKeys = showCashControl ? [...C2D_DEVICE_KEYS, 'cashControl'] : C2D_DEVICE_KEYS;
   const voltFueraDeRango = computeVoltajesFueraDeRango(form.voltajes);
 
   return (
@@ -202,7 +201,7 @@ export default function C2dPdfView({ form }) {
         <div style={{ flex: 1, padding: '14px 22px', overflow: 'hidden' }}>
           <SecTitle title="1 · Datos generales" />
           <Row><Lbl>Fecha</Lbl><Val value={form.fecha} minW={90} /><Lbl>Hora Inicio</Lbl><Val value={form.horaInicio} minW={60} /><Lbl>Hora Fin</Lbl><Val value={form.horaFin} minW={60} /></Row>
-          <Row><Lbl>ID ATM</Lbl><Val value={form.idAtm} minW={110} /><Lbl>Punto</Lbl><Val value={form.punto} flex={2} /></Row>
+          <Row><Lbl>ID C2D</Lbl><Val value={form.idAtm} minW={110} /><Lbl>Punto</Lbl><Val value={form.punto} flex={2} /></Row>
           <Row><Lbl>N° Serie</Lbl><Val value={form.nroSerie} /><Lbl>Marca</Lbl><Val value={form.marcaEquipo} /><Lbl>Modelo</Lbl><Val value={form.modeloEquipo} /></Row>
           <Row><Lbl>Técnico responsable</Lbl><Val value={form.tecnicoNombre} flex={2} /><Lbl>N° Interno</Lbl><Val value={form.tecnicoNum} minW={80} /></Row>
           <Row><Lbl>Cash Control instalado</Lbl><Val value={form.tieneCashControl === 'si' ? 'Sí' : form.tieneCashControl === 'no' ? 'No' : '—'} minW={40} /></Row>
@@ -222,11 +221,11 @@ export default function C2dPdfView({ form }) {
               : `✓ Voltajes dentro del rango (${VOLT_MIN}–${VOLT_MAX} V; N-T ≤ ${NT_MAX} V)`}
           </div>
 
-          <SecTitle title="3 · Resumen de componentes evaluados" />
+          <SecTitle title="3 · Resumen de dispositivos" />
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: FS }}>
             <thead>
               <tr>
-                <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: `1px solid ${BORD}`, fontSize: FS - 1, color: '#666' }}>Componente</th>
+                <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: `1px solid ${BORD}`, fontSize: FS - 1, color: '#666' }}>Dispositivo</th>
                 <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: `1px solid ${BORD}`, fontSize: FS - 1, color: '#666' }}>Estado</th>
                 <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: `1px solid ${BORD}`, fontSize: FS - 1, color: '#666' }}>Fotos A/D</th>
                 <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: `1px solid ${BORD}`, fontSize: FS - 1, color: '#666' }}>Observación</th>
@@ -238,7 +237,7 @@ export default function C2dPdfView({ form }) {
                 const info = ESTADO_CFG[dev.estado];
                 return (
                   <tr key={k}>
-                    <td style={{ padding: '4px 6px', borderBottom: '1px solid #eee' }}>{C2D_COMPONENT_LABELS[k]}</td>
+                    <td style={{ padding: '4px 6px', borderBottom: '1px solid #eee' }}>{C2D_DEVICE_LABELS[k]}</td>
                     <td style={{ padding: '4px 6px', borderBottom: '1px solid #eee', color: info?.color || '#999' }}>{info?.label || '—'}</td>
                     <td style={{ padding: '4px 6px', borderBottom: '1px solid #eee', fontFamily: 'monospace' }}>
                       {(dev.fotosAntes?.length ?? 0)}/{(dev.fotosDespues?.length ?? 0)}
@@ -274,9 +273,9 @@ export default function C2dPdfView({ form }) {
             </>
           )}
 
-          <SecTitle title="Evidencia fotográfica por componente" />
+          <SecTitle title="Evidencia fotográfica por dispositivo" />
           {allKeys.map(k => (
-            <ComponentBlock key={k} keyId={k} label={C2D_COMPONENT_LABELS[k]} dev={form.devFotos[k]} showPhotos />
+            <ComponentBlock key={k} keyId={k} label={C2D_DEVICE_LABELS[k]} dev={form.devFotos[k]} showPhotos />
           ))}
 
           <SecTitle title="Firmas" />

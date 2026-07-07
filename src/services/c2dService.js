@@ -1,14 +1,15 @@
 import { supabase } from '../lib/supabase.js';
 import { voltEstadoCampo } from '../constants/voltages.js';
 
-export const C2D_COMPONENT_LABELS = {
-  cashToday:       'Cash Today (equipo general)',
-  validador:       'Validador',
-  mecanismos:      'Mecanismos y sensores',
-  tomasElectricas: 'Tomas eléctricas',
-  gabinete:        'Gabinete',
-  routerTeldat:    'Router y Teldat',
-  cashControl:     'Cash Control',
+export const C2D_DEVICE_KEYS = ['cashToday', 'validador', 'mecanismos', 'gabinete', 'routerTeldat'];
+
+export const C2D_DEVICE_LABELS = {
+  cashToday:    'Cash Today (equipo general)',
+  validador:    'Validador',
+  mecanismos:   'Mecanismos y sensores',
+  gabinete:     'Gabinete',
+  routerTeldat: 'Router y Teldat',
+  cashControl:  'Cash Control',
 };
 
 export const C2D_ESTADO_LABELS = {
@@ -47,16 +48,19 @@ function buildPayload(form) {
                         : form.tieneCashControl === 'no' ? false : null,
     voltajes:             form.voltajes || null,
     voltajes_fuera_rango: computeVoltajesFueraDeRango(form.voltajes),
-    componentes: form.devFotos
+    dispositivos: form.devFotos
       ? Object.fromEntries(
-          Object.entries(form.devFotos)
-            .filter(([k]) => k !== 'cashControl' || form.tieneCashControl === 'si')
-            .map(([k, v]) => [k, {
-              estado:             v.estado || null,
-              obs:                v.obs || null,
-              num_fotos_antes:    v.fotosAntes?.length ?? 0,
-              num_fotos_despues:  v.fotosDespues?.length ?? 0,
-            }])
+          [...C2D_DEVICE_KEYS, ...(form.tieneCashControl === 'si' ? ['cashControl'] : [])]
+            .filter(k => form.devFotos[k])
+            .map(k => {
+              const v = form.devFotos[k];
+              return [k, {
+                estado:            v.estado || null,
+                obs:               v.obs || null,
+                num_fotos_antes:   v.fotosAntes?.length ?? 0,
+                num_fotos_despues: v.fotosDespues?.length ?? 0,
+              }];
+            })
         )
       : null,
     obs_generales: form.obsGenerales || null,
@@ -73,7 +77,7 @@ export async function saveC2d(form) {
 export async function getC2d({ fechaDesde, fechaHasta, idAtm, tecnicoId, limit = 100 } = {}) {
   let q = supabase
     .from('mantenimientos_c2d')
-    .select('id, created_at, fecha, hora_inicio, hora_fin, id_atm_texto, punto_texto, nro_serie, marca_texto, modelo_texto, tecnico_id, tecnico_nombre, tecnico_num, tiene_cash_control, voltajes, voltajes_fuera_rango, componentes, obs_generales')
+    .select('id, created_at, fecha, hora_inicio, hora_fin, id_atm_texto, punto_texto, nro_serie, marca_texto, modelo_texto, tecnico_id, tecnico_nombre, tecnico_num, tiene_cash_control, voltajes, voltajes_fuera_rango, dispositivos, obs_generales')
     .order('created_at', { ascending: false })
     .limit(limit);
 
@@ -89,9 +93,10 @@ export async function getC2d({ fechaDesde, fechaHasta, idAtm, tecnicoId, limit =
 
 export function buildC2dEmailSummary(form) {
   const estadoLabel = e => C2D_ESTADO_LABELS[e] || e || '—';
-  const componentes = Object.entries(form.devFotos || {})
-    .filter(([k]) => k !== 'cashControl' || form.tieneCashControl === 'si')
-    .map(([k, v]) => `${C2D_COMPONENT_LABELS[k] || k}: ${estadoLabel(v.estado)}${v.obs ? ` — ${v.obs}` : ''}`);
+  const keys = [...C2D_DEVICE_KEYS, ...(form.tieneCashControl === 'si' ? ['cashControl'] : [])];
+  const dispositivos = keys
+    .filter(k => form.devFotos?.[k])
+    .map(k => `${C2D_DEVICE_LABELS[k] || k}: ${estadoLabel(form.devFotos[k].estado)}${form.devFotos[k].obs ? ` — ${form.devFotos[k].obs}` : ''}`);
 
   const v = form.voltajes || {};
   const voltStr = v.equipo
@@ -100,15 +105,15 @@ export function buildC2dEmailSummary(form) {
 
   return [
     `Check List C2D — ${form.fecha || ''}`,
-    `ATM: ${form.idAtm} | Punto: ${form.punto || '—'} | S/N: ${form.nroSerie || '—'}`,
+    `C2D: ${form.idAtm} | Punto: ${form.punto || '—'} | S/N: ${form.nroSerie || '—'}`,
     `Equipo: ${form.marcaEquipo || '—'} ${form.modeloEquipo || ''}`,
     `Técnico: ${form.tecnicoNombre || '—'} (N° ${form.tecnicoNum || '—'})`,
     `Hora inicio: ${form.horaInicio || '—'} — Hora fin: ${form.horaFin || '—'}`,
     `Cash Control instalado: ${form.tieneCashControl === 'si' ? 'Sí' : form.tieneCashControl === 'no' ? 'No' : '—'}`,
     `Voltajes — ${voltStr}${computeVoltajesFueraDeRango(v) ? ' ⚠ FUERA DE RANGO' : ''}`,
     '',
-    'Componentes evaluados:',
-    ...componentes,
+    'Dispositivos evaluados:',
+    ...dispositivos,
     '',
     `Observaciones: ${form.obsGenerales || 'Sin observaciones'}`,
   ].join('\n');
