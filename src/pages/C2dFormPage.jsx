@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.js';
-import AtmIdInput from '../components/AtmIdInput.jsx';
 import TecnicoNumInput from '../components/TecnicoNumInput.jsx';
 import Toast from '../components/Toast.jsx';
 import { useIsMobile } from '../hooks/useIsMobile.js';
@@ -34,6 +33,19 @@ const VOLT_BLOCKS = [
   { key: 'transformador', label: 'Transformador de Aislamiento (opcional)', obligatorio: false },
 ];
 
+const SITE_ITEMS = [
+  { key: 'camaras',           label: '¿Cámaras de vigilancia?' },
+  { key: 'aireAcondicionado', label: '¿Aire acondicionado?' },
+  { key: 'iluminacion',       label: '¿Iluminación?' },
+  { key: 'excesoPolvo',       label: '¿Exceso de polvo?' },
+];
+
+const PRUEBAS_ITEMS = [
+  { key: 'depositoBilletes', label: 'Depósito de billetes' },
+  { key: 'depositoMonedas',  label: 'Depósito de monedas' },
+  { key: 'voucher',          label: 'Impresión de voucher' },
+];
+
 export const INITIAL = {
   fecha: '',
   horaInicio: '',
@@ -42,8 +54,7 @@ export const INITIAL = {
   tecnicoId: null,
   tecnicoNum: '',
   tecnicoNombre: '',
-  // ATM
-  atmDbId: null,
+  // Identificación C2D (manual — sin lookup a BD)
   idAtm: '',
   punto: '',
   nroSerie: '',
@@ -51,6 +62,12 @@ export const INITIAL = {
   modeloEquipo: '',
   // Cash Control condicional
   tieneCashControl: '', // '' | 'si' | 'no'
+  // Site
+  site:    { camaras: '', aireAcondicionado: '', iluminacion: '', excesoPolvo: '' },
+  siteObs: { camaras: '', aireAcondicionado: '', iluminacion: '', excesoPolvo: '' },
+  // Pruebas de depósito
+  pruebas:    { depositoBilletes: '', depositoMonedas: '', voucher: '' },
+  pruebasObs: { depositoBilletes: '', depositoMonedas: '', voucher: '' },
   // Voltajes
   voltajes: {
     equipo:        { ln: '', lt: '', nt: '' },
@@ -89,6 +106,16 @@ function SiNo({ value, onChange }) {
     <div style={{ display: 'flex', gap: 8 }}>
       <Pill active={value === 'si'} onClick={() => onChange('si')} color="var(--status-ok)">Sí</Pill>
       <Pill active={value === 'no'} onClick={() => onChange('no')} color="var(--status-critical)">No</Pill>
+    </div>
+  );
+}
+
+function PruebaResultado({ value, onChange }) {
+  return (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <Pill active={value === 'exitoso'} onClick={() => onChange('exitoso')} color="var(--status-ok)">Exitoso</Pill>
+      <Pill active={value === 'fallido'} onClick={() => onChange('fallido')} color="var(--status-critical)">Fallido</Pill>
+      <Pill active={value === 'na'}      onClick={() => onChange('na')}      color="var(--text-disabled)">N/A</Pill>
     </div>
   );
 }
@@ -311,6 +338,8 @@ export default function C2dFormPage() {
   }, [form]);
 
   const set = useCallback((f, v) => setForm(p => ({ ...p, [f]: v })), []);
+  const setN = useCallback((parent, f, v) =>
+    setForm(p => ({ ...p, [parent]: { ...p[parent], [f]: v } })), []);
   const setVoltaje = useCallback((block, campo, valor) =>
     setForm(p => ({ ...p, voltajes: { ...p.voltajes, [block]: { ...p.voltajes[block], [campo]: valor } } })), []);
   const setDevField = useCallback((device, field, value) =>
@@ -331,25 +360,9 @@ export default function C2dFormPage() {
     }));
   }, []);
 
-  const handleAtmAutofill = useCallback(atm => {
-    setForm(p => ({
-      ...p,
-      atmDbId:      atm.atmDbId      || p.atmDbId,
-      punto:        atm.punto        || p.punto,
-      marcaEquipo:  atm.marca        || p.marcaEquipo,
-      modeloEquipo: atm.modelo       || p.modeloEquipo,
-      nroSerie:     atm.nroSerie     || p.nroSerie,
-      fecha:        new Date().toISOString().split('T')[0],
-    }));
-  }, []);
-
   async function handleEnviarPDF() {
     if (!form.idAtm || !form.fecha) {
       setToast({ msg: 'Complete ID C2D y Fecha antes de enviar', type: 'err' });
-      return;
-    }
-    if (!form.atmDbId) {
-      setToast({ msg: 'El equipo C2D debe estar registrado en la base de datos', type: 'err' });
       return;
     }
     if (!form.tecnicoId) {
@@ -387,7 +400,8 @@ export default function C2dFormPage() {
 
   // ── Validación de secciones ──
   const sec1Complete = !!(form.tecnicoId && form.horaInicio);
-  const sec2Complete = !!(form.idAtm && form.atmDbId && form.fecha && form.punto && form.nroSerie && form.marcaEquipo && form.modeloEquipo);
+  const sec2Complete = !!(form.idAtm && form.fecha && form.punto && form.nroSerie && form.marcaEquipo && form.modeloEquipo);
+  const secSiteComplete = SITE_ITEMS.every(({ key }) => !!form.site[key]);
 
   const dispositivoCompleto = (dev) =>
     !!(dev?.estado) && (dev.fotosAntes?.length ?? 0) >= PHOTOS_MIN && (dev.fotosDespues?.length ?? 0) >= PHOTOS_MIN;
@@ -405,13 +419,16 @@ export default function C2dFormPage() {
   const voltajesPhotosOk = !voltajesFueraDeRango || (form.voltajesPhotos?.length ?? 0) >= VOLT_PHOTOS_MIN;
   const secVoltajesComplete = voltajesEquipoComplete && voltajesPhotosOk;
 
+  const secPruebasComplete = PRUEBAS_ITEMS.every(({ key }) => !!form.pruebas[key]);
   const secObsComplete = !!(form.obsGenerales && form.obsGenerales.trim());
 
   const allSecs = [
     sec1Complete,             // Técnico
-    sec2Complete,             // C2D
-    secDispositivosComplete,  // Dispositivos (switch + fijos + condicional)
+    sec2Complete,             // Identificación C2D
+    secSiteComplete,          // Estado del site
+    secDispositivosComplete,  // Dispositivos
     secVoltajesComplete,      // Voltajes
+    secPruebasComplete,       // Pruebas de depósito
     secObsComplete,           // Obs. generales
   ];
   const completedCount = allSecs.filter(Boolean).length;
@@ -529,11 +546,11 @@ export default function C2dFormPage() {
         <Section icon="🗂" title="Identificación del C2D" complete={sec2Complete}>
           <div>
             <Label>ID C2D *</Label>
-            <AtmIdInput value={form.idAtm} onChange={v => set('idAtm', v)} onAutofill={handleAtmAutofill} />
+            <TextInput value={form.idAtm} onChange={v => set('idAtm', v)} placeholder="Ej: C2D-01234" />
           </div>
           <div>
             <Label>Punto / Agencia</Label>
-            <TextInput value={form.punto} onChange={v => set('punto', v)} placeholder="Auto-completa desde ID C2D" />
+            <TextInput value={form.punto} onChange={v => set('punto', v)} placeholder="Ej: Agencia Miraflores" />
           </div>
           <div>
             <Label>N° Serie</Label>
@@ -551,7 +568,22 @@ export default function C2dFormPage() {
           </Row2>
         </Section>
 
-        {/* ══ 3. DISPOSITIVOS ══ */}
+        {/* ══ 3. ESTADO DEL SITE ══ */}
+        <Section icon="🏢" title="Estado del site" complete={secSiteComplete}>
+          {SITE_ITEMS.map(({ key, label }) => (
+            <div key={key} style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: 12 }}>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>{label}</div>
+              <SiNo value={form.site[key]} onChange={v => setN('site', key, v)} />
+              {form.site[key] === 'no' && (
+                <div style={{ marginTop: 8 }}>
+                  <TextInput value={form.siteObs[key]} onChange={v => setN('siteObs', key, v)} placeholder="Observaciones..." />
+                </div>
+              )}
+            </div>
+          ))}
+        </Section>
+
+        {/* ══ 4. DISPOSITIVOS ══ */}
         <Section icon="🔧" title="Dispositivos" complete={secDispositivosComplete}>
           {/* Switch Cash Control primero */}
           <div style={{
@@ -587,7 +619,7 @@ export default function C2dFormPage() {
           )}
         </Section>
 
-        {/* ══ 5. VOLTAJES ══ */}
+        {/* ══ 5. VOLTAJES (posición 5) ══ */}
         <Section icon="⚡" title="Voltajes (Equipo obligatorio)" complete={secVoltajesComplete}>
           {VOLT_BLOCKS.map(({ key, label, obligatorio }) => (
             <div key={key} style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: 12 }}>
@@ -618,7 +650,22 @@ export default function C2dFormPage() {
           )}
         </Section>
 
-        {/* ══ 5. OBSERVACIONES GENERALES ══ */}
+        {/* ══ 6. PRUEBAS DE DEPÓSITO ══ */}
+        <Section icon="🔌" title="Pruebas de depósito" complete={secPruebasComplete}>
+          {PRUEBAS_ITEMS.map(({ key, label }) => (
+            <div key={key} style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: 12 }}>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>{label}</div>
+              <PruebaResultado value={form.pruebas[key]} onChange={v => setN('pruebas', key, v)} />
+              {form.pruebas[key] === 'fallido' && (
+                <div style={{ marginTop: 8 }}>
+                  <TextInput value={form.pruebasObs[key]} onChange={v => setN('pruebasObs', key, v)} placeholder="Describir la falla..." />
+                </div>
+              )}
+            </div>
+          ))}
+        </Section>
+
+        {/* ══ 7. OBSERVACIONES GENERALES ══ */}
         <Section icon="📝" title="Observaciones Generales" complete={secObsComplete}>
           <div>
             <Label>Observaciones generales del mantenimiento *</Label>

@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS mantenimientos_c2d (
 
   tiene_cash_control    BOOLEAN,
 
+  estado_site           JSONB,   -- { items:{camaras,aireAcondicionado,iluminacion,excesoPolvo}, obs:{...} }
+  pruebas_deposito      JSONB,   -- { items:{depositoBilletes,depositoMonedas,voucher}, obs:{...} }
+
   voltajes              JSONB,   -- { equipo:{ln,lt,nt}, ups:{...}, transformador:{...} }
   voltajes_fuera_rango  BOOLEAN, -- true si algún valor de cualquier bloque salió de rango
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import AdminLayout from '../../admin/AdminLayout.jsx';
 import { supabase } from '../../lib/supabase.js';
-import { C2D_DEVICE_LABELS, C2D_ESTADO_LABELS } from '../../services/c2dService.js';
+import { C2D_DEVICE_LABELS, C2D_ESTADO_LABELS, C2D_SITE_ITEMS, C2D_PRUEBAS_ITEMS, C2D_PRUEBA_LABELS } from '../../services/c2dService.js';
 
 const TH = { padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #334155', whiteSpace: 'nowrap' };
 const TD = { padding: '10px 14px', fontSize: 13, color: '#e2e8f0', whiteSpace: 'nowrap' };
@@ -60,7 +60,7 @@ export default function C2dPage() {
     setLoading(true);
     let q = supabase
       .from('mantenimientos_c2d')
-      .select('id, created_at, fecha, hora_inicio, hora_fin, id_atm_texto, punto_texto, nro_serie, marca_texto, modelo_texto, tecnico_id, tecnico_nombre, tecnico_num, tiene_cash_control, voltajes, voltajes_fuera_rango, dispositivos, obs_generales')
+      .select('id, created_at, fecha, hora_inicio, hora_fin, id_atm_texto, punto_texto, nro_serie, marca_texto, modelo_texto, tecnico_id, tecnico_nombre, tecnico_num, tiene_cash_control, estado_site, pruebas_deposito, voltajes, voltajes_fuera_rango, dispositivos, obs_generales')
       .order('created_at', { ascending: false })
       .limit(200);
     if (filtros.desde)                       q = q.gte('fecha', filtros.desde);
@@ -86,6 +86,19 @@ export default function C2dPage() {
     try {
       const data = rows.map(r => {
         const counts = contarPorEstado(r.dispositivos);
+        const siteItems = r.estado_site?.items || {};
+        const siteObs   = r.estado_site?.obs   || {};
+        const siteNo    = C2D_SITE_ITEMS
+          .filter(({ key }) => siteItems[key] === 'no')
+          .map(({ key, label }) => `${label}${siteObs[key] ? ` (${siteObs[key]})` : ''}`)
+          .join(' · ');
+        const pruItems  = r.pruebas_deposito?.items || {};
+        const pruObs    = r.pruebas_deposito?.obs   || {};
+        const pruExit   = C2D_PRUEBAS_ITEMS.filter(({ key }) => pruItems[key] === 'exitoso').length;
+        const pruFall   = C2D_PRUEBAS_ITEMS
+          .filter(({ key }) => pruItems[key] === 'fallido')
+          .map(({ key, label }) => `${label}${pruObs[key] ? ` (${pruObs[key]})` : ''}`)
+          .join(' · ');
         return {
           'Fecha':             r.fecha || '',
           'ID C2D':            r.id_atm_texto || '',
@@ -98,6 +111,10 @@ export default function C2dPage() {
           'Hora Inicio':       r.hora_inicio || '',
           'Hora Fin':          r.hora_fin || '',
           'Cash Control':      r.tiene_cash_control === true ? 'Sí' : r.tiene_cash_control === false ? 'No' : '',
+          'Site OK':           C2D_SITE_ITEMS.filter(({ key }) => siteItems[key] === 'si').length,
+          'Site con Obs.':     siteNo || '—',
+          'Pruebas Exitosas':  pruExit,
+          'Pruebas Fallidas':  pruFall || '—',
           'Voltaje Equipo L-T': r.voltajes?.equipo?.lt || '',
           'Voltaje Equipo L-N': r.voltajes?.equipo?.ln || '',
           'Voltaje Equipo N-T': r.voltajes?.equipo?.nt || '',
@@ -114,6 +131,7 @@ export default function C2dPage() {
         { wch: 12 }, { wch: 14 }, { wch: 28 }, { wch: 15 },
         { wch: 13 }, { wch: 15 }, { wch: 25 }, { wch: 12 },
         { wch: 10 }, { wch: 10 }, { wch: 12 },
+        { wch: 10 }, { wch: 45 }, { wch: 12 }, { wch: 45 },
         { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 14 },
         { wch: 10 }, { wch: 15 }, { wch: 12 }, { wch: 50 }, { wch: 50 },
       ];
@@ -302,6 +320,22 @@ export default function C2dPage() {
               {detalle.voltajes_fuera_rango && <div style={{ marginTop: 8, color: '#ef4444', fontWeight: 600, fontSize: 12 }}>⚠ Fuera de rango</div>}
             </DetalleSection>
 
+            <DetalleSection title="Estado del site">
+              {C2D_SITE_ITEMS.map(({ key, label }) => {
+                const val = detalle.estado_site?.items?.[key];
+                const obs = detalle.estado_site?.obs?.[key];
+                const color = val === 'si' ? '#22c55e' : val === 'no' ? '#ef4444' : '#64748b';
+                const badge = val === 'si' ? '✓ OK' : val === 'no' ? '✕ No' : '—';
+                return (
+                  <div key={key} style={{ display: 'flex', gap: 10, marginBottom: 8, fontSize: 13 }}>
+                    <span style={{ minWidth: 190, color: '#94a3b8' }}>{label}</span>
+                    <span style={{ color, fontWeight: 600 }}>{badge}</span>
+                    {obs && <span style={{ flex: 1, color: '#cbd5e1', fontStyle: 'italic' }}>— {obs}</span>}
+                  </div>
+                );
+              })}
+            </DetalleSection>
+
             <DetalleSection title="Dispositivos">
               {Object.entries(detalle.dispositivos || {}).map(([k, c]) => (
                 <div key={k} style={{ display: 'flex', gap: 10, marginBottom: 8, fontSize: 13 }}>
@@ -311,6 +345,21 @@ export default function C2dPage() {
                   {c.obs && <span style={{ flex: 1, color: '#cbd5e1', fontStyle: 'italic' }}>— {c.obs}</span>}
                 </div>
               ))}
+            </DetalleSection>
+
+            <DetalleSection title="Pruebas de depósito">
+              {C2D_PRUEBAS_ITEMS.map(({ key, label }) => {
+                const val = detalle.pruebas_deposito?.items?.[key];
+                const obs = detalle.pruebas_deposito?.obs?.[key];
+                const color = val === 'exitoso' ? '#22c55e' : val === 'fallido' ? '#ef4444' : '#64748b';
+                return (
+                  <div key={key} style={{ display: 'flex', gap: 10, marginBottom: 8, fontSize: 13 }}>
+                    <span style={{ minWidth: 190, color: '#94a3b8' }}>{label}</span>
+                    <span style={{ color, fontWeight: 600 }}>{C2D_PRUEBA_LABELS[val] || '—'}</span>
+                    {obs && <span style={{ flex: 1, color: '#cbd5e1', fontStyle: 'italic' }}>— {obs}</span>}
+                  </div>
+                );
+              })}
             </DetalleSection>
 
             <DetalleSection title="Observaciones generales">
