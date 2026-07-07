@@ -1,5 +1,5 @@
 import React from 'react';
-import { C2D_DEVICE_KEYS, C2D_DEVICE_LABELS, C2D_ESTADO_LABELS, computeVoltajesFueraDeRango } from '../services/c2dService.js';
+import { C2D_DEVICE_KEYS, C2D_DEVICE_LABELS, C2D_ESTADO_LABELS, C2D_SITE_ITEMS, C2D_PRUEBAS_ITEMS, C2D_PRUEBA_LABELS, computeVoltajesFueraDeRango } from '../services/c2dService.js';
 import { VOLT_MIN, VOLT_MAX, NT_MAX, voltEstadoCampo } from '../constants/voltages.js';
 
 /* ══════════════════════════════════════════════════
@@ -249,7 +249,58 @@ export default function C2dPdfView({ form }) {
             </tbody>
           </table>
 
-          <SecTitle title="4 · Observaciones generales" />
+          <SecTitle title="4 · Estado del site" />
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: FS }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: `1px solid ${BORD}`, fontSize: FS - 1, color: '#666' }}>Item</th>
+                <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: `1px solid ${BORD}`, fontSize: FS - 1, color: '#666' }}>Resultado</th>
+                <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: `1px solid ${BORD}`, fontSize: FS - 1, color: '#666' }}>Observación</th>
+              </tr>
+            </thead>
+            <tbody>
+              {C2D_SITE_ITEMS.map(({ key, label }) => {
+                const val = form.site?.[key];
+                const obs = form.siteObs?.[key];
+                const color = val === 'si' ? '#16a34a' : val === 'no' ? '#dc2626' : '#999';
+                const badge = val === 'si' ? '✓ OK' : val === 'no' ? '✕ No' : '—';
+                return (
+                  <tr key={key}>
+                    <td style={{ padding: '4px 6px', borderBottom: '1px solid #eee' }}>{label}</td>
+                    <td style={{ padding: '4px 6px', borderBottom: '1px solid #eee', color, fontWeight: 700 }}>{badge}</td>
+                    <td style={{ padding: '4px 6px', borderBottom: '1px solid #eee', color: '#333' }}>{obs || '—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <SecTitle title="5 · Pruebas de depósito" />
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: FS }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: `1px solid ${BORD}`, fontSize: FS - 1, color: '#666' }}>Prueba</th>
+                <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: `1px solid ${BORD}`, fontSize: FS - 1, color: '#666' }}>Resultado</th>
+                <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: `1px solid ${BORD}`, fontSize: FS - 1, color: '#666' }}>Observación</th>
+              </tr>
+            </thead>
+            <tbody>
+              {C2D_PRUEBAS_ITEMS.map(({ key, label }) => {
+                const val = form.pruebas?.[key];
+                const obs = form.pruebasObs?.[key];
+                const color = val === 'exitoso' ? '#16a34a' : val === 'fallido' ? '#dc2626' : '#999';
+                return (
+                  <tr key={key}>
+                    <td style={{ padding: '4px 6px', borderBottom: '1px solid #eee' }}>{label}</td>
+                    <td style={{ padding: '4px 6px', borderBottom: '1px solid #eee', color, fontWeight: 700 }}>{C2D_PRUEBA_LABELS[val] || '—'}</td>
+                    <td style={{ padding: '4px 6px', borderBottom: '1px solid #eee', color: '#333' }}>{obs || '—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <SecTitle title="6 · Observaciones generales" />
           <div style={{ fontSize: FS, color: '#111', lineHeight: 1.5, whiteSpace: 'pre-wrap', minHeight: 40, border: '1px solid #ddd', borderRadius: 4, padding: '6px 10px', background: '#fafafa' }}>
             {form.obsGenerales || '—'}
           </div>
