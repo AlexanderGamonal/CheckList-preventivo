@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 import * as XLSX from 'xlsx';
 import AdminLayout from '../../admin/AdminLayout.jsx';
 import { supabase } from '../../lib/supabase.js';
-import { C2D_DEVICE_LABELS, C2D_ESTADO_LABELS, C2D_SITE_ITEMS, C2D_PRUEBAS_ITEMS, C2D_PRUEBA_LABELS } from '../../services/c2dService.js';
+import { C2D_DEVICE_LABELS, C2D_ESTADO_LABELS, C2D_SITE_ITEMS, C2D_PRUEBAS_ITEMS, C2D_PRUEBA_LABELS, c2dEstadoFinal as estadoFinal, c2dContarPorEstado as contarPorEstado } from '../../services/c2dService.js';
 import { VOLT_MIN, VOLT_MAX, NT_MAX } from '../../constants/voltages.js';
 import KpiCard from '../../components/dashboard/KpiCard.jsx';
 import LeyendaModal, { LeyendaSection } from '../../components/dashboard/LeyendaModal.jsx';
@@ -24,24 +24,6 @@ const ESTADO_FINAL_LABEL = {
   malo:        'Con falla',
 };
 
-const C2D_DEVICE_KEYS_INTERNAL = ['cashToday', 'validador', 'mecanismos', 'gabinete', 'routerTeldat'];
-
-function estadoFinal(disp) {
-  const estados = Object.values(disp || {}).map(c => c?.estado).filter(Boolean);
-  if (!estados.length) return null;
-  if (estados.some(e => e === 'malo'))        return 'malo';
-  if (estados.some(e => e === 'observacion')) return 'observacion';
-  return 'operativo';
-}
-
-function contarPorEstado(disp) {
-  const counts = { operativo: 0, observacion: 0, malo: 0 };
-  Object.values(disp || {}).forEach(c => {
-    if (c?.estado && counts[c.estado] !== undefined) counts[c.estado]++;
-  });
-  return counts;
-}
-
 function dispositivosConFalla(disp) {
   return Object.entries(disp || {})
     .filter(([, c]) => c?.estado === 'malo' || c?.estado === 'observacion')
@@ -53,8 +35,9 @@ export default function C2dPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tecnicos, setTecnicos] = useState([]);
-  const [filtros, setFiltros] = useState({
-    desde: '', hasta: '', id_atm: '', punto: '', tecnico_nombre: '',
+  const [filtrosFecha, setFiltrosFecha] = useState({ desde: '', hasta: '' });
+  const [filtrosLista, setFiltrosLista] = useState({
+    id_atm: '', punto: '', tecnico_nombre: '',
     tiene_cash_control: '', voltajes_fuera_rango: '',
   });
   const [tab, setTab] = useState(0);
@@ -77,22 +60,12 @@ export default function C2dPage() {
       .select('id, created_at, fecha, hora_inicio, hora_fin, id_atm_texto, punto_texto, nro_serie, marca_texto, modelo_texto, tecnico_id, tecnico_nombre, tecnico_num, tiene_cash_control, estado_site, pruebas_deposito, voltajes, voltajes_fuera_rango, dispositivos, obs_generales')
       .order('created_at', { ascending: false })
       .limit(200);
-    if (filtros.desde)                       q = q.gte('fecha', filtros.desde);
-    if (filtros.hasta)                       q = q.lte('fecha', filtros.hasta);
-    if (filtros.id_atm.trim())               q = q.ilike('id_atm_texto', `%${filtros.id_atm.trim()}%`);
-    if (filtros.punto.trim())                q = q.ilike('punto_texto', `%${filtros.punto.trim()}%`);
-    if (filtros.tecnico_nombre)              q = q.eq('tecnico_nombre', filtros.tecnico_nombre);
-    if (filtros.tiene_cash_control === 'si') q = q.eq('tiene_cash_control', true);
-    if (filtros.tiene_cash_control === 'no') q = q.eq('tiene_cash_control', false);
-    if (filtros.voltajes_fuera_rango === 'si') q = q.eq('voltajes_fuera_rango', true);
+    if (filtrosFecha.desde) q = q.gte('fecha', filtrosFecha.desde);
+    if (filtrosFecha.hasta) q = q.lte('fecha', filtrosFecha.hasta);
     const { data, error } = await q;
     if (error) console.error(error);
     setRows(data || []);
     setLoading(false);
-  }
-
-  function limpiarFiltros() {
-    setFiltros({ desde: '', hasta: '', id_atm: '', punto: '', tecnico_nombre: '', tiene_cash_control: '', voltajes_fuera_rango: '' });
   }
 
   const enriched = useMemo(() => rows.map(r => {
@@ -286,54 +259,25 @@ export default function C2dPage() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div style={{ background: '#1e293b', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
-        <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', marginBottom: 12 }}>Filtros</div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Desde</label>
-            <input type="date" value={filtros.desde} onChange={e => setFiltros(p => ({ ...p, desde: e.target.value }))} style={INPUT_STYLE} />
-          </div>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Hasta</label>
-            <input type="date" value={filtros.hasta} onChange={e => setFiltros(p => ({ ...p, hasta: e.target.value }))} style={INPUT_STYLE} />
-          </div>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>ID C2D</label>
-            <input type="text" placeholder="Buscar..." value={filtros.id_atm} onChange={e => setFiltros(p => ({ ...p, id_atm: e.target.value }))} style={{ ...INPUT_STYLE, minWidth: 140 }} />
-          </div>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Punto</label>
-            <input type="text" placeholder="Buscar..." value={filtros.punto} onChange={e => setFiltros(p => ({ ...p, punto: e.target.value }))} style={{ ...INPUT_STYLE, minWidth: 140 }} />
-          </div>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Técnico</label>
-            <select value={filtros.tecnico_nombre} onChange={e => setFiltros(p => ({ ...p, tecnico_nombre: e.target.value }))} style={INPUT_STYLE}>
-              <option value="">Todos</option>
-              {tecnicos.map(t => <option key={t.nombre}>{t.nombre}</option>)}
-            </select>
-          </div>
+      {/* Rango de fechas — afecta el dataset base de ambos tabs */}
+      <div style={{ background: '#1e293b', borderRadius: 12, padding: '12px 20px', marginBottom: 20, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div>
+          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Desde</label>
+          <input type="date" value={filtrosFecha.desde}
+            onChange={e => setFiltrosFecha(p => ({ ...p, desde: e.target.value }))}
+            style={INPUT_STYLE} />
         </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Cash Control</label>
-            <select value={filtros.tiene_cash_control} onChange={e => setFiltros(p => ({ ...p, tiene_cash_control: e.target.value }))} style={INPUT_STYLE}>
-              <option value="">Todos</option>
-              <option value="si">Con Cash Control</option>
-              <option value="no">Sin Cash Control</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Voltajes</label>
-            <select value={filtros.voltajes_fuera_rango} onChange={e => setFiltros(p => ({ ...p, voltajes_fuera_rango: e.target.value }))} style={INPUT_STYLE}>
-              <option value="">Todos</option>
-              <option value="si">Solo con anomalía</option>
-            </select>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={fetchData} style={{ padding: '7px 18px', borderRadius: 6, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Filtrar</button>
-            <button onClick={() => { limpiarFiltros(); setTimeout(fetchData, 0); }} style={{ padding: '7px 14px', borderRadius: 6, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}>Limpiar</button>
-          </div>
+        <div>
+          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Hasta</label>
+          <input type="date" value={filtrosFecha.hasta}
+            onChange={e => setFiltrosFecha(p => ({ ...p, hasta: e.target.value }))}
+            style={INPUT_STYLE} />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={fetchData}
+            style={{ padding: '7px 18px', borderRadius: 6, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Actualizar</button>
+          <button onClick={() => { setFiltrosFecha({ desde: '', hasta: '' }); setTimeout(fetchData, 0); }}
+            style={{ padding: '7px 14px', borderRadius: 6, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}>Limpiar</button>
         </div>
       </div>
 
@@ -379,6 +323,8 @@ export default function C2dPage() {
           enriched={enriched} loading={loading}
           hoveredRow={hoveredRow} setHoveredRow={setHoveredRow}
           onDetalle={setDetalle}
+          filtros={filtrosLista} setFiltros={setFiltrosLista}
+          tecnicos={tecnicos}
         />
       )}
 
@@ -531,8 +477,64 @@ function TabEjecutiva({ stats, pieData, dispositivosRanking, pruebasFallidasRank
 
 /* ══════════════════════ TAB LISTA ══════════════════════ */
 
-function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle }) {
+function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, filtros, setFiltros, tecnicos }) {
+  const filtered = useMemo(() => enriched.filter(r => {
+    if (filtros.id_atm.trim() && !(r.id_atm_texto || '').toLowerCase().includes(filtros.id_atm.trim().toLowerCase())) return false;
+    if (filtros.punto.trim() && !(r.punto_texto || '').toLowerCase().includes(filtros.punto.trim().toLowerCase())) return false;
+    if (filtros.tecnico_nombre && r.tecnico_nombre !== filtros.tecnico_nombre) return false;
+    if (filtros.tiene_cash_control === 'si' && r.tiene_cash_control !== true) return false;
+    if (filtros.tiene_cash_control === 'no' && r.tiene_cash_control !== false) return false;
+    if (filtros.voltajes_fuera_rango === 'si' && !r.voltajes_fuera_rango) return false;
+    return true;
+  }), [enriched, filtros]);
+
+  function limpiar() {
+    setFiltros({ id_atm: '', punto: '', tecnico_nombre: '', tiene_cash_control: '', voltajes_fuera_rango: '' });
+  }
+
   return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Filtros de lista */}
+      <div style={{ background: '#1e293b', borderRadius: 12, padding: '16px 20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Filtros de búsqueda</div>
+          <button onClick={limpiar} style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', fontSize: 11, cursor: 'pointer' }}>Limpiar</button>
+        </div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>ID C2D</label>
+            <input type="text" placeholder="Buscar..." value={filtros.id_atm} onChange={e => setFiltros(p => ({ ...p, id_atm: e.target.value }))} style={{ ...INPUT_STYLE, minWidth: 140 }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Punto</label>
+            <input type="text" placeholder="Buscar..." value={filtros.punto} onChange={e => setFiltros(p => ({ ...p, punto: e.target.value }))} style={{ ...INPUT_STYLE, minWidth: 140 }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Técnico</label>
+            <select value={filtros.tecnico_nombre} onChange={e => setFiltros(p => ({ ...p, tecnico_nombre: e.target.value }))} style={INPUT_STYLE}>
+              <option value="">Todos</option>
+              {tecnicos.map(t => <option key={t.nombre}>{t.nombre}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Cash Control</label>
+            <select value={filtros.tiene_cash_control} onChange={e => setFiltros(p => ({ ...p, tiene_cash_control: e.target.value }))} style={INPUT_STYLE}>
+              <option value="">Todos</option>
+              <option value="si">Con Cash Control</option>
+              <option value="no">Sin Cash Control</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Voltajes</label>
+            <select value={filtros.voltajes_fuera_rango} onChange={e => setFiltros(p => ({ ...p, voltajes_fuera_rango: e.target.value }))} style={INPUT_STYLE}>
+              <option value="">Todos</option>
+              <option value="si">Solo con anomalía</option>
+            </select>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: '#64748b' }}>Mostrando <b style={{ color: '#e2e8f0' }}>{filtered.length}</b> de {enriched.length} registros</div>
+      </div>
+
     <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
         <thead>
@@ -548,9 +550,9 @@ function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle }) {
               <span style={{ display: 'inline-block', width: 20, height: 20, border: '2px solid #334155', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
               <span style={{ marginLeft: 10 }}>Cargando...</span>
             </td></tr>
-          ) : enriched.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <tr><td colSpan={10} style={{ ...TD, textAlign: 'center', color: '#64748b', padding: 40 }}>Sin resultados</td></tr>
-          ) : enriched.map((r, i) => {
+          ) : filtered.map((r, i) => {
             const isHovered = hoveredRow === r.id;
             const rowBg = isHovered ? '#263548' : (i % 2 === 0 ? '#1e293b' : '#172033');
             const fallas = dispositivosConFalla(r.dispositivos);
@@ -583,6 +585,7 @@ function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle }) {
           })}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }

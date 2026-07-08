@@ -41,9 +41,9 @@ export default function MantenimientosPage() {
   const [loading, setLoading] = useState(true);
   const [marcas, setMarcas] = useState([]);
   const [tecnicos, setTecnicos] = useState([]);
-  const [filtros, setFiltros] = useState({
-    desde: '', hasta: '', est_final: '',
-    id_atm: '', punto: '', marca: '', tecnico_nombre: '',
+  const [filtrosFecha, setFiltrosFecha] = useState({ desde: '', hasta: '' });
+  const [filtrosLista, setFiltrosLista] = useState({
+    est_final: '', id_atm: '', punto: '', marca: '', tecnico_nombre: '',
     disp_buenos_min: '', disp_defectuosos_min: '',
   });
   const [tab, setTab] = useState(0);
@@ -68,22 +68,11 @@ export default function MantenimientosPage() {
       .select('id, fecha, id_atm_texto, punto_texto, marca_texto, tecnico_nombre, est_final, disp_buenos, disp_defectuosos, disp_regulares, disp_no_aplica, obs_gen, resultados, recomendaciones, dispositivos, voltajes, site_eval')
       .order('fecha', { ascending: false })
       .limit(200);
-    if (filtros.desde)               q = q.gte('fecha', filtros.desde);
-    if (filtros.hasta)               q = q.lte('fecha', filtros.hasta);
-    if (filtros.est_final)           q = q.eq('est_final', filtros.est_final);
-    if (filtros.id_atm.trim())       q = q.ilike('id_atm_texto', `%${filtros.id_atm.trim()}%`);
-    if (filtros.punto.trim())        q = q.ilike('punto_texto', `%${filtros.punto.trim()}%`);
-    if (filtros.marca)               q = q.eq('marca_texto', filtros.marca);
-    if (filtros.tecnico_nombre)      q = q.eq('tecnico_nombre', filtros.tecnico_nombre);
-    if (filtros.disp_buenos_min !== '') q = q.gte('disp_buenos', parseInt(filtros.disp_buenos_min));
-    if (filtros.disp_defectuosos_min !== '') q = q.gte('disp_defectuosos', parseInt(filtros.disp_defectuosos_min));
+    if (filtrosFecha.desde) q = q.gte('fecha', filtrosFecha.desde);
+    if (filtrosFecha.hasta) q = q.lte('fecha', filtrosFecha.hasta);
     const { data } = await q;
     setRows(data || []);
     setLoading(false);
-  }
-
-  function limpiarFiltros() {
-    setFiltros({ desde: '', hasta: '', est_final: '', id_atm: '', punto: '', marca: '', tecnico_nombre: '', disp_buenos_min: '', disp_defectuosos_min: '' });
   }
 
   const enriched = useMemo(() => rows.map(r => ({
@@ -251,93 +240,33 @@ export default function MantenimientosPage() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div style={{ background: '#1e293b', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
-        <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', marginBottom: 12 }}>Filtros</div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-          {[['desde', 'Desde', 'date'], ['hasta', 'Hasta', 'date']].map(([key, label, type]) => (
-            <div key={key}>
-              <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>{label}</label>
-              <input type={type} value={filtros[key]}
-                onChange={e => setFiltros(p => ({ ...p, [key]: e.target.value }))}
-                style={INPUT_STYLE}
-              />
-            </div>
-          ))}
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Estado</label>
-            <select value={filtros.est_final}
-              onChange={e => setFiltros(p => ({ ...p, est_final: e.target.value }))}
-              style={INPUT_STYLE}
-            >
-              <option value="">Todos</option>
-              <option>Operativo</option>
-              <option>Inoperativo</option>
-              <option>Operativo con observaciones</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>ID ATM</label>
-            <input type="text" placeholder="Buscar..." value={filtros.id_atm}
-              onChange={e => setFiltros(p => ({ ...p, id_atm: e.target.value }))}
-              style={{ ...INPUT_STYLE, minWidth: 140 }}
-            />
-          </div>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Punto</label>
-            <input type="text" placeholder="Buscar..." value={filtros.punto}
-              onChange={e => setFiltros(p => ({ ...p, punto: e.target.value }))}
-              style={{ ...INPUT_STYLE, minWidth: 140 }}
-            />
-          </div>
+      {/* Rango de fechas — afecta el dataset base de ambos tabs */}
+      <div style={{ background: '#1e293b', borderRadius: 12, padding: '12px 20px', marginBottom: 20, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div>
+          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Desde</label>
+          <input type="date" value={filtrosFecha.desde}
+            onChange={e => setFiltrosFecha(p => ({ ...p, desde: e.target.value }))}
+            style={INPUT_STYLE}
+          />
         </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Marca</label>
-            <select value={filtros.marca}
-              onChange={e => setFiltros(p => ({ ...p, marca: e.target.value }))}
-              style={INPUT_STYLE}
-            >
-              <option value="">Todas</option>
-              {marcas.map(m => <option key={m.nombre}>{m.nombre}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Técnico</label>
-            <select value={filtros.tecnico_nombre}
-              onChange={e => setFiltros(p => ({ ...p, tecnico_nombre: e.target.value }))}
-              style={INPUT_STYLE}
-            >
-              <option value="">Todos</option>
-              {tecnicos.map(t => <option key={t.nombre}>{t.nombre}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Disp. Buenos ≥</label>
-            <input type="number" min="0" placeholder="0" value={filtros.disp_buenos_min}
-              onChange={e => setFiltros(p => ({ ...p, disp_buenos_min: e.target.value }))}
-              style={{ ...INPUT_STYLE, minWidth: 90 }}
-            />
-          </div>
-          <div>
-            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Disp. Defect. ≥</label>
-            <input type="number" min="0" placeholder="0" value={filtros.disp_defectuosos_min}
-              onChange={e => setFiltros(p => ({ ...p, disp_defectuosos_min: e.target.value }))}
-              style={{ ...INPUT_STYLE, minWidth: 90 }}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={fetchData}
-              style={{ padding: '7px 18px', borderRadius: 6, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-            >
-              Filtrar
-            </button>
-            <button onClick={() => { limpiarFiltros(); setTimeout(fetchData, 0); }}
-              style={{ padding: '7px 14px', borderRadius: 6, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}
-            >
-              Limpiar
-            </button>
-          </div>
+        <div>
+          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Hasta</label>
+          <input type="date" value={filtrosFecha.hasta}
+            onChange={e => setFiltrosFecha(p => ({ ...p, hasta: e.target.value }))}
+            style={INPUT_STYLE}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={fetchData}
+            style={{ padding: '7px 18px', borderRadius: 6, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          >
+            Actualizar
+          </button>
+          <button onClick={() => { setFiltrosFecha({ desde: '', hasta: '' }); setTimeout(fetchData, 0); }}
+            style={{ padding: '7px 14px', borderRadius: 6, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}
+          >
+            Limpiar
+          </button>
         </div>
       </div>
 
@@ -384,6 +313,8 @@ export default function MantenimientosPage() {
           enriched={enriched} loading={loading}
           hoveredRow={hoveredRow} setHoveredRow={setHoveredRow}
           onDetalle={setDetalle}
+          filtros={filtrosLista} setFiltros={setFiltrosLista}
+          marcas={marcas} tecnicos={tecnicos}
         />
       )}
 
@@ -537,8 +468,74 @@ function TabEjecutiva({ stats, pieData, defectosPorMarca, porMes, puntosInoperat
 
 /* ══════════════════════ TAB LISTA ══════════════════════ */
 
-function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle }) {
+function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, filtros, setFiltros, marcas, tecnicos }) {
+  const filtered = React.useMemo(() => enriched.filter(r => {
+    if (filtros.est_final && r.est_final !== filtros.est_final) return false;
+    if (filtros.id_atm.trim() && !(r.id_atm_texto || '').toLowerCase().includes(filtros.id_atm.trim().toLowerCase())) return false;
+    if (filtros.punto.trim() && !(r.punto_texto || '').toLowerCase().includes(filtros.punto.trim().toLowerCase())) return false;
+    if (filtros.marca && r.marca_texto !== filtros.marca) return false;
+    if (filtros.tecnico_nombre && r.tecnico_nombre !== filtros.tecnico_nombre) return false;
+    if (filtros.disp_buenos_min !== '' && (r.disp_buenos ?? 0) < parseInt(filtros.disp_buenos_min)) return false;
+    if (filtros.disp_defectuosos_min !== '' && (r.disp_defectuosos ?? 0) < parseInt(filtros.disp_defectuosos_min)) return false;
+    return true;
+  }), [enriched, filtros]);
+
+  function limpiar() {
+    setFiltros({ est_final: '', id_atm: '', punto: '', marca: '', tecnico_nombre: '', disp_buenos_min: '', disp_defectuosos_min: '' });
+  }
+
   return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Filtros de lista */}
+      <div style={{ background: '#1e293b', borderRadius: 12, padding: '16px 20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Filtros de búsqueda</div>
+          <button onClick={limpiar} style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', fontSize: 11, cursor: 'pointer' }}>Limpiar</button>
+        </div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Estado</label>
+            <select value={filtros.est_final} onChange={e => setFiltros(p => ({ ...p, est_final: e.target.value }))} style={INPUT_STYLE}>
+              <option value="">Todos</option>
+              <option>Operativo</option>
+              <option>Inoperativo</option>
+              <option>Operativo con observaciones</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>ID ATM</label>
+            <input type="text" placeholder="Buscar..." value={filtros.id_atm} onChange={e => setFiltros(p => ({ ...p, id_atm: e.target.value }))} style={{ ...INPUT_STYLE, minWidth: 140 }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Punto</label>
+            <input type="text" placeholder="Buscar..." value={filtros.punto} onChange={e => setFiltros(p => ({ ...p, punto: e.target.value }))} style={{ ...INPUT_STYLE, minWidth: 140 }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Marca</label>
+            <select value={filtros.marca} onChange={e => setFiltros(p => ({ ...p, marca: e.target.value }))} style={INPUT_STYLE}>
+              <option value="">Todas</option>
+              {marcas.map(m => <option key={m.nombre}>{m.nombre}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Técnico</label>
+            <select value={filtros.tecnico_nombre} onChange={e => setFiltros(p => ({ ...p, tecnico_nombre: e.target.value }))} style={INPUT_STYLE}>
+              <option value="">Todos</option>
+              {tecnicos.map(t => <option key={t.nombre}>{t.nombre}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Buenos ≥</label>
+            <input type="number" min="0" placeholder="0" value={filtros.disp_buenos_min} onChange={e => setFiltros(p => ({ ...p, disp_buenos_min: e.target.value }))} style={{ ...INPUT_STYLE, minWidth: 80 }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Defect. ≥</label>
+            <input type="number" min="0" placeholder="0" value={filtros.disp_defectuosos_min} onChange={e => setFiltros(p => ({ ...p, disp_defectuosos_min: e.target.value }))} style={{ ...INPUT_STYLE, minWidth: 80 }} />
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: '#64748b' }}>Mostrando <b style={{ color: '#e2e8f0' }}>{filtered.length}</b> de {enriched.length} registros</div>
+      </div>
+
     <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
         <thead>
@@ -554,9 +551,9 @@ function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle }) {
               <span style={{ display: 'inline-block', width: 20, height: 20, border: '2px solid #334155', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
               <span style={{ marginLeft: 10 }}>Cargando...</span>
             </td></tr>
-          ) : enriched.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <tr><td colSpan={10} style={{ ...TD, textAlign: 'center', color: '#64748b', padding: 40 }}>Sin resultados</td></tr>
-          ) : enriched.map((r, i) => {
+          ) : filtered.map((r, i) => {
             const isHovered = hoveredRow === r.id;
             const rowBg = isHovered ? '#263548' : (i % 2 === 0 ? '#1e293b' : '#172033');
             return (
@@ -588,6 +585,7 @@ function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle }) {
           })}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }
