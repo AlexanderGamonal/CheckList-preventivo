@@ -2,12 +2,14 @@ import { supabase } from '../lib/supabase.js';
 import { buildEmailSummary } from './mantenimientoService.js';
 import { buildAuditoriaEmailSummary } from './auditoriaService.js';
 import { buildC2dEmailSummary } from './c2dService.js';
+import { resolveGrupoMP } from '../constants/emailGrupos.js';
 
 export async function sendNotificationEmail(form, pdfArrayBuffer, onStep) {
   const summary = buildEmailSummary(form);
   const sanitize = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9\-_]/g, '-').replace(/-+/g, '-');
   const filename = `MP-${sanitize(form.punto)}-${form.idAtm}.pdf`;
   const storagePath = `temp/${Date.now()}-${filename}`;
+  const grupo = resolveGrupoMP(form.cliente);
 
   onStep?.('Subiendo PDF…');
   const { error: uploadError } = await supabase.storage
@@ -25,6 +27,7 @@ export async function sendNotificationEmail(form, pdfArrayBuffer, onStep) {
       text: summary,
       storagePath,
       filename,
+      grupo,
     },
   });
 
@@ -62,6 +65,7 @@ export async function sendC2dEmail(form, pdfArrayBuffer, onStep) {
       text: summary,
       storagePath,
       filename,
+      grupo: 'c2d',
     },
   });
 
@@ -98,6 +102,7 @@ export async function sendAuditoriaEmail(form, pdfArrayBuffer, onStep) {
       text: summary,
       storagePath,
       filename,
+      grupo: 'atm_bbva',
     },
   });
 

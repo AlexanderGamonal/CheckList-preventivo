@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AdminLayout from '../../admin/AdminLayout.jsx';
 import { supabase } from '../../lib/supabase.js';
 import { useIsMobile } from '../../hooks/useIsMobile.js';
+import { EMAIL_GRUPOS, EMAIL_GRUPO_LABEL, EMAIL_GRUPO_COLOR } from '../../constants/emailGrupos.js';
 
 const TH = { padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #334155' };
 const TD = { padding: '10px 14px', fontSize: 13, color: '#e2e8f0', borderBottom: '1px solid #0f172a' };
@@ -12,7 +13,7 @@ const INP_STYLE = {
 };
 const LABEL_STYLE = { display: 'block', color: '#94a3b8', fontSize: 11, fontWeight: 700, marginBottom: 6, textTransform: 'uppercase' };
 
-const EMPTY_FORM = { nombre: '', email: '' };
+const EMPTY_FORM = { nombre: '', email: '', grupos: ['atm_bbva'] };
 
 export default function ContactosEmailPage() {
   const isMobile = useIsMobile();
@@ -26,6 +27,7 @@ export default function ContactosEmailPage() {
   const [togglingId, setTogglingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [toast, setToast] = useState('');
+  const [filtroGrupo, setFiltroGrupo] = useState('');
 
   useEffect(() => { loadContactos(); }, []);
 
@@ -33,7 +35,7 @@ export default function ContactosEmailPage() {
     setLoading(true);
     const { data } = await supabase
       .from('email_contactos')
-      .select('id, nombre, email, activo')
+      .select('id, nombre, email, activo, grupos')
       .order('nombre');
     setContactos(data || []);
     setLoading(false);
@@ -53,7 +55,7 @@ export default function ContactosEmailPage() {
 
   function openEdit(c) {
     setEditRow(c);
-    setForm({ nombre: c.nombre, email: c.email });
+    setForm({ nombre: c.nombre, email: c.email, grupos: c.grupos?.length ? c.grupos : ['atm_bbva'] });
     setError('');
     setShowModal(true);
   }
@@ -65,20 +67,30 @@ export default function ContactosEmailPage() {
     setError('');
   }
 
+  function toggleGrupo(key) {
+    setForm(p => ({
+      ...p,
+      grupos: p.grupos.includes(key) ? p.grupos.filter(g => g !== key) : [...p.grupos, key],
+    }));
+  }
+
   async function handleSave() {
-    const { nombre, email } = form;
+    const { nombre, email, grupos } = form;
     if (!nombre.trim() || !email.trim()) {
       setError('Nombre y email son obligatorios.');
       return;
     }
-    // Basic email validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError('Ingrese un email valido.');
       return;
     }
+    if (!grupos || grupos.length === 0) {
+      setError('Seleccione al menos un grupo.');
+      return;
+    }
     setSaving(true);
     setError('');
-    const payload = { nombre: nombre.trim(), email: email.trim().toLowerCase() };
+    const payload = { nombre: nombre.trim(), email: email.trim().toLowerCase(), grupos };
     let res;
     if (editRow) {
       res = await supabase.from('email_contactos').update(payload).eq('id', editRow.id);
@@ -127,20 +139,29 @@ export default function ContactosEmailPage() {
     }
   }
 
-  const activeCount = contactos.filter(c => c.activo).length;
+  const filtrados = useMemo(() => (
+    filtroGrupo ? contactos.filter(c => (c.grupos || []).includes(filtroGrupo)) : contactos
+  ), [contactos, filtroGrupo]);
+
+  const activeCount = filtrados.filter(c => c.activo).length;
+
+  const countsPorGrupo = useMemo(() => {
+    const acc = {};
+    EMAIL_GRUPOS.forEach(g => { acc[g.key] = 0; });
+    contactos.forEach(c => {
+      if (!c.activo) return;
+      (c.grupos || []).forEach(g => { if (acc[g] !== undefined) acc[g]++; });
+    });
+    return acc;
+  }, [contactos]);
 
   return (
     <AdminLayout>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ color: '#f8fafc', fontSize: 22, fontWeight: 700 }}>Contactos Email</h1>
           <p style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
-            Destinatarios para notificaciones de mantenimiento
-            {!loading && (
-              <span style={{ marginLeft: 8, color: activeCount > 0 ? '#22c55e' : '#ef4444' }}>
-                ({activeCount} activo{activeCount !== 1 ? 's' : ''})
-              </span>
-            )}
+            Destinatarios para notificaciones — separados por grupo (BBVA, Scotiabank, JV LATM, C2D)
           </p>
         </div>
         <button
@@ -151,10 +172,60 @@ export default function ContactosEmailPage() {
         </button>
       </div>
 
-      {/* Info banner */}
-      <div style={{ background: '#1e293b', borderRadius: 10, padding: '12px 16px', marginBottom: 20, borderLeft: '3px solid #3b82f6', fontSize: 12, color: '#94a3b8' }}>
-        Los contactos activos recibiran el PDF de mantenimiento por email al finalizar cada checklist.
-        La funcion de envio utiliza la Edge Function <code style={{ background: '#0f172a', padding: '1px 6px', borderRadius: 4, color: '#60a5fa' }}>send-email</code> con la clave service_role para acceder a esta tabla.
+      {/* KPIs por grupo */}
+      {!loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 }}>
+          {EMAIL_GRUPOS.map(g => (
+            <button
+              key={g.key}
+              onClick={() => setFiltroGrupo(filtroGrupo === g.key ? '' : g.key)}
+              style={{
+                padding: '14px 16px', borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                background: filtroGrupo === g.key ? g.color + '22' : '#1e293b',
+                border: `1.5px solid ${filtroGrupo === g.key ? g.color : '#334155'}`,
+                borderLeft: `4px solid ${g.color}`,
+                transition: 'all 0.15s',
+              }}
+            >
+              <div style={{ color: g.color, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{g.label}</div>
+              <div style={{ color: '#f8fafc', fontSize: 26, fontWeight: 800, marginTop: 4 }}>{countsPorGrupo[g.key]}</div>
+              <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>{g.description}</div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Filter bar */}
+      <div style={{ background: '#1e293b', borderRadius: 10, padding: '10px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <span style={{ color: '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Filtro:</span>
+        <button
+          onClick={() => setFiltroGrupo('')}
+          style={{
+            padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            border: '1px solid #334155',
+            background: !filtroGrupo ? '#3b82f6' : 'transparent',
+            color: !filtroGrupo ? '#fff' : '#94a3b8',
+          }}
+        >
+          Todos ({contactos.length})
+        </button>
+        {EMAIL_GRUPOS.map(g => (
+          <button
+            key={g.key}
+            onClick={() => setFiltroGrupo(g.key)}
+            style={{
+              padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              border: '1px solid ' + (filtroGrupo === g.key ? g.color : '#334155'),
+              background: filtroGrupo === g.key ? g.color : 'transparent',
+              color: filtroGrupo === g.key ? '#fff' : '#94a3b8',
+            }}
+          >
+            {g.label}
+          </button>
+        ))}
+        <span style={{ marginLeft: 'auto', color: '#64748b', fontSize: 12 }}>
+          {activeCount} activo{activeCount !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {toast && (
@@ -165,27 +236,46 @@ export default function ContactosEmailPage() {
 
       {/* Table */}
       <div style={{ background: '#1e293b', borderRadius: 12, overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 420 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
           <thead>
             <tr>
-              {['Nombre', 'Email', 'Estado', 'Acciones'].map(h => (
+              {['Nombre', 'Email', 'Grupos', 'Estado', 'Acciones'].map(h => (
                 <th key={h} style={TH}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={4} style={{ ...TD, textAlign: 'center', color: '#64748b' }}>Cargando...</td></tr>
-            ) : contactos.length === 0 ? (
+              <tr><td colSpan={5} style={{ ...TD, textAlign: 'center', color: '#64748b' }}>Cargando...</td></tr>
+            ) : filtrados.length === 0 ? (
               <tr>
-                <td colSpan={4} style={{ ...TD, textAlign: 'center', color: '#64748b', padding: '32px 14px' }}>
-                  No hay contactos configurados. Agrega el primero.
+                <td colSpan={5} style={{ ...TD, textAlign: 'center', color: '#64748b', padding: '32px 14px' }}>
+                  {filtroGrupo
+                    ? `No hay contactos en el grupo "${EMAIL_GRUPO_LABEL[filtroGrupo]}".`
+                    : 'No hay contactos configurados. Agrega el primero.'}
                 </td>
               </tr>
-            ) : contactos.map(c => (
+            ) : filtrados.map(c => (
               <tr key={c.id} style={{ opacity: c.activo ? 1 : 0.5 }}>
                 <td style={{ ...TD, fontWeight: 600 }}>{c.nombre}</td>
                 <td style={{ ...TD, color: '#60a5fa', fontFamily: 'monospace' }}>{c.email}</td>
+                <td style={TD}>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {(c.grupos || []).map(g => (
+                      <span key={g} style={{
+                        padding: '2px 8px', borderRadius: 10, fontSize: 10, fontWeight: 700,
+                        background: (EMAIL_GRUPO_COLOR[g] || '#334155') + '22',
+                        color: EMAIL_GRUPO_COLOR[g] || '#94a3b8',
+                        border: `1px solid ${EMAIL_GRUPO_COLOR[g] || '#334155'}`,
+                      }}>
+                        {EMAIL_GRUPO_LABEL[g] || g}
+                      </span>
+                    ))}
+                    {(!c.grupos || c.grupos.length === 0) && (
+                      <span style={{ color: '#64748b', fontSize: 11 }}>—</span>
+                    )}
+                  </div>
+                </td>
                 <td style={TD}>
                   <span style={{
                     padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 700,
@@ -233,7 +323,7 @@ export default function ContactosEmailPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
         }}>
           <div style={{
-            background: '#1e293b', borderRadius: 16, padding: isMobile ? 20 : 32, width: '100%', maxWidth: 420,
+            background: '#1e293b', borderRadius: 16, padding: isMobile ? 20 : 32, width: '100%', maxWidth: 480,
             boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
           }}>
             <h2 style={{ color: '#f8fafc', fontSize: 18, fontWeight: 700, marginBottom: 24 }}>
@@ -259,6 +349,34 @@ export default function ContactosEmailPage() {
                   placeholder="Ej: coordinacion@empresa.com"
                   style={INP_STYLE}
                 />
+              </div>
+              <div>
+                <label style={LABEL_STYLE}>Grupos * (recibirá correos de:)</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {EMAIL_GRUPOS.map(g => (
+                    <label
+                      key={g.key}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+                        padding: '9px 12px', borderRadius: 8,
+                        background: form.grupos.includes(g.key) ? g.color + '18' : '#0f172a',
+                        border: `1px solid ${form.grupos.includes(g.key) ? g.color : '#334155'}`,
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.grupos.includes(g.key)}
+                        onChange={() => toggleGrupo(g.key)}
+                        style={{ accentColor: g.color }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ color: form.grupos.includes(g.key) ? g.color : '#e2e8f0', fontWeight: 700, fontSize: 13 }}>{g.label}</div>
+                        <div style={{ color: '#64748b', fontSize: 11 }}>{g.description}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
