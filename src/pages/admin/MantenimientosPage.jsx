@@ -41,17 +41,13 @@ export default function MantenimientosPage() {
   const [loading, setLoading] = useState(true);
   const [marcas, setMarcas] = useState([]);
   const [tecnicos, setTecnicos] = useState([]);
-  const [filtrosFecha, setFiltrosFecha] = useState({ desde: '', hasta: '' });
   const [filtrosLista, setFiltrosLista] = useState({
-    est_final: '', id_atm: '', punto: '', marca: '', tecnico_nombre: '',
+    desde: '', hasta: '', est_final: '', id_atm: '', punto: '', marca: '', tecnico_nombre: '',
     disp_buenos_min: '', disp_defectuosos_min: '',
   });
   const [tab, setTab] = useState(0);
   const [detalle, setDetalle] = useState(null);
   const [showLeyenda, setShowLeyenda] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [exportingDisp, setExportingDisp] = useState(false);
-  const [exportingExcel, setExportingExcel] = useState(false);
   const [toast, setToast] = useState('');
   const [hoveredRow, setHoveredRow] = useState(null);
 
@@ -63,14 +59,11 @@ export default function MantenimientosPage() {
 
   async function fetchData() {
     setLoading(true);
-    let q = supabase
+    const { data } = await supabase
       .from('mantenimientos')
       .select('id, fecha, id_atm_texto, punto_texto, marca_texto, tecnico_nombre, est_final, disp_buenos, disp_defectuosos, disp_regulares, disp_no_aplica, obs_gen, resultados, recomendaciones, dispositivos, voltajes, site_eval')
       .order('fecha', { ascending: false })
       .limit(200);
-    if (filtrosFecha.desde) q = q.gte('fecha', filtrosFecha.desde);
-    if (filtrosFecha.hasta) q = q.lte('fecha', filtrosFecha.hasta);
-    const { data } = await q;
     setRows(data || []);
     setLoading(false);
   }
@@ -141,69 +134,6 @@ export default function MantenimientosPage() {
       .slice(0, 5);
   }, [enriched]);
 
-  async function handleExport() {
-    setExporting(true);
-    try {
-      await exportarCSV(filtros);
-      setToast('✓ mantenimientos.csv exportado');
-    } catch (e) {
-      setToast('Error: ' + e.message);
-    } finally {
-      setExporting(false);
-      setTimeout(() => setToast(''), 3000);
-    }
-  }
-
-  async function handleExportDisp() {
-    setExportingDisp(true);
-    try {
-      await exportarDispositivosCSV(filtros);
-      setToast('✓ dispositivos.csv exportado');
-    } catch (e) {
-      setToast('Error: ' + e.message);
-    } finally {
-      setExportingDisp(false);
-      setTimeout(() => setToast(''), 3000);
-    }
-  }
-
-  function handleExportExcel() {
-    setExportingExcel(true);
-    try {
-      const data = enriched.map(r => ({
-        'Fecha':          r.fecha || '',
-        'ID ATM':         r.id_atm_texto || '',
-        'Punto':          r.punto_texto || '',
-        'Marca':          r.marca_texto || '',
-        'Técnico':        r.tecnico_nombre || '',
-        'Estado Final':   r.est_final || '',
-        'Buenos':         r.disp_buenos ?? 0,
-        'Regulares':      r.disp_regulares ?? 0,
-        'Defectuosos':    r.disp_defectuosos ?? 0,
-        'N/A':            r.disp_no_aplica ?? 0,
-        '% Cumpl.':       r.pctCumpl != null ? r.pctCumpl : '',
-        'Obs. Generales': r.obs_gen || '',
-        'Resultados':     r.resultados || '',
-        'Recomendaciones': r.recomendaciones || '',
-      }));
-      const ws = XLSX.utils.json_to_sheet(data);
-      ws['!cols'] = [
-        { wch: 12 }, { wch: 14 }, { wch: 28 }, { wch: 13 }, { wch: 25 }, { wch: 22 },
-        { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 10 },
-        { wch: 40 }, { wch: 40 }, { wch: 40 },
-      ];
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Mantenimientos');
-      XLSX.writeFile(wb, `mantenimientos_${new Date().toISOString().slice(0, 10)}.xlsx`);
-      setToast('✓ Excel exportado');
-    } catch (e) {
-      setToast('Error: ' + e.message);
-    } finally {
-      setExportingExcel(false);
-      setTimeout(() => setToast(''), 3000);
-    }
-  }
-
   return (
     <AdminLayout>
       {/* Header */}
@@ -220,52 +150,10 @@ export default function MantenimientosPage() {
             📖 Guía de métricas
           </button>
           <button
-            onClick={handleExport} disabled={exporting}
-            style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#10b981', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+            onClick={fetchData} disabled={loading}
+            style={{ padding: '9px 14px', borderRadius: 8, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', fontSize: 12, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
           >
-            {exporting ? 'Exportando...' : '↓ CSV'}
-          </button>
-          <button
-            onClick={handleExportDisp} disabled={exportingDisp}
-            style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#6366f1', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-          >
-            {exportingDisp ? 'Exportando...' : '↓ Dispositivos CSV'}
-          </button>
-          <button
-            onClick={handleExportExcel} disabled={exportingExcel || !rows.length}
-            style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#0ea5e9', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: rows.length ? 1 : 0.5 }}
-          >
-            {exportingExcel ? 'Exportando...' : '↓ Excel'}
-          </button>
-        </div>
-      </div>
-
-      {/* Rango de fechas — afecta el dataset base de ambos tabs */}
-      <div style={{ background: '#1e293b', borderRadius: 12, padding: '12px 20px', marginBottom: 20, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-        <div>
-          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Desde</label>
-          <input type="date" value={filtrosFecha.desde}
-            onChange={e => setFiltrosFecha(p => ({ ...p, desde: e.target.value }))}
-            style={INPUT_STYLE}
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Hasta</label>
-          <input type="date" value={filtrosFecha.hasta}
-            onChange={e => setFiltrosFecha(p => ({ ...p, hasta: e.target.value }))}
-            style={INPUT_STYLE}
-          />
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={fetchData}
-            style={{ padding: '7px 18px', borderRadius: 6, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-          >
-            Actualizar
-          </button>
-          <button onClick={() => { setFiltrosFecha({ desde: '', hasta: '' }); setTimeout(fetchData, 0); }}
-            style={{ padding: '7px 14px', borderRadius: 6, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}
-          >
-            Limpiar
+            ⟳ {loading ? 'Cargando…' : 'Recargar'}
           </button>
         </div>
       </div>
@@ -315,6 +203,7 @@ export default function MantenimientosPage() {
           onDetalle={setDetalle}
           filtros={filtrosLista} setFiltros={setFiltrosLista}
           marcas={marcas} tecnicos={tecnicos}
+          setToast={setToast}
         />
       )}
 
@@ -468,8 +357,14 @@ function TabEjecutiva({ stats, pieData, defectosPorMarca, porMes, puntosInoperat
 
 /* ══════════════════════ TAB LISTA ══════════════════════ */
 
-function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, filtros, setFiltros, marcas, tecnicos }) {
+function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, filtros, setFiltros, marcas, tecnicos, setToast }) {
+  const [exporting, setExporting] = React.useState(false);
+  const [exportingDisp, setExportingDisp] = React.useState(false);
+  const [exportingExcel, setExportingExcel] = React.useState(false);
+
   const filtered = React.useMemo(() => enriched.filter(r => {
+    if (filtros.desde && r.fecha && r.fecha < filtros.desde) return false;
+    if (filtros.hasta && r.fecha && r.fecha > filtros.hasta) return false;
     if (filtros.est_final && r.est_final !== filtros.est_final) return false;
     if (filtros.id_atm.trim() && !(r.id_atm_texto || '').toLowerCase().includes(filtros.id_atm.trim().toLowerCase())) return false;
     if (filtros.punto.trim() && !(r.punto_texto || '').toLowerCase().includes(filtros.punto.trim().toLowerCase())) return false;
@@ -481,12 +376,99 @@ function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, fil
   }), [enriched, filtros]);
 
   function limpiar() {
-    setFiltros({ est_final: '', id_atm: '', punto: '', marca: '', tecnico_nombre: '', disp_buenos_min: '', disp_defectuosos_min: '' });
+    setFiltros({ desde: '', hasta: '', est_final: '', id_atm: '', punto: '', marca: '', tecnico_nombre: '', disp_buenos_min: '', disp_defectuosos_min: '' });
+  }
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      await exportarCSV(filtros);
+      setToast('✓ mantenimientos.csv exportado');
+    } catch (e) {
+      setToast('Error: ' + e.message);
+    } finally {
+      setExporting(false);
+      setTimeout(() => setToast(''), 3000);
+    }
+  }
+
+  async function handleExportDisp() {
+    setExportingDisp(true);
+    try {
+      await exportarDispositivosCSV(filtros);
+      setToast('✓ dispositivos.csv exportado');
+    } catch (e) {
+      setToast('Error: ' + e.message);
+    } finally {
+      setExportingDisp(false);
+      setTimeout(() => setToast(''), 3000);
+    }
+  }
+
+  function handleExportExcel() {
+    setExportingExcel(true);
+    try {
+      const data = filtered.map(r => ({
+        'Fecha':           r.fecha || '',
+        'ID ATM':          r.id_atm_texto || '',
+        'Punto':           r.punto_texto || '',
+        'Marca':           r.marca_texto || '',
+        'Técnico':         r.tecnico_nombre || '',
+        'Estado Final':    r.est_final || '',
+        'Buenos':          r.disp_buenos ?? 0,
+        'Regulares':       r.disp_regulares ?? 0,
+        'Defectuosos':     r.disp_defectuosos ?? 0,
+        'N/A':             r.disp_no_aplica ?? 0,
+        '% Cumpl.':        r.pctCumpl != null ? r.pctCumpl : '',
+        'Obs. Generales':  r.obs_gen || '',
+        'Resultados':      r.resultados || '',
+        'Recomendaciones': r.recomendaciones || '',
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      ws['!cols'] = [
+        { wch: 12 }, { wch: 14 }, { wch: 28 }, { wch: 13 }, { wch: 25 }, { wch: 22 },
+        { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 10 },
+        { wch: 40 }, { wch: 40 }, { wch: 40 },
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Mantenimientos');
+      XLSX.writeFile(wb, `mantenimientos_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      setToast('✓ Excel exportado');
+    } catch (e) {
+      setToast('Error: ' + e.message);
+    } finally {
+      setExportingExcel(false);
+      setTimeout(() => setToast(''), 3000);
+    }
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* Filtros de lista */}
+      {/* Rango de fechas + exports */}
+      <div style={{ background: '#1e293b', borderRadius: 12, padding: '14px 20px', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div>
+          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Desde</label>
+          <input type="date" value={filtros.desde} onChange={e => setFiltros(p => ({ ...p, desde: e.target.value }))} style={INPUT_STYLE} />
+        </div>
+        <div>
+          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Hasta</label>
+          <input type="date" value={filtros.hasta} onChange={e => setFiltros(p => ({ ...p, hasta: e.target.value }))} style={INPUT_STYLE} />
+        </div>
+        <div style={{ flex: 1, minWidth: 20 }} />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={handleExport} disabled={exporting} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#10b981', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            {exporting ? 'Exportando...' : '↓ CSV'}
+          </button>
+          <button onClick={handleExportDisp} disabled={exportingDisp} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#6366f1', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            {exportingDisp ? 'Exportando...' : '↓ Dispositivos CSV'}
+          </button>
+          <button onClick={handleExportExcel} disabled={exportingExcel || !filtered.length} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#0ea5e9', color: '#fff', fontSize: 12, fontWeight: 700, cursor: filtered.length ? 'pointer' : 'not-allowed', opacity: filtered.length ? 1 : 0.5 }}>
+            {exportingExcel ? 'Exportando...' : '↓ Excel'}
+          </button>
+        </div>
+      </div>
+
+      {/* Filtros de búsqueda */}
       <div style={{ background: '#1e293b', borderRadius: 12, padding: '16px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Filtros de búsqueda</div>

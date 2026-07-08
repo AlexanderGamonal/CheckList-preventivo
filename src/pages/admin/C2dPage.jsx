@@ -35,14 +35,11 @@ export default function C2dPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tecnicos, setTecnicos] = useState([]);
-  const [filtrosFecha, setFiltrosFecha] = useState({ desde: '', hasta: '' });
   const [filtrosLista, setFiltrosLista] = useState({
-    id_atm: '', punto: '', tecnico_nombre: '',
+    desde: '', hasta: '', id_atm: '', punto: '', tecnico_nombre: '',
     tiene_cash_control: '', voltajes_fuera_rango: '',
   });
   const [tab, setTab] = useState(0);
-  const [exporting, setExporting] = useState(false);
-  const [exportingCsv, setExportingCsv] = useState(false);
   const [toast, setToast] = useState('');
   const [hoveredRow, setHoveredRow] = useState(null);
   const [detalle, setDetalle] = useState(null);
@@ -55,14 +52,11 @@ export default function C2dPage() {
 
   async function fetchData() {
     setLoading(true);
-    let q = supabase
+    const { data, error } = await supabase
       .from('mantenimientos_c2d')
       .select('id, created_at, fecha, hora_inicio, hora_fin, id_atm_texto, punto_texto, nro_serie, marca_texto, modelo_texto, tecnico_id, tecnico_nombre, tecnico_num, tiene_cash_control, estado_site, pruebas_deposito, voltajes, voltajes_fuera_rango, dispositivos, obs_generales')
       .order('created_at', { ascending: false })
       .limit(200);
-    if (filtrosFecha.desde) q = q.gte('fecha', filtrosFecha.desde);
-    if (filtrosFecha.hasta) q = q.lte('fecha', filtrosFecha.hasta);
-    const { data, error } = await q;
     if (error) console.error(error);
     setRows(data || []);
     setLoading(false);
@@ -132,102 +126,6 @@ export default function C2dPage() {
       .sort((a, b) => b.count - a.count)
   ), [enriched]);
 
-  function handleExportExcel() {
-    setExporting(true);
-    try {
-      const data = enriched.map(r => {
-        const counts = contarPorEstado(r.dispositivos);
-        const siteItems = r.estado_site?.items || {};
-        const siteObs   = r.estado_site?.obs   || {};
-        const siteNo    = C2D_SITE_ITEMS
-          .filter(({ key }) => siteItems[key] === 'no')
-          .map(({ key, label }) => `${label}${siteObs[key] ? ` (${siteObs[key]})` : ''}`)
-          .join(' · ');
-        const pruItems  = r.pruebas_deposito?.items || {};
-        const pruObs    = r.pruebas_deposito?.obs   || {};
-        const pruExit   = C2D_PRUEBAS_ITEMS.filter(({ key }) => pruItems[key] === 'exitoso').length;
-        const pruFall   = C2D_PRUEBAS_ITEMS
-          .filter(({ key }) => pruItems[key] === 'fallido')
-          .map(({ key, label }) => `${label}${pruObs[key] ? ` (${pruObs[key]})` : ''}`)
-          .join(' · ');
-        return {
-          'Fecha':             r.fecha || '',
-          'ID C2D':            r.id_atm_texto || '',
-          'Punto':             r.punto_texto || '',
-          'N° Serie':          r.nro_serie || '',
-          'Marca':             r.marca_texto || '',
-          'Modelo':            r.modelo_texto || '',
-          'Técnico':           r.tecnico_nombre || '',
-          'N° Interno':        r.tecnico_num || '',
-          'Hora Inicio':       r.hora_inicio || '',
-          'Hora Fin':          r.hora_fin || '',
-          'Cash Control':      r.tiene_cash_control === true ? 'Sí' : r.tiene_cash_control === false ? 'No' : '',
-          'Site OK':           C2D_SITE_ITEMS.filter(({ key }) => siteItems[key] === 'si').length,
-          'Site con Obs.':     siteNo || '—',
-          'Pruebas Exitosas':  pruExit,
-          'Pruebas Fallidas':  pruFall || '—',
-          'Voltaje Equipo L-T': r.voltajes?.equipo?.lt || '',
-          'Voltaje Equipo L-N': r.voltajes?.equipo?.ln || '',
-          'Voltaje Equipo N-T': r.voltajes?.equipo?.nt || '',
-          'Voltajes Fuera Rango': r.voltajes_fuera_rango ? 'Sí' : 'No',
-          'Operativos':        counts.operativo,
-          'Con Observación':   counts.observacion,
-          'Malos / Falla':     counts.malo,
-          'Dispositivos con falla': dispositivosConFalla(r.dispositivos) || '—',
-          'Obs. Generales':    r.obs_generales || '',
-        };
-      });
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'C2D');
-      XLSX.writeFile(wb, `c2d_${new Date().toISOString().slice(0, 10)}.xlsx`);
-      setToast('✓ Excel exportado');
-    } catch (e) {
-      setToast('Error: ' + e.message);
-    } finally {
-      setExporting(false);
-      setTimeout(() => setToast(''), 3000);
-    }
-  }
-
-  function handleExportCsv() {
-    setExportingCsv(true);
-    try {
-      const headers = [
-        'Fecha', 'ID C2D', 'Punto', 'N° Serie', 'Marca', 'Modelo', 'Técnico', 'N° Interno',
-        'Cash Control', 'Voltajes Fuera Rango', 'Estado Final',
-        'Operativos', 'Con Observación', 'Malos', 'Pruebas Fallidas', 'Site con Obs.',
-        'Dispositivos con falla', 'Obs. Generales',
-      ];
-      const lines = enriched.map(r => {
-        const counts = contarPorEstado(r.dispositivos);
-        return [
-          r.fecha || '', r.id_atm_texto || '', r.punto_texto || '',
-          r.nro_serie || '', r.marca_texto || '', r.modelo_texto || '',
-          r.tecnico_nombre || '', r.tecnico_num || '',
-          r.tiene_cash_control === true ? 'Sí' : r.tiene_cash_control === false ? 'No' : '',
-          r.voltajes_fuera_rango ? 'Sí' : 'No',
-          ESTADO_FINAL_LABEL[r.estadoFinal] || '—',
-          counts.operativo, counts.observacion, counts.malo,
-          r.pruebasFallidas, r.siteIssues,
-          dispositivosConFalla(r.dispositivos) || '—',
-          r.obs_generales || '',
-        ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
-      });
-      const csv = [headers.join(','), ...lines].join('\n');
-      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `c2d_${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click(); URL.revokeObjectURL(url);
-      setToast('✓ CSV exportado');
-    } catch (e) {
-      setToast('Error: ' + e.message);
-    } finally {
-      setExportingCsv(false);
-      setTimeout(() => setToast(''), 3000);
-    }
-  }
 
   return (
     <AdminLayout>
@@ -245,39 +143,11 @@ export default function C2dPage() {
             📖 Guía de métricas
           </button>
           <button
-            onClick={handleExportCsv} disabled={exportingCsv || !rows.length}
-            style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#10b981', color: '#fff', fontSize: 13, fontWeight: 700, cursor: rows.length ? 'pointer' : 'not-allowed', opacity: rows.length ? 1 : 0.5 }}
+            onClick={fetchData} disabled={loading}
+            style={{ padding: '9px 14px', borderRadius: 8, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', fontSize: 12, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
           >
-            {exportingCsv ? 'Exportando...' : '↓ CSV'}
+            ⟳ {loading ? 'Cargando…' : 'Recargar'}
           </button>
-          <button
-            onClick={handleExportExcel} disabled={exporting || !rows.length}
-            style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#0ea5e9', color: '#fff', fontSize: 13, fontWeight: 700, cursor: rows.length ? 'pointer' : 'not-allowed', opacity: rows.length ? 1 : 0.5 }}
-          >
-            {exporting ? 'Exportando...' : '↓ Excel'}
-          </button>
-        </div>
-      </div>
-
-      {/* Rango de fechas — afecta el dataset base de ambos tabs */}
-      <div style={{ background: '#1e293b', borderRadius: 12, padding: '12px 20px', marginBottom: 20, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-        <div>
-          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Desde</label>
-          <input type="date" value={filtrosFecha.desde}
-            onChange={e => setFiltrosFecha(p => ({ ...p, desde: e.target.value }))}
-            style={INPUT_STYLE} />
-        </div>
-        <div>
-          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Hasta</label>
-          <input type="date" value={filtrosFecha.hasta}
-            onChange={e => setFiltrosFecha(p => ({ ...p, hasta: e.target.value }))}
-            style={INPUT_STYLE} />
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={fetchData}
-            style={{ padding: '7px 18px', borderRadius: 6, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Actualizar</button>
-          <button onClick={() => { setFiltrosFecha({ desde: '', hasta: '' }); setTimeout(fetchData, 0); }}
-            style={{ padding: '7px 14px', borderRadius: 6, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}>Limpiar</button>
         </div>
       </div>
 
@@ -325,6 +195,7 @@ export default function C2dPage() {
           onDetalle={setDetalle}
           filtros={filtrosLista} setFiltros={setFiltrosLista}
           tecnicos={tecnicos}
+          setToast={setToast}
         />
       )}
 
@@ -477,8 +348,13 @@ function TabEjecutiva({ stats, pieData, dispositivosRanking, pruebasFallidasRank
 
 /* ══════════════════════ TAB LISTA ══════════════════════ */
 
-function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, filtros, setFiltros, tecnicos }) {
+function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, filtros, setFiltros, tecnicos, setToast }) {
+  const [exporting, setExporting] = useState(false);
+  const [exportingCsv, setExportingCsv] = useState(false);
+
   const filtered = useMemo(() => enriched.filter(r => {
+    if (filtros.desde && r.fecha && r.fecha < filtros.desde) return false;
+    if (filtros.hasta && r.fecha && r.fecha > filtros.hasta) return false;
     if (filtros.id_atm.trim() && !(r.id_atm_texto || '').toLowerCase().includes(filtros.id_atm.trim().toLowerCase())) return false;
     if (filtros.punto.trim() && !(r.punto_texto || '').toLowerCase().includes(filtros.punto.trim().toLowerCase())) return false;
     if (filtros.tecnico_nombre && r.tecnico_nombre !== filtros.tecnico_nombre) return false;
@@ -489,12 +365,100 @@ function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, fil
   }), [enriched, filtros]);
 
   function limpiar() {
-    setFiltros({ id_atm: '', punto: '', tecnico_nombre: '', tiene_cash_control: '', voltajes_fuera_rango: '' });
+    setFiltros({ desde: '', hasta: '', id_atm: '', punto: '', tecnico_nombre: '', tiene_cash_control: '', voltajes_fuera_rango: '' });
+  }
+
+  function handleExportExcel() {
+    setExporting(true);
+    try {
+      const data = filtered.map(r => {
+        const counts = contarPorEstado(r.dispositivos);
+        const siteItems = r.estado_site?.items || {};
+        const siteObs   = r.estado_site?.obs   || {};
+        const siteNo    = C2D_SITE_ITEMS.filter(({ key }) => siteItems[key] === 'no').map(({ key, label }) => `${label}${siteObs[key] ? ` (${siteObs[key]})` : ''}`).join(' · ');
+        const pruItems  = r.pruebas_deposito?.items || {};
+        const pruObs    = r.pruebas_deposito?.obs   || {};
+        const pruExit   = C2D_PRUEBAS_ITEMS.filter(({ key }) => pruItems[key] === 'exitoso').length;
+        const pruFall   = C2D_PRUEBAS_ITEMS.filter(({ key }) => pruItems[key] === 'fallido').map(({ key, label }) => `${label}${pruObs[key] ? ` (${pruObs[key]})` : ''}`).join(' · ');
+        return {
+          'Fecha': r.fecha || '', 'ID C2D': r.id_atm_texto || '', 'Punto': r.punto_texto || '',
+          'N° Serie': r.nro_serie || '', 'Marca': r.marca_texto || '', 'Modelo': r.modelo_texto || '',
+          'Técnico': r.tecnico_nombre || '', 'N° Interno': r.tecnico_num || '',
+          'Hora Inicio': r.hora_inicio || '', 'Hora Fin': r.hora_fin || '',
+          'Cash Control': r.tiene_cash_control === true ? 'Sí' : r.tiene_cash_control === false ? 'No' : '',
+          'Site OK': C2D_SITE_ITEMS.filter(({ key }) => siteItems[key] === 'si').length,
+          'Site con Obs.': siteNo || '—',
+          'Pruebas Exitosas': pruExit, 'Pruebas Fallidas': pruFall || '—',
+          'Voltaje Equipo L-T': r.voltajes?.equipo?.lt || '', 'Voltaje Equipo L-N': r.voltajes?.equipo?.ln || '', 'Voltaje Equipo N-T': r.voltajes?.equipo?.nt || '',
+          'Voltajes Fuera Rango': r.voltajes_fuera_rango ? 'Sí' : 'No',
+          'Operativos': counts.operativo, 'Con Observación': counts.observacion, 'Malos / Falla': counts.malo,
+          'Dispositivos con falla': dispositivosConFalla(r.dispositivos) || '—',
+          'Obs. Generales': r.obs_generales || '',
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'C2D');
+      XLSX.writeFile(wb, `c2d_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      setToast('✓ Excel exportado');
+    } catch (e) { setToast('Error: ' + e.message); }
+    finally { setExporting(false); setTimeout(() => setToast(''), 3000); }
+  }
+
+  function handleExportCsv() {
+    setExportingCsv(true);
+    try {
+      const headers = ['Fecha','ID C2D','Punto','N° Serie','Marca','Modelo','Técnico','N° Interno','Cash Control','Voltajes Fuera Rango','Estado Final','Operativos','Con Observación','Malos','Pruebas Fallidas','Site con Obs.','Dispositivos con falla','Obs. Generales'];
+      const lines = filtered.map(r => {
+        const counts = contarPorEstado(r.dispositivos);
+        return [
+          r.fecha || '', r.id_atm_texto || '', r.punto_texto || '',
+          r.nro_serie || '', r.marca_texto || '', r.modelo_texto || '',
+          r.tecnico_nombre || '', r.tecnico_num || '',
+          r.tiene_cash_control === true ? 'Sí' : r.tiene_cash_control === false ? 'No' : '',
+          r.voltajes_fuera_rango ? 'Sí' : 'No',
+          ESTADO_FINAL_LABEL[r.estadoFinal] || '—',
+          counts.operativo, counts.observacion, counts.malo,
+          r.pruebasFallidas, r.siteIssues,
+          dispositivosConFalla(r.dispositivos) || '—',
+          r.obs_generales || '',
+        ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+      });
+      const csv = [headers.join(','), ...lines].join('\n');
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `c2d_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click(); URL.revokeObjectURL(url);
+      setToast('✓ CSV exportado');
+    } catch (e) { setToast('Error: ' + e.message); }
+    finally { setExportingCsv(false); setTimeout(() => setToast(''), 3000); }
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* Filtros de lista */}
+      {/* Rango de fechas + exports */}
+      <div style={{ background: '#1e293b', borderRadius: 12, padding: '14px 20px', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div>
+          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Desde</label>
+          <input type="date" value={filtros.desde} onChange={e => setFiltros(p => ({ ...p, desde: e.target.value }))} style={INPUT_STYLE} />
+        </div>
+        <div>
+          <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Hasta</label>
+          <input type="date" value={filtros.hasta} onChange={e => setFiltros(p => ({ ...p, hasta: e.target.value }))} style={INPUT_STYLE} />
+        </div>
+        <div style={{ flex: 1, minWidth: 20 }} />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={handleExportCsv} disabled={exportingCsv || !filtered.length} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#10b981', color: '#fff', fontSize: 12, fontWeight: 700, cursor: filtered.length ? 'pointer' : 'not-allowed', opacity: filtered.length ? 1 : 0.5 }}>
+            {exportingCsv ? 'Exportando...' : '↓ CSV'}
+          </button>
+          <button onClick={handleExportExcel} disabled={exporting || !filtered.length} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#0ea5e9', color: '#fff', fontSize: 12, fontWeight: 700, cursor: filtered.length ? 'pointer' : 'not-allowed', opacity: filtered.length ? 1 : 0.5 }}>
+            {exporting ? 'Exportando...' : '↓ Excel'}
+          </button>
+        </div>
+      </div>
+
+      {/* Filtros de búsqueda */}
       <div style={{ background: '#1e293b', borderRadius: 12, padding: '16px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Filtros de búsqueda</div>
