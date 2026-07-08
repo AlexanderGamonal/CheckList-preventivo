@@ -24,21 +24,28 @@ serve(async (req) => {
   }
 
   try {
-    const { subject, text, storagePath, filename } = await req.json();
+    const { subject, text, storagePath, filename, grupo } = await req.json();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: contactos, error: dbError } = await supabase
+    let query = supabase
       .from("email_contactos")
       .select("email")
       .eq("activo", true);
 
+    // Filtrar por grupo si viene en el body (retrocompat: sin grupo → todos)
+    if (grupo) {
+      query = query.contains("grupos", [grupo]);
+    }
+
+    const { data: contactos, error: dbError } = await query;
+
     if (dbError) throw dbError;
     if (!contactos || contactos.length === 0) {
-      return new Response(JSON.stringify({ error: "No active email contacts" }), {
+      return new Response(JSON.stringify({ error: grupo ? `No active email contacts for group '${grupo}'` : "No active email contacts" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
