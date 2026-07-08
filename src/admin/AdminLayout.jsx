@@ -143,7 +143,7 @@ export default function AdminLayout({ children }) {
       )}
 
       {/* Main content */}
-      <main style={{ flex: 1, padding: isMobile ? 16 : 32, overflowY: 'auto', minWidth: 0 }}>
+      <main style={{ flex: 1, padding: isMobile ? '16px 12px' : '24px 20px', overflowY: 'auto', minWidth: 0 }}>
         {/* Botón hamburger mobile */}
         {isMobile && (
           <button

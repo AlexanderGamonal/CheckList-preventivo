@@ -37,6 +37,22 @@ export const C2D_PRUEBA_LABELS = {
   na:      '— N/A',
 };
 
+export function c2dEstadoFinal(dispositivos) {
+  const estados = Object.values(dispositivos || {}).map(c => c?.estado).filter(Boolean);
+  if (!estados.length) return null;
+  if (estados.some(e => e === 'malo'))        return 'malo';
+  if (estados.some(e => e === 'observacion')) return 'observacion';
+  return 'operativo';
+}
+
+export function c2dContarPorEstado(dispositivos) {
+  const counts = { operativo: 0, observacion: 0, malo: 0 };
+  Object.values(dispositivos || {}).forEach(c => {
+    if (c?.estado && counts[c.estado] !== undefined) counts[c.estado]++;
+  });
+  return counts;
+}
+
 export function computeVoltajesFueraDeRango(voltajes) {
   if (!voltajes) return false;
   for (const bloque of Object.values(voltajes)) {
