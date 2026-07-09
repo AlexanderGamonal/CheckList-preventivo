@@ -18,6 +18,7 @@ function buildPayload(form, sections) {
     punto_texto:      form.punto,
     marca_texto:      form.marca,
     modelo_texto:     form.modelo || null,
+    cliente_texto:    form.cliente || null,
     atm_tipo:         form.atmTipo,
     tecnico_id:       form.tecnicoId || null,
     tecnico_nombre:   form.tec,

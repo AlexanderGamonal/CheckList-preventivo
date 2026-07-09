@@ -42,8 +42,9 @@ export default function MantenimientosPage() {
   const [loading, setLoading] = useState(true);
   const [marcas, setMarcas] = useState([]);
   const [tecnicos, setTecnicos] = useState([]);
+  const [clientes, setClientes] = useState([]);
   const [filtrosLista, setFiltrosLista] = useState({
-    desde: '', hasta: '', est_final: '', id_atm: '', punto: '', marca: '', tecnico_nombre: '',
+    desde: '', hasta: '', est_final: '', id_atm: '', punto: '', marca: '', cliente: '', tecnico_nombre: '',
     disp_buenos_min: '', disp_defectuosos_min: '',
   });
   const [tab, setTab] = useState(0);
@@ -56,13 +57,14 @@ export default function MantenimientosPage() {
     fetchData();
     supabase.from('marcas').select('nombre').order('nombre').then(({ data }) => setMarcas(data || []));
     supabase.from('tecnicos').select('nombre').order('nombre').then(({ data }) => setTecnicos(data || []));
+    supabase.from('clientes').select('nombre').order('nombre').then(({ data }) => setClientes(data || []));
   }, []);
 
   async function fetchData() {
     setLoading(true);
     const [{ data }, { count }] = await Promise.all([
       supabase.from('mantenimientos')
-        .select('id, fecha, id_atm_texto, punto_texto, marca_texto, tecnico_nombre, est_final, disp_buenos, disp_defectuosos, disp_regulares, disp_no_aplica, obs_gen, resultados, recomendaciones, dispositivos, voltajes, site_eval')
+        .select('id, fecha, id_atm_texto, punto_texto, marca_texto, cliente_texto, tecnico_nombre, est_final, disp_buenos, disp_defectuosos, disp_regulares, disp_no_aplica, obs_gen, resultados, recomendaciones, dispositivos, voltajes, site_eval')
         .order('fecha', { ascending: false })
         .limit(5000),
       supabase.from('mantenimientos').select('id', { count: 'exact', head: true }),
@@ -207,7 +209,7 @@ export default function MantenimientosPage() {
           hoveredRow={hoveredRow} setHoveredRow={setHoveredRow}
           onDetalle={setDetalle}
           filtros={filtrosLista} setFiltros={setFiltrosLista}
-          marcas={marcas} tecnicos={tecnicos}
+          marcas={marcas} tecnicos={tecnicos} clientes={clientes}
           setToast={setToast}
         />
       )}
@@ -368,7 +370,7 @@ function TabEjecutiva({ stats, pieData, defectosPorMarca, porMes, puntosInoperat
 
 /* ══════════════════════ TAB LISTA ══════════════════════ */
 
-function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, filtros, setFiltros, marcas, tecnicos, setToast }) {
+function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, filtros, setFiltros, marcas, tecnicos, clientes, setToast }) {
   const [exporting, setExporting] = React.useState(false);
   const [exportingDisp, setExportingDisp] = React.useState(false);
   const [exportingExcel, setExportingExcel] = React.useState(false);
@@ -380,6 +382,7 @@ function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, fil
     if (filtros.id_atm.trim() && !(r.id_atm_texto || '').toLowerCase().includes(filtros.id_atm.trim().toLowerCase())) return false;
     if (filtros.punto.trim() && !(r.punto_texto || '').toLowerCase().includes(filtros.punto.trim().toLowerCase())) return false;
     if (filtros.marca && r.marca_texto !== filtros.marca) return false;
+    if (filtros.cliente && r.cliente_texto !== filtros.cliente) return false;
     if (filtros.tecnico_nombre && r.tecnico_nombre !== filtros.tecnico_nombre) return false;
     if (filtros.disp_buenos_min !== '' && (r.disp_buenos ?? 0) < parseInt(filtros.disp_buenos_min)) return false;
     if (filtros.disp_defectuosos_min !== '' && (r.disp_defectuosos ?? 0) < parseInt(filtros.disp_defectuosos_min)) return false;
@@ -387,7 +390,7 @@ function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, fil
   }), [enriched, filtros]);
 
   function limpiar() {
-    setFiltros({ desde: '', hasta: '', est_final: '', id_atm: '', punto: '', marca: '', tecnico_nombre: '', disp_buenos_min: '', disp_defectuosos_min: '' });
+    setFiltros({ desde: '', hasta: '', est_final: '', id_atm: '', punto: '', marca: '', cliente: '', tecnico_nombre: '', disp_buenos_min: '', disp_defectuosos_min: '' });
   }
 
   async function handleExport() {
@@ -423,6 +426,7 @@ function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, fil
         'Fecha':           r.fecha || '',
         'ID ATM':          r.id_atm_texto || '',
         'Punto':           r.punto_texto || '',
+        'Cliente':         r.cliente_texto || '',
         'Marca':           r.marca_texto || '',
         'Técnico':         r.tecnico_nombre || '',
         'Estado Final':    r.est_final || '',
@@ -437,7 +441,7 @@ function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, fil
       }));
       const ws = XLSX.utils.json_to_sheet(data);
       ws['!cols'] = [
-        { wch: 12 }, { wch: 14 }, { wch: 28 }, { wch: 13 }, { wch: 25 }, { wch: 22 },
+        { wch: 12 }, { wch: 14 }, { wch: 28 }, { wch: 14 }, { wch: 13 }, { wch: 25 }, { wch: 22 },
         { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 10 },
         { wch: 40 }, { wch: 40 }, { wch: 40 },
       ];
@@ -502,6 +506,13 @@ function TabLista({ enriched, loading, hoveredRow, setHoveredRow, onDetalle, fil
           <div>
             <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Punto</label>
             <input type="text" placeholder="Buscar..." value={filtros.punto} onChange={e => setFiltros(p => ({ ...p, punto: e.target.value }))} style={{ ...INPUT_STYLE, minWidth: 140 }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Cliente</label>
+            <select value={filtros.cliente} onChange={e => setFiltros(p => ({ ...p, cliente: e.target.value }))} style={INPUT_STYLE}>
+              <option value="">Todos</option>
+              {clientes.map(c => <option key={c.nombre}>{c.nombre}</option>)}
+            </select>
           </div>
           <div>
             <label style={{ display: 'block', color: '#64748b', fontSize: 11, marginBottom: 4 }}>Marca</label>
