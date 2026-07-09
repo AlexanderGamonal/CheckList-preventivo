@@ -38,6 +38,7 @@ function calcPct(buenos, defect, reg) {
 
 export default function MantenimientosPage() {
   const [rows, setRows] = useState([]);
+  const [totalCount, setTotalCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [marcas, setMarcas] = useState([]);
   const [tecnicos, setTecnicos] = useState([]);
@@ -59,12 +60,15 @@ export default function MantenimientosPage() {
 
   async function fetchData() {
     setLoading(true);
-    const { data } = await supabase
-      .from('mantenimientos')
-      .select('id, fecha, id_atm_texto, punto_texto, marca_texto, tecnico_nombre, est_final, disp_buenos, disp_defectuosos, disp_regulares, disp_no_aplica, obs_gen, resultados, recomendaciones, dispositivos, voltajes, site_eval')
-      .order('fecha', { ascending: false })
-      .limit(200);
+    const [{ data }, { count }] = await Promise.all([
+      supabase.from('mantenimientos')
+        .select('id, fecha, id_atm_texto, punto_texto, marca_texto, tecnico_nombre, est_final, disp_buenos, disp_defectuosos, disp_regulares, disp_no_aplica, obs_gen, resultados, recomendaciones, dispositivos, voltajes, site_eval')
+        .order('fecha', { ascending: false })
+        .limit(5000),
+      supabase.from('mantenimientos').select('id', { count: 'exact', head: true }),
+    ]);
     setRows(data || []);
+    setTotalCount(count ?? null);
     setLoading(false);
   }
 
@@ -193,6 +197,7 @@ export default function MantenimientosPage() {
           enriched={enriched}
           loading={loading}
           onDetalle={setDetalle}
+          totalCount={totalCount}
         />
       )}
 
@@ -235,17 +240,23 @@ export default function MantenimientosPage() {
 
 /* ══════════════════════ TAB EJECUTIVA ══════════════════════ */
 
-function TabEjecutiva({ stats, pieData, defectosPorMarca, porMes, puntosInoperativos, enriched, loading, onDetalle }) {
+function TabEjecutiva({ stats, pieData, defectosPorMarca, porMes, puntosInoperativos, enriched, loading, onDetalle, totalCount }) {
   if (loading) return <div style={{ color: '#64748b', padding: 40, textAlign: 'center' }}>Cargando...</div>;
   if (!enriched.length) return <div style={{ color: '#64748b', padding: 40, textAlign: 'center' }}>Sin resultados para los filtros aplicados</div>;
 
   const pct = (n) => stats.total ? Math.round((n / stats.total) * 100) : 0;
+  const hayMas = totalCount != null && totalCount > stats.total;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {hayMas && (
+        <div style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontSize: 12 }}>
+          ℹ Mostrando los últimos <b>{stats.total}</b> registros de <b>{totalCount}</b> totales.
+        </div>
+      )}
       {/* KPIs */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <KpiCard label="Total" value={stats.total} color="#60a5fa" />
+        <KpiCard label="Total" value={stats.total} subtitle={hayMas ? `de ${totalCount} históricos` : 'histórico completo'} color="#60a5fa" />
         <KpiCard label="Operativos" value={stats.operativos} subtitle={`${pct(stats.operativos)}%`} color="#22c55e" />
         <KpiCard label="Con observaciones" value={stats.conObs} subtitle={`${pct(stats.conObs)}%`} color="#f59e0b" />
         <KpiCard label="Inoperativos" value={stats.inoperativos} subtitle={`${pct(stats.inoperativos)}%`} color="#ef4444" />

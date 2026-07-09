@@ -33,6 +33,7 @@ function dispositivosConFalla(disp) {
 
 export default function C2dPage() {
   const [rows, setRows] = useState([]);
+  const [totalCount, setTotalCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tecnicos, setTecnicos] = useState([]);
   const [filtrosLista, setFiltrosLista] = useState({
@@ -52,13 +53,16 @@ export default function C2dPage() {
 
   async function fetchData() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('mantenimientos_c2d')
-      .select('id, created_at, fecha, hora_inicio, hora_fin, id_atm_texto, punto_texto, nro_serie, marca_texto, modelo_texto, tecnico_id, tecnico_nombre, tecnico_num, tiene_cash_control, estado_site, pruebas_deposito, voltajes, voltajes_fuera_rango, dispositivos, obs_generales')
-      .order('created_at', { ascending: false })
-      .limit(200);
+    const [{ data, error }, { count }] = await Promise.all([
+      supabase.from('mantenimientos_c2d')
+        .select('id, created_at, fecha, hora_inicio, hora_fin, id_atm_texto, punto_texto, nro_serie, marca_texto, modelo_texto, tecnico_id, tecnico_nombre, tecnico_num, tiene_cash_control, estado_site, pruebas_deposito, voltajes, voltajes_fuera_rango, dispositivos, obs_generales')
+        .order('created_at', { ascending: false })
+        .limit(5000),
+      supabase.from('mantenimientos_c2d').select('id', { count: 'exact', head: true }),
+    ]);
     if (error) console.error(error);
     setRows(data || []);
+    setTotalCount(count ?? null);
     setLoading(false);
   }
 
@@ -185,6 +189,7 @@ export default function C2dPage() {
           siteIssuesRanking={siteIssuesRanking}
           enriched={enriched} loading={loading}
           onDetalle={setDetalle}
+          totalCount={totalCount}
         />
       )}
 
@@ -227,17 +232,23 @@ export default function C2dPage() {
 
 /* ══════════════════════ TAB EJECUTIVA ══════════════════════ */
 
-function TabEjecutiva({ stats, pieData, dispositivosRanking, pruebasFallidasRanking, siteIssuesRanking, enriched, loading, onDetalle }) {
+function TabEjecutiva({ stats, pieData, dispositivosRanking, pruebasFallidasRanking, siteIssuesRanking, enriched, loading, onDetalle, totalCount }) {
   if (loading) return <div style={{ color: '#64748b', padding: 40, textAlign: 'center' }}>Cargando...</div>;
   if (!enriched.length) return <div style={{ color: '#64748b', padding: 40, textAlign: 'center' }}>Sin resultados para los filtros aplicados</div>;
 
   const pct = (n) => stats.total ? Math.round((n / stats.total) * 100) : 0;
+  const hayMas = totalCount != null && totalCount > stats.total;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {hayMas && (
+        <div style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontSize: 12 }}>
+          ℹ Mostrando los últimos <b>{stats.total}</b> registros de <b>{totalCount}</b> totales.
+        </div>
+      )}
       {/* KPIs */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <KpiCard label="Total C2D" value={stats.total} color="#60a5fa" />
+        <KpiCard label="Total C2D" value={stats.total} subtitle={hayMas ? `de ${totalCount} históricos` : 'histórico completo'} color="#60a5fa" />
         <KpiCard label="Operativos" value={stats.operativos} subtitle={`${pct(stats.operativos)}%`} color="#22c55e" />
         <KpiCard label="Con observaciones" value={stats.conObs} subtitle={`${pct(stats.conObs)}%`} color="#f59e0b" />
         <KpiCard label="Con falla" value={stats.inoperativos} subtitle={`${pct(stats.inoperativos)}%`} color="#ef4444" />
