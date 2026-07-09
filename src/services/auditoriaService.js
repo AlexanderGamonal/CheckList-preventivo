@@ -74,7 +74,7 @@ export async function saveAuditoria(form) {
   return true;
 }
 
-export async function getAuditorias({ fechaDesde, fechaHasta, idAtm, tipoAtm, limit = 100 } = {}) {
+export async function getAuditorias({ fechaDesde, fechaHasta, idAtm, tipoAtm, limit = 5000 } = {}) {
   let q = supabase
     .from('auditorias')
     .select('id, created_at, fecha, id_atm, tipo_atm, punto_texto, marca_texto, modelo_texto, cliente_texto, nro_serie, direccion, equipo_funcionando, equipo_funcionando_obs, pruebas_exitosas, pruebas_exitosas_obs, pruebas_linea, pruebas_linea_obs, info_general, voltajes, dispositivos_estado, estado_site, obs_generales')
