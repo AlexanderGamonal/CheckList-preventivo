@@ -31,25 +31,25 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    let query = supabase
+    // Filtrar por grupo. Si no viene grupo asumimos 'atm_bbva' (el flujo
+    // original: MP BBVA + Auditorías). Nunca enviar a todos por seguridad.
+    const grupoActivo = grupo || 'atm_bbva';
+
+    const { data: contactos, error: dbError } = await supabase
       .from("email_contactos")
       .select("email")
-      .eq("activo", true);
-
-    // Filtrar por grupo si viene en el body (retrocompat: sin grupo → todos)
-    if (grupo) {
-      query = query.contains("grupos", [grupo]);
-    }
-
-    const { data: contactos, error: dbError } = await query;
+      .eq("activo", true)
+      .contains("grupos", [grupoActivo]);
 
     if (dbError) throw dbError;
     if (!contactos || contactos.length === 0) {
-      return new Response(JSON.stringify({ error: grupo ? `No active email contacts for group '${grupo}'` : "No active email contacts" }), {
+      return new Response(JSON.stringify({ error: `No hay contactos activos configurados para el grupo '${grupoActivo}'. Configura al menos uno en /admin/contactos.` }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log(`[send-email] grupo=${grupoActivo} destinatarios=${contactos.length}`);
 
     const GMAIL_USER = Deno.env.get("GMAIL_USER")!;
     const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD")!;
