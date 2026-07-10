@@ -2,14 +2,28 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import nodemailer from "npm:nodemailer@6.9.1";
 
-const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "*";
+// Normaliza el ALLOWED_ORIGIN: quita barras finales, acepta lista separada
+// por comas. "*" permite cualquiera. Compara con Origin del request para
+// devolver siempre el valor exacto (Access-Control-Allow-Origin no acepta lista).
+const stripSlash = (s: string) => s.trim().replace(/\/$/, "");
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGIN") || "*")
+  .split(",")
+  .map(stripSlash);
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+function buildCorsHeaders(req: Request) {
+  const reqOrigin = stripSlash(req.headers.get("Origin") || "");
+  const allowAny = ALLOWED_ORIGINS.includes("*");
+  const isAllowed = allowAny || ALLOWED_ORIGINS.includes(reqOrigin);
+  return {
+    "Access-Control-Allow-Origin": isAllowed && reqOrigin ? reqOrigin : (ALLOWED_ORIGINS[0] || "*"),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
