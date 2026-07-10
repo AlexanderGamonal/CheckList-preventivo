@@ -10,6 +10,7 @@ export async function sendNotificationEmail(form, pdfArrayBuffer, onStep) {
   const filename = `MP-${sanitize(form.punto)}-${form.idAtm}.pdf`;
   const storagePath = `temp/${Date.now()}-${filename}`;
   const grupo = resolveGrupoMP(form.cliente);
+  console.log('[email MP] cliente:', form.cliente, '→ grupo:', grupo);
 
   onStep?.('Subiendo PDF…');
   const { error: uploadError } = await supabase.storage
@@ -48,6 +49,7 @@ export async function sendC2dEmail(form, pdfArrayBuffer, onStep) {
   const puntoSlug = sanitize(form.punto).slice(0, 40);
   const filename = `C2D-${puntoSlug ? puntoSlug + '-' : ''}${sanitize(form.idAtm || 'ATM')}-${form.fecha || 'sin-fecha'}.pdf`;
   const storagePath = `temp/${Date.now()}-${filename}`;
+  console.log('[email C2D] grupo: c2d');
 
   onStep?.('Subiendo PDF...');
   const { error: uploadError } = await supabase.storage
@@ -85,6 +87,7 @@ export async function sendAuditoriaEmail(form, pdfArrayBuffer, onStep) {
   const sanitize = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9\-_]/g, '-').replace(/-+/g, '-');
   const filename = `Auditoria-${sanitize(form.idAtm || 'ATM')}-${form.fecha || 'sin-fecha'}.pdf`;
   const storagePath = `temp/${Date.now()}-${filename}`;
+  console.log('[email Auditoria] grupo: atm_bbva');
 
   onStep?.('Subiendo PDF...');
   const { error: uploadError } = await supabase.storage
