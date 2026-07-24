@@ -11,3 +11,6 @@ dist/
 
 # Supabase CLI temp files
 supabase/.temp/
+
+# Vite config temp files (ESM loader artifacts)
+vite.config.js.timestamp-*.mjs

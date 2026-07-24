@@ -150,9 +150,12 @@ function VoltRow({ label, values, showStar }) {
   );
 }
 
+function hasBlockContent(dev) {
+  return !!(dev.estado || dev.obs || (dev.fotosAntes?.length ?? 0) > 0 || (dev.fotosDespues?.length ?? 0) > 0);
+}
+
 function ComponentBlock({ keyId, label, dev, showPhotos }) {
-  const hasContent = dev.estado || dev.obs || (dev.fotosAntes?.length ?? 0) > 0 || (dev.fotosDespues?.length ?? 0) > 0;
-  if (!hasContent) return null;
+  if (!hasBlockContent(dev)) return null;
   return (
     <div style={{ marginBottom: 10, breakInside: 'avoid' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${GOLD}`, paddingBottom: 3, marginBottom: 5 }}>
@@ -178,6 +181,48 @@ function ComponentBlock({ keyId, label, dev, showPhotos }) {
       )}
     </div>
   );
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Paginación dinámica de evidencias — mismo patrón que AuditPdfView.jsx
+   ───────────────────────────────────────────────────────────────── */
+const PHOTO_ROW_H    = 160;  // 1 fila de 3 fotos (156px + 4px marginTop)
+const BLOCK_HEADER_H = 26;   // nombre + badge estado + borde inferior + margen
+const OBS_H          = 20;   // obs texto (1 línea)
+const LABEL_H        = 20;   // línea "ANTES" / "DESPUÉS"
+const SEC_TITLE_H    = 32;   // SecTitle
+const PAGE_BODY_H    = 920;  // espacio útil por hoja (conservador)
+
+function estimateC2dBlockH(dev) {
+  if (!hasBlockContent(dev)) return 0;
+  let h = BLOCK_HEADER_H + (dev.obs ? OBS_H : 0) + 10;
+  const nAntes = dev.fotosAntes?.length ?? 0;
+  const nDespues = dev.fotosDespues?.length ?? 0;
+  if (nAntes)   h += LABEL_H + Math.ceil(nAntes / 3) * PHOTO_ROW_H;
+  if (nDespues) h += LABEL_H + Math.ceil(nDespues / 3) * PHOTO_ROW_H;
+  return h;
+}
+
+/* ── Distribuye bloques de dispositivo en páginas según su altura estimada ── */
+function paginateC2dBlocks(blocks) {
+  const pages = [];
+  let current = [];
+  let usedH = SEC_TITLE_H;
+
+  blocks.forEach(block => {
+    if (!hasBlockContent(block.dev)) return;
+    const h = estimateC2dBlockH(block.dev);
+    if (usedH + h > PAGE_BODY_H && current.length > 0) {
+      pages.push(current);
+      current = [];
+      usedH = SEC_TITLE_H;
+    }
+    current.push(block);
+    usedH += h;
+  });
+
+  if (current.length > 0) pages.push(current);
+  return pages;
 }
 
 export default function C2dPdfView({ form }) {
@@ -309,35 +354,83 @@ export default function C2dPdfView({ form }) {
         <PdfFooter />
       </div>
 
-      {/* ── Página 2: Evidencias fotográficas (voltajes + componentes) ── */}
-      <div className="pdf-page" style={{
-        width: 794, minHeight: 1123, background: '#fff', color: DARK, fontFamily: FONT,
-        display: 'flex', flexDirection: 'column',
-      }}>
-        <PdfHeader />
+      {/* ── Página(s) 2+: Evidencias fotográficas (voltajes + componentes), dinámicas ── */}
+      {(() => {
+        const deviceBlocks = allKeys
+          .map(k => ({ key: k, label: C2D_DEVICE_LABELS[k], dev: form.devFotos[k] }))
+          .filter(b => hasBlockContent(b.dev));
 
-        <div style={{ flex: 1, padding: '14px 22px' }}>
-          {voltFueraDeRango && form.voltajesPhotos?.length > 0 && (
-            <>
-              <SecTitle title="Evidencia — Voltajes fuera de rango" />
-              <PdfPhotoGrid photos={form.voltajesPhotos} />
-            </>
-          )}
+        const hasVoltPhotos = voltFueraDeRango && form.voltajesPhotos?.length > 0;
+        const VOLT_SECTION_H = hasVoltPhotos
+          ? SEC_TITLE_H + Math.ceil(form.voltajesPhotos.length / 3) * PHOTO_ROW_H
+          : 0;
+        const availableInPage2 = PAGE_BODY_H - VOLT_SECTION_H - SEC_TITLE_H;
 
-          <SecTitle title="Evidencia fotográfica por dispositivo" />
-          {allKeys.map(k => (
-            <ComponentBlock key={k} keyId={k} label={C2D_DEVICE_LABELS[k]} dev={form.devFotos[k]} showPhotos />
-          ))}
+        const page2Blocks = [];
+        let page2Used = 0;
+        const remaining = [...deviceBlocks];
+        while (remaining.length > 0) {
+          const h = estimateC2dBlockH(remaining[0].dev);
+          if (page2Used + h > availableInPage2) break;
+          page2Blocks.push(remaining.shift());
+          page2Used += h;
+        }
 
-          <SecTitle title="Firmas" />
-          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-            <FirmaBox label="Técnico responsable" />
-            <FirmaBox label="Encargado del punto" />
-          </div>
-        </div>
+        const extraPages = paginateC2dBlocks(remaining);
 
-        <PdfFooter />
-      </div>
+        const firmasBlock = (
+          <>
+            <SecTitle title="Firmas" />
+            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+              <FirmaBox label="Técnico responsable" />
+              <FirmaBox label="Encargado del punto" />
+            </div>
+          </>
+        );
+
+        const PAGE_STYLE = {
+          width: 794, minHeight: 1123, background: '#fff', color: DARK, fontFamily: FONT,
+          display: 'flex', flexDirection: 'column',
+        };
+
+        return (
+          <>
+            <div className="pdf-page" style={PAGE_STYLE}>
+              <PdfHeader />
+              <div style={{ flex: 1, padding: '14px 22px' }}>
+                {hasVoltPhotos && (
+                  <>
+                    <SecTitle title="Evidencia — Voltajes fuera de rango" />
+                    <PdfPhotoGrid photos={form.voltajesPhotos} />
+                  </>
+                )}
+
+                <SecTitle title="Evidencia fotográfica por dispositivo" />
+                {page2Blocks.map(b => (
+                  <ComponentBlock key={b.key} keyId={b.key} label={b.label} dev={b.dev} showPhotos />
+                ))}
+
+                {extraPages.length === 0 && firmasBlock}
+              </div>
+              <PdfFooter />
+            </div>
+
+            {extraPages.map((blocks, idx) => (
+              <div key={idx} className="pdf-page" style={PAGE_STYLE}>
+                <PdfHeader />
+                <div style={{ flex: 1, padding: '14px 22px' }}>
+                  <SecTitle title="Evidencia fotográfica por dispositivo (cont.)" />
+                  {blocks.map(b => (
+                    <ComponentBlock key={b.key} keyId={b.key} label={b.label} dev={b.dev} showPhotos />
+                  ))}
+                  {idx === extraPages.length - 1 && firmasBlock}
+                </div>
+                <PdfFooter />
+              </div>
+            ))}
+          </>
+        );
+      })()}
     </div>
   );
 }
