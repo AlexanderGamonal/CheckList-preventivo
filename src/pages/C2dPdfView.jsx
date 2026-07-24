@@ -55,28 +55,6 @@ function Lbl({ children }) {
   return <span style={{ fontSize: FS, whiteSpace: 'nowrap', color: '#444' }}>{children} :</span>;
 }
 
-function FirmaBox({ label }) {
-  return (
-    <div style={{
-      flex: 1, border: `1px solid ${BORD}`, borderRadius: 4,
-      padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 12,
-    }}>
-      <div style={{ fontSize: FS - 1, fontWeight: 700, color: DARK, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-        {label}
-      </div>
-      <div style={{ borderBottom: `1px solid ${BORD}`, height: 36 }} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <span style={{ fontSize: FS - 2, color: '#888', marginBottom: 2 }}>Nombres y Apellidos</span>
-        <div style={{ borderBottom: `1px solid ${BORD}`, height: 18 }} />
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: FS - 1, color: '#555', whiteSpace: 'nowrap' }}>DNI :</span>
-        <div style={{ flex: 1, borderBottom: `1px solid ${BORD}`, height: 18 }} />
-      </div>
-    </div>
-  );
-}
-
 function PdfFooter() {
   return (
     <div style={{ borderTop: `1px solid #ddd`, padding: '5px 18px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -378,16 +356,6 @@ export default function C2dPdfView({ form }) {
 
         const extraPages = paginateC2dBlocks(remaining);
 
-        const firmasBlock = (
-          <>
-            <SecTitle title="Firmas" />
-            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-              <FirmaBox label="Técnico responsable" />
-              <FirmaBox label="Encargado del punto" />
-            </div>
-          </>
-        );
-
         const PAGE_STYLE = {
           width: 794, minHeight: 1123, background: '#fff', color: DARK, fontFamily: FONT,
           display: 'flex', flexDirection: 'column',
@@ -409,8 +377,6 @@ export default function C2dPdfView({ form }) {
                 {page2Blocks.map(b => (
                   <ComponentBlock key={b.key} keyId={b.key} label={b.label} dev={b.dev} showPhotos />
                 ))}
-
-                {extraPages.length === 0 && firmasBlock}
               </div>
               <PdfFooter />
             </div>
@@ -423,7 +389,6 @@ export default function C2dPdfView({ form }) {
                   {blocks.map(b => (
                     <ComponentBlock key={b.key} keyId={b.key} label={b.label} dev={b.dev} showPhotos />
                   ))}
-                  {idx === extraPages.length - 1 && firmasBlock}
                 </div>
                 <PdfFooter />
               </div>
