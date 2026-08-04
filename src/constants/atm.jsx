@@ -51,6 +51,19 @@ export const MARCA_CONFIG = {
   GRG: { color: "#1565c0", bg: "#e8f0fb", border: "#90caf9" },
 };
 
+/* Marcas canónicas — usado para tolerar variaciones de mayúsculas
+   que puedan venir de la base de datos (ej. "DIEBOLD" en vez de
+   "Diebold"), evitando que las búsquedas exactas por clave fallen. */
+const MARCAS_CANONICAS = ["NCR", "Diebold", "GRG", "Hyosung"];
+
+export function normalizeMarca(marca) {
+  if (!marca) return marca;
+  const match = MARCAS_CANONICAS.find(
+    (m) => m.toLowerCase() === String(marca).toLowerCase(),
+  );
+  return match || marca;
+}
+
 /* ══════════════════════════════════════════════════
    LOGOS DE MARCA — archivos estáticos en public/logos/
 ══════════════════════════════════════════════════ */
@@ -62,7 +75,7 @@ export const LOGO_SRCS = {
 };
 
 export function BrandLogo({ marca, height = 40, style = {} }) {
-  const src = LOGO_SRCS[marca];
+  const src = LOGO_SRCS[normalizeMarca(marca)];
   if (!src) return null;
   // Contenedor fijo: misma altura Y mismo ancho para los 3 logos
   return (

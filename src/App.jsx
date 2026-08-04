@@ -13,7 +13,7 @@ import TabVoltaje from './components/checklist/TabVoltaje.jsx';
 import TabDispositivos from './components/checklist/TabDispositivos.jsx';
 import TabCierre from './components/checklist/TabCierre.jsx';
 import TabFotos from './components/checklist/TabFotos.jsx';
-import { ATM_TIPOS, MARCAS_POR_TIPO, MARCA_CONFIG } from './constants/atm.jsx';
+import { ATM_TIPOS, MARCAS_POR_TIPO, MARCA_CONFIG, normalizeMarca } from './constants/atm.jsx';
 import { voltMensaje } from './constants/voltages.js';
 import { getSections, initDevicesFor } from './constants/devices.js';
 import './pdf-styles.css';
@@ -108,7 +108,7 @@ export default function App() {
   );
 
   const tipoObj = ATM_TIPOS.find((t) => t.id === form.atmTipo) || null;
-  const marcaObj = form.marca ? MARCA_CONFIG[form.marca] : null;
+  const marcaObj = form.marca ? MARCA_CONFIG[normalizeMarca(form.marca)] : null;
   const sections = useMemo(
     () => getSections(form.atmTipo, form.marca, form.modelo),
     [form.atmTipo, form.marca, form.modelo],

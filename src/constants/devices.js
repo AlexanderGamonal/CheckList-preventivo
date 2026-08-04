@@ -1,3 +1,5 @@
+import { normalizeMarca } from './atm.jsx';
+
 /* ══════════════════════════════════════════════════════════════
    SECCIONES BASE — iguales para toda marca/tipo
 ══════════════════════════════════════════════════════════════ */
@@ -225,12 +227,13 @@ const NCR_6622_MODELOS = ["ss22", "ss26", "6622"];
 const NCR_6623_MODELOS = ["ss23", "ss27", "6623"];
 
 function getDisp(marca, modelo) {
-  if (marca === "NCR" && modelo) {
+  const marcaNorm = normalizeMarca(marca);
+  if (marcaNorm === "NCR" && modelo) {
     const m = modelo.toLowerCase();
     if (NCR_6622_MODELOS.some(k => m.includes(k))) return DISP_NCR_6622;
     if (NCR_6623_MODELOS.some(k => m.includes(k))) return DISP_NCR_6623;
   }
-  return DISP_MAP[marca] || null;
+  return DISP_MAP[marcaNorm] || null;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -289,7 +292,8 @@ export const ACEPT_MAP = { NCR: ACEPT_NCR, Diebold: ACEPT_DIEBOLD };
 ══════════════════════════════════════════════════════════════ */
 export function getSections(atmTipo, marca, modelo = "") {
   if (!atmTipo) return [];
-  const lectora = marca === "Hyosung" ? LECTORA_HYOSUNG : SEC_LECTORA;
+  const marcaNorm = normalizeMarca(marca);
+  const lectora = marcaNorm === "Hyosung" ? LECTORA_HYOSUNG : SEC_LECTORA;
   const secs = [lectora, SEC_IMPRESORA];
 
   if (
@@ -302,9 +306,9 @@ export function getSections(atmTipo, marca, modelo = "") {
   if (
     (atmTipo === "depositos" || atmTipo === "multifuncion") &&
     marca &&
-    ACEPT_MAP[marca]
+    ACEPT_MAP[marcaNorm]
   ) {
-    secs.push(ACEPT_MAP[marca]);
+    secs.push(ACEPT_MAP[marcaNorm]);
   }
 
   secs.push(SEC_MONITOR, SEC_TECLADO, SEC_CPU, SEC_OTROS);
