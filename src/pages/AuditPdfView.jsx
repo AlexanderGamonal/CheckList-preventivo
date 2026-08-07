@@ -578,21 +578,31 @@ export default function AuditPdfView({ form }) {
                 <SecTitle title="VOLTAJES" />
                 {(() => {
                   const V_MIN = 220 * 0.95, V_MAX = 220 * 1.05, NT_MAX = 5;
-                  function vSt(val, isTierra) {
+                  function parseV(val) {
+                    if (val === '' || val === null || val === undefined) return null;
+                    const v = parseFloat(String(val).replace(',', '.'));
+                    return isNaN(v) ? null : v;
+                  }
+                  function esSinAcceso(lt, ln, nt) {
+                    return parseV(lt) === 0 && parseV(ln) === 0 && parseV(nt) === 0;
+                  }
+                  function vSt(val, isTierra, sinAcceso) {
                     const v = parseFloat(String(val || '').replace(',', '.'));
                     if (!val || isNaN(v)) return null;
+                    if (sinAcceso) return 'sinacceso';
                     if (isTierra) return v >= NT_MAX ? 'tierra' : 'ok';
                     return (v >= V_MIN && v <= V_MAX) ? 'ok' : 'fuera';
                   }
                   function eqSt(lt, ln, nt) {
+                    if (esSinAcceso(lt, ln, nt)) return 'sinacceso';
                     const slt = vSt(lt); const sln = vSt(ln); const snt = vSt(nt, true);
                     if (slt === 'fuera' || sln === 'fuera') return 'fuera';
                     if (snt === 'tierra') return 'tierra';
                     if (slt === 'ok' || sln === 'ok' || snt === 'ok') return 'ok';
                     return null;
                   }
-                  const SCOL = { ok: '#16a34a', fuera: '#dc2626', tierra: '#d97706' };
-                  const SLBL = { ok: 'OK', fuera: 'FUERA DE RANGO', tierra: 'TIERRA DEFICIENTE' };
+                  const SCOL = { ok: '#16a34a', fuera: '#dc2626', tierra: '#d97706', sinacceso: '#64748b' };
+                  const SLBL = { ok: 'OK', fuera: 'FUERA DE RANGO', tierra: 'TIERRA DEFICIENTE', sinacceso: 'SIN ACCESO' };
                   const rows = [
                     { label: 'ATM', lt: f.voltajes?.atmLT, ln: f.voltajes?.atmLN, nt: f.voltajes?.atmNT },
                     { label: 'UPS', lt: f.voltajes?.upsLT, ln: f.voltajes?.upsLN, nt: f.voltajes?.upsNT },
@@ -600,9 +610,10 @@ export default function AuditPdfView({ form }) {
                   const atmSt = eqSt(f.voltajes?.atmLT, f.voltajes?.atmLN, f.voltajes?.atmNT);
                   const upsSt = eqSt(f.voltajes?.upsLT, f.voltajes?.upsLN, f.voltajes?.upsNT);
                   const hasIssue = atmSt === 'fuera' || atmSt === 'tierra' || upsSt === 'fuera' || upsSt === 'tierra';
+                  const sinAccesoAlgo = atmSt === 'sinacceso' || upsSt === 'sinacceso';
                   const anyFilled = [f.voltajes?.atmLT, f.voltajes?.atmLN, f.voltajes?.atmNT,
                   f.voltajes?.upsLT, f.voltajes?.upsLN, f.voltajes?.upsNT].some(v => v);
-                  const obsText = !anyFilled ? '' : hasIssue ? 'Voltajes incorrectos, reportar al proveedor' : 'Voltajes correctos';
+                  const obsText = !anyFilled ? '' : hasIssue ? 'Voltajes incorrectos, reportar al proveedor' : sinAccesoAlgo ? 'Sin acceso a la medición de voltajes' : 'Voltajes correctos';
                   return (
                     <>
                       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 6 }}>
@@ -617,12 +628,13 @@ export default function AuditPdfView({ form }) {
                         <tbody>
                           {rows.map(({ label, lt, ln, nt }) => {
                             const st = eqSt(lt, ln, nt);
-                            const ntSt = vSt(nt, true);
+                            const sinAcceso = esSinAcceso(lt, ln, nt);
+                            const ntSt = vSt(nt, true, sinAcceso);
                             return (
                               <tr key={label}>
                                 <td style={{ fontSize: FS, padding: '5px 8px', border: `1px solid ${BORD}`, fontWeight: 700 }}>{label}</td>
-                                <td style={{ fontSize: FS, padding: '5px 8px', border: `1px solid ${BORD}`, textAlign: 'center', color: vSt(lt) === 'fuera' ? '#dc2626' : '#222' }}>{lt || '—'}</td>
-                                <td style={{ fontSize: FS, padding: '5px 8px', border: `1px solid ${BORD}`, textAlign: 'center', color: vSt(ln) === 'fuera' ? '#dc2626' : '#222' }}>{ln || '—'}</td>
+                                <td style={{ fontSize: FS, padding: '5px 8px', border: `1px solid ${BORD}`, textAlign: 'center', color: vSt(lt, false, sinAcceso) === 'fuera' ? '#dc2626' : '#222' }}>{lt || '—'}</td>
+                                <td style={{ fontSize: FS, padding: '5px 8px', border: `1px solid ${BORD}`, textAlign: 'center', color: vSt(ln, false, sinAcceso) === 'fuera' ? '#dc2626' : '#222' }}>{ln || '—'}</td>
                                 <td style={{ fontSize: FS, padding: '5px 8px', border: `1px solid ${BORD}`, textAlign: 'center', color: ntSt === 'tierra' ? '#d97706' : '#222' }}>{nt || '—'}{ntSt === 'tierra' ? ' ⚠' : ''}</td>
                                 <td style={{ fontSize: FS, padding: '5px 8px', border: `1px solid ${BORD}`, textAlign: 'center', fontWeight: 700, color: st ? SCOL[st] : '#999' }}>{st ? SLBL[st] : '—'}</td>
                               </tr>
@@ -631,7 +643,7 @@ export default function AuditPdfView({ form }) {
                         </tbody>
                       </table>
                       {obsText && (
-                        <div style={{ fontSize: FS, fontWeight: 700, padding: '5px 10px', borderRadius: 4, marginBottom: 6, background: hasIssue ? '#fef2f2' : '#f0fdf4', border: `1px solid ${hasIssue ? '#fca5a5' : '#86efac'}`, color: hasIssue ? '#dc2626' : '#16a34a' }}>
+                        <div style={{ fontSize: FS, fontWeight: 700, padding: '5px 10px', borderRadius: 4, marginBottom: 6, background: hasIssue ? '#fef2f2' : sinAccesoAlgo ? '#f1f5f9' : '#f0fdf4', border: `1px solid ${hasIssue ? '#fca5a5' : sinAccesoAlgo ? '#cbd5e1' : '#86efac'}`, color: hasIssue ? '#dc2626' : sinAccesoAlgo ? '#64748b' : '#16a34a' }}>
                           Observaciones: {obsText}
                         </div>
                       )}

@@ -230,14 +230,31 @@ const V_MIN = 220 * 0.95; // 209 V
 const V_MAX = 220 * 1.05; // 231 V
 const NT_MAX = 5;          // Tierra: máx 5 V (>= 5V = deficiente)
 
-function voltLineStatus(val, isTierra = false) {
+function parseVolt(val) {
+  if (val === '' || val === null || val === undefined) return null;
+  const v = parseFloat(String(val).replace(',', '.'));
+  return isNaN(v) ? null : v;
+}
+
+/* Un técnico sin acceso físico a la medición a veces registra 0 en
+   las 3 mediciones (L-T, L-N y N-T) en vez de dejarlas vacías. Ese
+   caso puntual no debe leerse como "fuera de rango": se trata como
+   "sin acceso a la medición". */
+function esSinAcceso(lt, ln, nt) {
+  const a = parseVolt(lt), b = parseVolt(ln), c = parseVolt(nt);
+  return a === 0 && b === 0 && c === 0;
+}
+
+function voltLineStatus(val, isTierra = false, sinAcceso = false) {
   const v = parseFloat(String(val).replace(',', '.'));
   if (val === '' || val === null || val === undefined || isNaN(v)) return null;
+  if (sinAcceso) return 'sinacceso';
   if (isTierra) return v >= NT_MAX ? 'tierra' : 'ok';
   return (v >= V_MIN && v <= V_MAX) ? 'ok' : 'fuera';
 }
 
 function equipoStatus(lt, ln, nt) {
+  if (esSinAcceso(lt, ln, nt)) return 'sinacceso';
   const slt = voltLineStatus(lt);
   const sln = voltLineStatus(ln);
   const snt = voltLineStatus(nt, true);
@@ -247,7 +264,7 @@ function equipoStatus(lt, ln, nt) {
   return null;
 }
 
-const VOLT_COLOR = { ok: 'var(--status-ok)', fuera: 'var(--status-critical)', tierra: '#F59E0B' };
+const VOLT_COLOR = { ok: 'var(--status-ok)', fuera: 'var(--status-critical)', tierra: '#F59E0B', sinacceso: 'var(--status-offline)' };
 
 function VoltRow({ prefix, voltajes, setVoltaje }) {
   const [touched, setTouched] = React.useState({});
@@ -260,17 +277,19 @@ function VoltRow({ prefix, voltajes, setVoltaje }) {
     { key: `${prefix}NT`, label: 'N–T (V)', isTierra: true,  val: nt },
   ];
   const overall    = equipoStatus(lt, ln, nt);
+  const sinAcceso  = overall === 'sinacceso';
   const anyTouched = Object.values(touched).some(Boolean);
   const STATUS_MSG = {
-    ok:     '✓ OK',
-    fuera:  '⚠ Fuera de rango — reportar al proveedor eléctrico',
-    tierra: '⚠ Tierra deficiente (≥5 V) — reportar al proveedor',
+    ok:        '✓ OK',
+    fuera:     '⚠ Fuera de rango — reportar al proveedor eléctrico',
+    tierra:    '⚠ Tierra deficiente (≥5 V) — reportar al proveedor',
+    sinacceso: '🔒 Sin acceso a esta medición',
   };
   return (
     <>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
         {MEDIDAS.map(({ key, label, isTierra, val }) => {
-          const st  = voltLineStatus(val, isTierra);
+          const st  = voltLineStatus(val, isTierra, sinAcceso);
           const isT = !!touched[key];
           return (
             <div key={key}>
@@ -291,7 +310,7 @@ function VoltRow({ prefix, voltajes, setVoltaje }) {
               />
               {isT && st && (
                 <div style={{ fontSize: 10, color: VOLT_COLOR[st], marginTop: 3, fontWeight: 600 }}>
-                  {st === 'ok' ? '✓ OK' : isTierra ? '⚠ ≥5 V' : '⚠ Fuera ±5%'}
+                  {st === 'ok' ? '✓ OK' : st === 'sinacceso' ? '🔒 S/ACCESO' : isTierra ? '⚠ ≥5 V' : '⚠ Fuera ±5%'}
                 </div>
               )}
             </div>
@@ -301,7 +320,7 @@ function VoltRow({ prefix, voltajes, setVoltaje }) {
       {anyTouched && overall && (
         <div style={{
           padding: '8px 12px', borderRadius: 8, marginTop: 2,
-          background: overall === 'ok' ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+          background: overall === 'ok' ? 'rgba(34,197,94,0.08)' : overall === 'sinacceso' ? 'rgba(100,116,139,0.08)' : 'rgba(239,68,68,0.08)',
           border: `1px solid ${VOLT_COLOR[overall]}44`,
           fontSize: 12, color: VOLT_COLOR[overall], fontWeight: 600,
         }}>
@@ -958,16 +977,19 @@ export default function AuditFormPage() {
             const atmSt = equipoStatus(atmLT, atmLN, atmNT);
             const upsSt = equipoStatus(upsLT, upsLN, upsNT);
             const hasIssue = atmSt === 'fuera' || atmSt === 'tierra' || upsSt === 'fuera' || upsSt === 'tierra';
+            const sinAccesoAlgo = atmSt === 'sinacceso' || upsSt === 'sinacceso';
             const obsText = hasIssue
               ? 'Voltajes incorrectos, reportar al proveedor'
-              : 'Voltajes correctos';
-            const obsColor = hasIssue ? 'var(--status-critical)' : 'var(--status-ok)';
+              : sinAccesoAlgo
+                ? 'Sin acceso a la medición de voltajes'
+                : 'Voltajes correctos';
+            const obsColor = hasIssue ? 'var(--status-critical)' : sinAccesoAlgo ? 'var(--status-offline)' : 'var(--status-ok)';
             return (
               <div>
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.3px', textTransform: 'uppercase', marginBottom: 5 }}>Observaciones</div>
                 <div style={{
                   padding: '10px 12px', borderRadius: 8, border: `1.5px solid ${obsColor}44`,
-                  background: hasIssue ? 'rgba(239,68,68,0.06)' : 'rgba(34,197,94,0.06)',
+                  background: hasIssue ? 'rgba(239,68,68,0.06)' : sinAccesoAlgo ? 'rgba(100,116,139,0.06)' : 'rgba(34,197,94,0.06)',
                   fontSize: 13, color: obsColor, fontWeight: 600,
                 }}>
                   {obsText}
@@ -978,9 +1000,10 @@ export default function AuditFormPage() {
           {/* Fotos — si alguna medición está fuera de rango */}
           {(() => {
             const { atmLT, atmLN, atmNT, upsLT, upsLN, upsNT } = form.voltajes;
+            const PROBLEMA = ['fuera', 'tierra'];
             const hasIssue =
-              equipoStatus(atmLT, atmLN, atmNT) !== 'ok' && equipoStatus(atmLT, atmLN, atmNT) !== null ||
-              equipoStatus(upsLT, upsLN, upsNT) !== 'ok' && equipoStatus(upsLT, upsLN, upsNT) !== null;
+              PROBLEMA.includes(equipoStatus(atmLT, atmLN, atmNT)) ||
+              PROBLEMA.includes(equipoStatus(upsLT, upsLN, upsNT));
             return hasIssue ? (
               <PhotoUploader
                 label="Evidencia fotográfica de voltaje"

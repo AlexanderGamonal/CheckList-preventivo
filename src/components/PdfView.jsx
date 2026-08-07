@@ -1,6 +1,6 @@
 import React from 'react';
 import { ATM_TIPOS, BrandLogo } from '../constants/atm.jsx';
-import { VOLT_ITEMS, VOLT_MIN, VOLT_MAX, NT_MAX, voltEstadoCampo } from '../constants/voltages.js';
+import { VOLT_ITEMS, VOLT_MIN, VOLT_MAX, NT_MAX, voltEstadoCampo, esSinAcceso } from '../constants/voltages.js';
 
 export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
   const ck = (f) => (f ? "✓" : "");
@@ -115,18 +115,21 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
         <tbody>
           {VOLT_ITEMS.map((item) => {
             const v = form.voltages[item];
+            const sinAcceso = esSinAcceso(v.ln, v.lt, v.nt);
             const hayErrLL = [v.ln, v.lt].some(
-              (x) => voltEstadoCampo("ln", x) === "err",
+              (x) => voltEstadoCampo("ln", x, sinAcceso) === "err",
             );
-            const hayErrNT = voltEstadoCampo("nt", v.nt) === "err";
+            const hayErrNT = voltEstadoCampo("nt", v.nt, sinAcceso) === "err";
             const hayErr = hayErrLL || hayErrNT;
             const hayVal = [v.ln, v.lt, v.nt].some((x) => x !== "");
-            const estBg = !hayVal ? "" : hayErr ? "#FFCCCC" : "#E2EFDA";
+            const estBg = !hayVal ? "" : sinAcceso ? "#E5E7EB" : hayErr ? "#FFCCCC" : "#E2EFDA";
             const estClr = !hayVal
               ? "#64748b"
-              : hayErr
-                ? "#9C0006"
-                : "#375623";
+              : sinAcceso
+                ? "#374151"
+                : hayErr
+                  ? "#9C0006"
+                  : "#375623";
             return (
               <tr key={item}>
                 <td className="pdf-vi">{item}</td>
@@ -135,7 +138,7 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
                   ["lt", v.lt],
                   ["nt", v.nt],
                 ].map(([campo, val], i) => {
-                  const est = voltEstadoCampo(campo, val);
+                  const est = voltEstadoCampo(campo, val, sinAcceso);
                   const isNT = campo === "nt";
                   return (
                     <td
@@ -143,19 +146,23 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
                       className="pdf-vc"
                       style={{
                         background:
-                          est === "err"
-                            ? isNT
-                              ? "#EDE9FE"
-                              : "#FFCCCC"
-                            : est === "ok"
-                              ? "#E2EFDA"
-                              : "",
+                          est === "sinacceso"
+                            ? "#E5E7EB"
+                            : est === "err"
+                              ? isNT
+                                ? "#EDE9FE"
+                                : "#FFCCCC"
+                              : est === "ok"
+                                ? "#E2EFDA"
+                                : "",
                         color:
-                          est === "err"
-                            ? isNT
-                              ? "#5B21B6"
-                              : "#9C0006"
-                            : "",
+                          est === "sinacceso"
+                            ? "#374151"
+                            : est === "err"
+                              ? isNT
+                                ? "#5B21B6"
+                                : "#9C0006"
+                              : "",
                         fontWeight: est ? "700" : "",
                       }}
                     >
@@ -172,7 +179,7 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
                     color: estClr,
                   }}
                 >
-                  {!hayVal ? "—" : hayErr ? "✗ FUERA" : "✓ OK"}
+                  {!hayVal ? "—" : sinAcceso ? "🔒 S/ACCESO" : hayErr ? "✗ FUERA" : "✓ OK"}
                 </td>
                 <td
                   style={{

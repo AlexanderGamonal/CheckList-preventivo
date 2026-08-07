@@ -1,5 +1,5 @@
 import React from 'react';
-import { VOLT_ITEMS, VOLT_MIN, VOLT_MAX, NT_MAX, voltEstadoCampo } from '../../constants/voltages.js';
+import { VOLT_ITEMS, VOLT_MIN, VOLT_MAX, NT_MAX, voltEstadoCampo, esSinAcceso } from '../../constants/voltages.js';
 import { INP, LBL } from './styles.js';
 
 export default function TabVoltaje({ form, updV, setTab, marcaObj, accentBg }) {
@@ -102,9 +102,10 @@ export default function TabVoltaje({ form, updV, setTab, marcaObj, accentBg }) {
 
       {VOLT_ITEMS.map((item) => {
         const v = form.voltages[item];
-        const estLN = voltEstadoCampo("ln", v.ln);
-        const estLT = voltEstadoCampo("lt", v.lt);
-        const estNT = voltEstadoCampo("nt", v.nt);
+        const sinAcceso = esSinAcceso(v.ln, v.lt, v.nt);
+        const estLN = voltEstadoCampo("ln", v.ln, sinAcceso);
+        const estLT = voltEstadoCampo("lt", v.lt, sinAcceso);
+        const estNT = voltEstadoCampo("nt", v.nt, sinAcceso);
         const estados = [estLN, estLT, estNT].filter(
           (e) => e !== null,
         );
@@ -112,14 +113,18 @@ export default function TabVoltaje({ form, updV, setTab, marcaObj, accentBg }) {
         const hayOk = estados.length > 0;
         const borderColor = !hayOk
           ? "var(--border-default)"
-          : hayErr
-            ? "var(--status-critical-border)"
-            : "var(--status-ok-border)";
+          : sinAcceso
+            ? "var(--status-offline-border)"
+            : hayErr
+              ? "var(--status-critical-border)"
+              : "var(--status-ok-border)";
         const headerBg = !hayOk
           ? "var(--bg-secondary)"
-          : hayErr
-            ? "var(--status-critical-dim)"
-            : "var(--status-ok-dim)";
+          : sinAcceso
+            ? "var(--status-offline-dim)"
+            : hayErr
+              ? "var(--status-critical-dim)"
+              : "var(--status-ok-dim)";
         return (
           <div
             key={item}
@@ -156,8 +161,9 @@ export default function TabVoltaje({ form, updV, setTab, marcaObj, accentBg }) {
                     fontWeight: 800,
                     borderRadius: 20,
                     padding: "3px 10px",
-                    background:
-                      estNT === "err" &&
+                    background: sinAcceso
+                      ? "var(--status-offline)"
+                      : estNT === "err" &&
                         !(estLN === "err" || estLT === "err")
                         ? "var(--status-caution)"
                         : hayErr
@@ -166,12 +172,14 @@ export default function TabVoltaje({ form, updV, setTab, marcaObj, accentBg }) {
                     color: "#fff",
                   }}
                 >
-                  {estNT === "err" &&
-                    !(estLN === "err" || estLT === "err")
-                    ? "⚠ Tierra desbalanceada"
-                    : hayErr
-                      ? "✗ Fuera de rango"
-                      : "✓ En rango"}
+                  {sinAcceso
+                    ? "🔒 Sin acceso a esta medición"
+                    : estNT === "err" &&
+                      !(estLN === "err" || estLT === "err")
+                      ? "⚠ Tierra desbalanceada"
+                      : hayErr
+                        ? "✗ Fuera de rango"
+                        : "✓ En rango"}
                 </span>
               )}
             </div>
@@ -189,32 +197,38 @@ export default function TabVoltaje({ form, updV, setTab, marcaObj, accentBg }) {
                   ["lt", "L – T"],
                   ["nt", "N – T"],
                 ].map(([f, l]) => {
-                  const est = voltEstadoCampo(f, v[f]);
+                  const est = voltEstadoCampo(f, v[f], sinAcceso);
                   const isNT = f === "nt";
                   const cBorder =
                     est === "ok"
                       ? "var(--status-ok-border)"
-                      : est === "err"
-                        ? isNT
-                          ? "var(--status-info-border)"
-                          : "var(--status-critical-border)"
-                        : "var(--border-default)";
+                      : est === "sinacceso"
+                        ? "var(--status-offline-border)"
+                        : est === "err"
+                          ? isNT
+                            ? "var(--status-info-border)"
+                            : "var(--status-critical-border)"
+                          : "var(--border-default)";
                   const cBg =
                     est === "ok"
                       ? "var(--status-ok-dim)"
-                      : est === "err"
-                        ? isNT
-                          ? "var(--status-info-dim)"
-                          : "var(--status-critical-dim)"
-                        : "var(--bg-secondary)";
+                      : est === "sinacceso"
+                        ? "var(--status-offline-dim)"
+                        : est === "err"
+                          ? isNT
+                            ? "var(--status-info-dim)"
+                            : "var(--status-critical-dim)"
+                          : "var(--bg-secondary)";
                   const cText =
                     est === "ok"
                       ? "var(--status-ok)"
-                      : est === "err"
-                        ? isNT
-                          ? "var(--status-caution)"
-                          : "var(--status-critical)"
-                        : "var(--text-primary)";
+                      : est === "sinacceso"
+                        ? "var(--status-offline)"
+                        : est === "err"
+                          ? isNT
+                            ? "var(--status-caution)"
+                            : "var(--status-critical)"
+                          : "var(--text-primary)";
                   return (
                     <div key={f}>
                       <label
@@ -258,9 +272,11 @@ export default function TabVoltaje({ form, updV, setTab, marcaObj, accentBg }) {
                           >
                             {est === "ok"
                               ? "✓ " + v[f] + " V"
-                              : isNT
-                                ? "⚠ " + v[f] + " V"
-                                : "✗ " + v[f] + " V"}
+                              : est === "sinacceso"
+                                ? "🔒 Sin acceso"
+                                : isNT
+                                  ? "⚠ " + v[f] + " V"
+                                  : "✗ " + v[f] + " V"}
                           </p>
                         ) : (
                           <p
@@ -290,25 +306,31 @@ export default function TabVoltaje({ form, updV, setTab, marcaObj, accentBg }) {
                   gap: 8,
                   background: !hayOk
                     ? "var(--bg-tertiary)"
-                    : hayErr
-                      ? "var(--status-critical-dim)"
-                      : "var(--status-ok-dim)",
+                    : sinAcceso
+                      ? "var(--status-offline-dim)"
+                      : hayErr
+                        ? "var(--status-critical-dim)"
+                        : "var(--status-ok-dim)",
                   border:
                     "1px solid " +
                     (!hayOk
                       ? "var(--border-default)"
-                      : hayErr
-                        ? "var(--status-critical-border)"
-                        : "var(--status-ok-border)"),
+                      : sinAcceso
+                        ? "var(--status-offline-border)"
+                        : hayErr
+                          ? "var(--status-critical-border)"
+                          : "var(--status-ok-border)"),
                   color: !hayOk
                     ? "var(--text-muted)"
-                    : hayErr
-                      ? "var(--status-critical)"
-                      : "var(--status-ok)",
+                    : sinAcceso
+                      ? "var(--status-offline)"
+                      : hayErr
+                        ? "var(--status-critical)"
+                        : "var(--status-ok)",
                 }}
               >
                 <span style={{ fontSize: 16 }}>
-                  {!hayOk ? "📋" : hayErr ? "⚠️" : "✅"}
+                  {!hayOk ? "📋" : sinAcceso ? "🔒" : hayErr ? "⚠️" : "✅"}
                 </span>
                 <span>
                   {v.obs ||
@@ -322,15 +344,16 @@ export default function TabVoltaje({ form, updV, setTab, marcaObj, accentBg }) {
 
       {/* Resumen global voltajes */}
       {(() => {
-        const errLL = VOLT_ITEMS.some((it) =>
-          [form.voltages[it].ln, form.voltages[it].lt].some(
-            (v) => voltEstadoCampo("ln", v) === "err",
-          ),
-        );
-        const errNT = VOLT_ITEMS.some(
-          (it) =>
-            voltEstadoCampo("nt", form.voltages[it].nt) === "err",
-        );
+        const errLL = VOLT_ITEMS.some((it) => {
+          const v = form.voltages[it];
+          const sa = esSinAcceso(v.ln, v.lt, v.nt);
+          return [v.ln, v.lt].some((val) => voltEstadoCampo("ln", val, sa) === "err");
+        });
+        const errNT = VOLT_ITEMS.some((it) => {
+          const v = form.voltages[it];
+          const sa = esSinAcceso(v.ln, v.lt, v.nt);
+          return voltEstadoCampo("nt", v.nt, sa) === "err";
+        });
         const hayVal = VOLT_ITEMS.some((it) => {
           const v = form.voltages[it];
           return v.ln || v.lt || v.nt;

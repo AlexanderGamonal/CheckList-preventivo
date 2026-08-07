@@ -15,10 +15,30 @@ export const VOLT_ITEMS = [
   "Toma Eléctrica",
 ];
 
-/* Valida un campo específico según su tipo */
-export function voltEstadoCampo(campo, valor) {
+function parseVolt(valor) {
+  if (valor === "" || valor === null || valor === undefined) return null;
+  const v = parseFloat(String(valor).replace(",", "."));
+  return isNaN(v) ? null : v;
+}
+
+/* Un técnico sin acceso físico a la medición a veces registra 0 en
+   las 3 mediciones (L-N, L-T y N-T) en vez de dejarlas vacías. Ese
+   caso puntual no debe leerse como "fuera de rango": se trata como
+   "sin acceso a la medición". */
+export function esSinAcceso(ln, lt, nt) {
+  const a = parseVolt(ln);
+  const b = parseVolt(lt);
+  const c = parseVolt(nt);
+  return a === 0 && b === 0 && c === 0;
+}
+
+/* Valida un campo específico según su tipo.
+   sinAcceso: cuando las 3 mediciones del grupo son 0, se marca el
+   campo como "sinacceso" en vez de "ok"/"err". */
+export function voltEstadoCampo(campo, valor, sinAcceso = false) {
   const v = parseFloat(valor);
   if (isNaN(v) || valor === "" || valor === null) return null;
+  if (sinAcceso) return "sinacceso";
   if (campo === "nt") return v <= NT_MAX ? "ok" : "err";
   return v >= VOLT_MIN && v <= VOLT_MAX ? "ok" : "err";
 }
@@ -30,6 +50,9 @@ export function voltEstado(valor) {
 
 /* Genera el mensaje de observación automático */
 export function voltMensaje(ln, lt, nt) {
+  if (esSinAcceso(ln, lt, nt)) {
+    return "Sin acceso a esta medición";
+  }
   const partes = [];
   const llenos = [ln, lt].filter(
     (v) => v !== "" && v !== null && v !== undefined,
