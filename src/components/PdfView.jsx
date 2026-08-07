@@ -2,8 +2,89 @@ import React from 'react';
 import { ATM_TIPOS, BrandLogo } from '../constants/atm.jsx';
 import { VOLT_ITEMS, VOLT_MIN, VOLT_MAX, NT_MAX, voltEstadoCampo, esSinAcceso } from '../constants/voltages.js';
 
-export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
+/* Tabla de un bloque de dispositivos (Lectora, Impresora, Dispensador,
+   Monitor, etc.) — se renderiza en la hoja 1 o en hojas extra según
+   cuánto contenido tenga que paginarse dinámicamente. */
+function DeviceSectionTable({ sec, form }) {
   const ck = (f) => (f ? "✓" : "");
+  const headCls =
+    "pdf-sh " +
+    (sec.tipo === "disp"
+      ? "pdf-sh-disp"
+      : sec.tipo === "dep"
+        ? "pdf-sh-dep"
+        : "pdf-sh-base");
+  return (
+    <table className="pdf-table" style={{ marginTop: 3 }}>
+      <thead>
+        <tr>
+          <th
+            className={headCls}
+            style={{ textAlign: "left", paddingLeft: 4, width: "29%" }}
+          >
+            {sec.title}
+          </th>
+          <th className={headCls} style={{ width: "5%" }}>Limp.</th>
+          <th className={headCls} style={{ width: "5%" }}>Pru.</th>
+          <th className={headCls} style={{ width: "5.5%" }}>Bueno</th>
+          <th className={headCls} style={{ width: "7%" }}>Defect.</th>
+          <th className={headCls} style={{ width: "6%" }}>Regular</th>
+          <th className={headCls} style={{ width: "6.5%" }}>N/Aplica</th>
+          <th className={headCls}>Observaciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {sec.items.map((item, ii) => {
+          const d = form.devices[sec.id + "_" + ii] || {};
+          return (
+            <tr key={ii} className={ii % 2 === 1 ? "pdf-alt" : ""}>
+              <td className="pdf-col-item">{item}</td>
+              <td className="pdf-col-chk" style={{ color: "#1d4ed8" }}>
+                {ck(d.lim)}
+              </td>
+              <td className="pdf-col-chk" style={{ color: "#1d4ed8" }}>
+                {ck(d.pru)}
+              </td>
+              <td
+                className="pdf-col-chk2"
+                style={{
+                  color: "#16a34a",
+                  background: d.est === "Bueno" ? "#f0fdf4" : "",
+                }}
+              >
+                {d.est === "Bueno" ? "✓" : ""}
+              </td>
+              <td
+                className="pdf-col-def"
+                style={{
+                  color: "#dc2626",
+                  background: d.est === "Defectuoso" ? "#fef2f2" : "",
+                }}
+              >
+                {d.est === "Defectuoso" ? "✓" : ""}
+              </td>
+              <td
+                className="pdf-col-reg"
+                style={{
+                  color: "#d97706",
+                  background: d.est === "Regular" ? "#fffbeb" : "",
+                }}
+              >
+                {d.est === "Regular" ? "✓" : ""}
+              </td>
+              <td className="pdf-col-na" style={{ color: "#64748b" }}>
+                {d.est === "No Aplica" ? "✓" : ""}
+              </td>
+              <td className="pdf-col-obs">{d.obs}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
   const stCls = {
     Operativo: "pdf-ok",
     Inoperativo: "pdf-bad",
@@ -22,6 +103,44 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
   return (
     <div>
       {/* ═══ PÁGINA 1: Datos + Checklist ═══ */}
+      {(() => {
+        const ROW_H = 15;       // alto aprox. de una fila de item de dispositivo (px)
+        const SEC_HEAD_H = 18;   // header de tabla + margen inferior (px)
+        const PAGE_BODY_H = 1000; // alto util aprox. de una hoja A4 completa (px)
+        const PAGE1_FIXED_H = 260; // titulo + subtitulo + tabla datos + tabla voltajes + banner (estimado)
+
+        function estimateSectionH(sec) {
+          return SEC_HEAD_H + sec.items.length * ROW_H;
+        }
+
+        const remaining = [...sections];
+        const page1Sections = [];
+        let usedPage1 = 0;
+        const availablePage1 = PAGE_BODY_H - PAGE1_FIXED_H;
+        while (remaining.length > 0) {
+          const h = estimateSectionH(remaining[0]);
+          if (usedPage1 + h > availablePage1 && page1Sections.length > 0) break;
+          page1Sections.push(remaining.shift());
+          usedPage1 += h;
+        }
+
+        const extraPages = [];
+        let current = [];
+        let usedExtra = 0;
+        remaining.forEach((sec) => {
+          const h = estimateSectionH(sec);
+          if (usedExtra + h > PAGE_BODY_H && current.length > 0) {
+            extraPages.push(current);
+            current = [];
+            usedExtra = 0;
+          }
+          current.push(sec);
+          usedExtra += h;
+        });
+        if (current.length > 0) extraPages.push(current);
+
+        return (
+          <>
       <div className="pdf-page">
       <div className="pdf-title">
         CHECK LIST MANTENIMIENTO PREVENTIVO ATM{form.cliente ? ` — ${form.cliente}` : ""}
@@ -203,116 +322,28 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
         {form.marca ? "| " + form.marca : ""}
       </div>
 
-      {/* TABLAS DISPOSITIVOS */}
-      {sections.map((sec) => {
-        const headCls =
-          "pdf-sh " +
-          (sec.tipo === "disp"
-            ? "pdf-sh-disp"
-            : sec.tipo === "dep"
-              ? "pdf-sh-dep"
-              : "pdf-sh-base");
-        return (
-          <table
-            key={sec.id + sec.title}
-            className="pdf-table"
-            style={{ marginTop: 3 }}
-          >
-            <thead>
-              <tr>
-                <th
-                  className={headCls}
-                  style={{
-                    textAlign: "left",
-                    paddingLeft: 4,
-                    width: "29%",
-                  }}
-                >
-                  {sec.title}
-                </th>
-                <th className={headCls} style={{ width: "5%" }}>
-                  Limp.
-                </th>
-                <th className={headCls} style={{ width: "5%" }}>
-                  Pru.
-                </th>
-                <th className={headCls} style={{ width: "5.5%" }}>
-                  Bueno
-                </th>
-                <th className={headCls} style={{ width: "7%" }}>
-                  Defect.
-                </th>
-                <th className={headCls} style={{ width: "6%" }}>
-                  Regular
-                </th>
-                <th className={headCls} style={{ width: "6.5%" }}>
-                  N/Aplica
-                </th>
-                <th className={headCls}>Observaciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sec.items.map((item, ii) => {
-                const d = form.devices[sec.id + "_" + ii] || {};
-                return (
-                  <tr key={ii} className={ii % 2 === 1 ? "pdf-alt" : ""}>
-                    <td className="pdf-col-item">{item}</td>
-                    <td
-                      className="pdf-col-chk"
-                      style={{ color: "#1d4ed8" }}
-                    >
-                      {ck(d.lim)}
-                    </td>
-                    <td
-                      className="pdf-col-chk"
-                      style={{ color: "#1d4ed8" }}
-                    >
-                      {ck(d.pru)}
-                    </td>
-                    <td
-                      className="pdf-col-chk2"
-                      style={{
-                        color: "#16a34a",
-                        background: d.est === "Bueno" ? "#f0fdf4" : "",
-                      }}
-                    >
-                      {d.est === "Bueno" ? "✓" : ""}
-                    </td>
-                    <td
-                      className="pdf-col-def"
-                      style={{
-                        color: "#dc2626",
-                        background:
-                          d.est === "Defectuoso" ? "#fef2f2" : "",
-                      }}
-                    >
-                      {d.est === "Defectuoso" ? "✓" : ""}
-                    </td>
-                    <td
-                      className="pdf-col-reg"
-                      style={{
-                        color: "#d97706",
-                        background: d.est === "Regular" ? "#fffbeb" : "",
-                      }}
-                    >
-                      {d.est === "Regular" ? "✓" : ""}
-                    </td>
-                    <td
-                      className="pdf-col-na"
-                      style={{ color: "#64748b" }}
-                    >
-                      {d.est === "No Aplica" ? "✓" : ""}
-                    </td>
-                    <td className="pdf-col-obs">{d.obs}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        );
-      })}
+      {/* TABLAS DISPOSITIVOS (las que caben en la hoja 1) */}
+      {page1Sections.map((sec) => (
+        <DeviceSectionTable key={sec.id + sec.title} sec={sec} form={form} />
+      ))}
 
       </div>{/* fin pdf-page 1 */}
+
+      {/* ═══ HOJAS EXTRA: resto de tablas de dispositivos ═══ */}
+      {extraPages.map((secs, idx) => (
+        <div key={idx} className="pdf-page">
+          <div className={"pdf-banner " + tipoObj.pdfBanner}>
+            ESTADO DE DISPOSITIVOS (cont.) — {tipoObj.label.toUpperCase()}{" "}
+            {form.marca ? "| " + form.marca : ""}
+          </div>
+          {secs.map((sec) => (
+            <DeviceSectionTable key={sec.id + sec.title} sec={sec} form={form} />
+          ))}
+        </div>
+      ))}
+          </>
+        );
+      })()}
 
       {/* ═══ PÁGINA 2: Conclusiones + Fotos + Firmas ═══ */}
       <div className="pdf-page">
