@@ -84,6 +84,126 @@ function DeviceSectionTable({ sec, form }) {
   );
 }
 
+/* Un bloque de evidencia fotográfica = una etiqueta opcional
+   ("Antes/Después del Mantenimiento", solo en la primera fila del
+   grupo) + una fila de fotos. Se usa como unidad atómica de
+   paginación para que ninguna hoja crezca sin límite. */
+function chunkArray(arr, size) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+const PHOTOS_PER_ROW = 5; // 120px + 5px gap caben 5 por fila en 210mm - padding
+const PHOTO_ROW_H = 125;  // alto de una fila de fotos (foto + gap)
+const PHOTO_LABEL_H = 20; // alto del texto "Antes/Después del Mantenimiento"
+
+function buildPhotoRowBlocks(label, fotos) {
+  if (!fotos.length) return [];
+  return chunkArray(fotos, PHOTOS_PER_ROW).map((row, i) => ({
+    label: i === 0 ? label : null,
+    photos: row,
+  }));
+}
+
+function estimatePhotoBlockH(block) {
+  return (block.label ? PHOTO_LABEL_H : 0) + PHOTO_ROW_H;
+}
+
+function PhotoBlockRows({ blocks }) {
+  return (
+    <>
+      {blocks.map((b, i) => (
+        <div key={i} style={{ marginTop: b.label ? 5 : 3 }}>
+          {b.label && (
+            <p style={{ fontWeight: 700, fontSize: "7pt", marginBottom: 4 }}>
+              {b.label}
+            </p>
+          )}
+          <div className="pdf-photos">
+            {b.photos.map((p, j) => (
+              <div key={j}>
+                <img
+                  src={typeof p === "string" ? p : p.src}
+                  alt=""
+                  className="pdf-photo"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function FirmasTable({ form }) {
+  return (
+    <table
+      style={{
+        width: "100%",
+        borderCollapse: "collapse",
+        marginTop: 22,
+      }}
+    >
+      <tbody>
+        <tr>
+          <td
+            style={{
+              width: "47%",
+              textAlign: "center",
+              paddingTop: 30,
+              fontWeight: 700,
+              fontSize: "7pt",
+              border: "none",
+              borderBottom: "1.5px solid #000",
+            }}
+          >
+            {form.tec || " "}
+          </td>
+          <td style={{ width: "6%", border: "none" }}></td>
+          <td
+            style={{
+              width: "47%",
+              textAlign: "center",
+              paddingTop: 30,
+              border: "none",
+              borderBottom: "1.5px solid #000",
+            }}
+          >
+            {" "}
+          </td>
+        </tr>
+        <tr>
+          <td
+            style={{
+              textAlign: "center",
+              fontSize: "7pt",
+              paddingTop: 3,
+              border: "none",
+              color: "#475569",
+            }}
+          >
+            Técnico Responsable
+          </td>
+          <td style={{ border: "none" }}></td>
+          <td
+            style={{
+              textAlign: "center",
+              fontSize: "7pt",
+              paddingTop: 3,
+              border: "none",
+              color: "#475569",
+            }}
+          >
+            Supervisor / V°B°
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
 export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
   const stCls = {
     Operativo: "pdf-ok",
@@ -346,6 +466,43 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
       })()}
 
       {/* ═══ PÁGINA 2: Conclusiones + Fotos + Firmas ═══ */}
+      {(() => {
+        const PAGE_BODY_H = 1000;   // alto util aprox. de una hoja A4 completa (px)
+        const PAGE2_FIXED_H = 340;   // titulo + subtitulo + tabla conclusiones/site + banner (estimado)
+
+        const photoBlocks = [
+          ...buildPhotoRowBlocks('Antes del Mantenimiento', fotosAntes),
+          ...buildPhotoRowBlocks('Después del Mantenimiento', fotosDespues),
+        ];
+
+        const remainingBlocks = [...photoBlocks];
+        const page2Blocks = [];
+        let usedPage2 = 0;
+        const availablePage2 = PAGE_BODY_H - PAGE2_FIXED_H;
+        while (remainingBlocks.length > 0) {
+          const h = estimatePhotoBlockH(remainingBlocks[0]);
+          if (usedPage2 + h > availablePage2 && page2Blocks.length > 0) break;
+          page2Blocks.push(remainingBlocks.shift());
+          usedPage2 += h;
+        }
+
+        const extraPhotoPages = [];
+        let currentP = [];
+        let usedExtraP = 0;
+        remainingBlocks.forEach((b) => {
+          const h = estimatePhotoBlockH(b);
+          if (usedExtraP + h > PAGE_BODY_H && currentP.length > 0) {
+            extraPhotoPages.push(currentP);
+            currentP = [];
+            usedExtraP = 0;
+          }
+          currentP.push(b);
+          usedExtraP += h;
+        });
+        if (currentP.length > 0) extraPhotoPages.push(currentP);
+
+        return (
+          <>
       <div className="pdf-page">
       <div className="pdf-title" style={{ marginBottom: 4 }}>
         CONCLUSIONES DEL MANTENIMIENTO — ATM{form.cliente ? ` — ${form.cliente}` : ""}
@@ -474,119 +631,34 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
         </tbody>
       </table>
 
-      {/* FOTOS */}
-      {(fotosAntes.length > 0 || fotosDespues.length > 0) && (
+      {/* FOTOS (las que caben en la hoja de conclusiones) */}
+      {photoBlocks.length > 0 && (
         <div style={{ marginTop: 8 }}>
           <div className={"pdf-banner " + tipoObj.pdfBanner}>
             EVIDENCIA FOTOGRÁFICA
           </div>
-          {fotosAntes.length > 0 && (
-            <div style={{ marginTop: 5 }}>
-              <p
-                style={{
-                  fontWeight: 700,
-                  fontSize: "7pt",
-                  marginBottom: 4,
-                }}
-              >
-                Antes del Mantenimiento
-              </p>
-              <div className="pdf-photos">
-                {fotosAntes.map((p, i) => (
-                  <div key={i}>
-                    <img src={typeof p === 'string' ? p : p.src} alt="" className="pdf-photo" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {fotosDespues.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              <p
-                style={{
-                  fontWeight: 700,
-                  fontSize: "7pt",
-                  marginBottom: 4,
-                }}
-              >
-                Después del Mantenimiento
-              </p>
-              <div className="pdf-photos">
-                {fotosDespues.map((p, i) => (
-                  <div key={i}>
-                    <img src={typeof p === 'string' ? p : p.src} alt="" className="pdf-photo" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <PhotoBlockRows blocks={page2Blocks} />
         </div>
       )}
 
-      {/* FIRMAS */}
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          marginTop: 22,
-        }}
-      >
-        <tbody>
-          <tr>
-            <td
-              style={{
-                width: "47%",
-                textAlign: "center",
-                paddingTop: 30,
-                fontWeight: 700,
-                fontSize: "7pt",
-                border: "none",
-                borderBottom: "1.5px solid #000",
-              }}
-            >
-              {form.tec || " "}
-            </td>
-            <td style={{ width: "6%", border: "none" }}></td>
-            <td
-              style={{
-                width: "47%",
-                textAlign: "center",
-                paddingTop: 30,
-                border: "none",
-                borderBottom: "1.5px solid #000",
-              }}
-            >
-              {" "}
-            </td>
-          </tr>
-          <tr>
-            <td
-              style={{
-                textAlign: "center",
-                fontSize: "7pt",
-                paddingTop: 3,
-                border: "none",
-                color: "#475569",
-              }}
-            >
-              Técnico Responsable
-            </td>
-            <td style={{ border: "none" }}></td>
-            <td
-              style={{
-                textAlign: "center",
-                fontSize: "7pt",
-                paddingTop: 3,
-                border: "none",
-                color: "#475569",
-              }}
-            >
-              Supervisor / V°B°
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      {/* FIRMAS — en esta misma hoja si no hay fotos extra */}
+      {extraPhotoPages.length === 0 && <FirmasTable form={form} />}
+
       </div>{/* fin pdf-page 2 */}
+
+      {/* ═══ HOJAS EXTRA: resto de fotos + firmas ═══ */}
+      {extraPhotoPages.map((blocks, idx) => (
+        <div key={idx} className="pdf-page">
+          <div className={"pdf-banner " + tipoObj.pdfBanner}>
+            EVIDENCIA FOTOGRÁFICA (cont.)
+          </div>
+          <PhotoBlockRows blocks={blocks} />
+          {idx === extraPhotoPages.length - 1 && <FirmasTable form={form} />}
+        </div>
+      ))}
+          </>
+        );
+      })()}
     </div>
   );
 }
