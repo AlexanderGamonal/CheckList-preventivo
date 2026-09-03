@@ -1,6 +1,7 @@
 import React from 'react';
 import { ATM_TIPOS, BrandLogo } from '../constants/atm.jsx';
 import { VOLT_ITEMS, VOLT_MIN, VOLT_MAX, NT_MAX, voltEstadoCampo, esSinAcceso } from '../constants/voltages.js';
+import PdfPhotoGrid from './PdfPhotoGrid.jsx';
 
 /* Tabla de un bloque de dispositivos (Lectora, Impresora, Dispensador,
    Monitor, etc.) — se renderiza en la hoja 1 o en hojas extra según
@@ -94,8 +95,10 @@ function chunkArray(arr, size) {
   return out;
 }
 
-const PHOTOS_PER_ROW = 5; // 120px + 5px gap caben 5 por fila en 210mm - padding
-const PHOTO_ROW_H = 125;  // alto de una fila de fotos (foto + gap)
+/* Grid de 3 columnas (PdfPhotoGrid) — ancho útil de MP: 210mm-16mm≈733px.
+   Col: (733-10)/3≈241px → alto 241×0.75≈181px + margen ≈190px por fila. */
+const PHOTOS_PER_ROW = 3;
+const PHOTO_ROW_H = 190;  // alto de una fila de fotos (foto + gap)
 const PHOTO_LABEL_H = 20; // alto del texto "Antes/Después del Mantenimiento"
 
 function buildPhotoRowBlocks(label, fotos) {
@@ -120,17 +123,7 @@ function PhotoBlockRows({ blocks }) {
               {b.label}
             </p>
           )}
-          <div className="pdf-photos">
-            {b.photos.map((p, j) => (
-              <div key={j}>
-                <img
-                  src={typeof p === "string" ? p : p.src}
-                  alt=""
-                  className="pdf-photo"
-                />
-              </div>
-            ))}
-          </div>
+          <PdfPhotoGrid photos={b.photos} />
         </div>
       ))}
     </>

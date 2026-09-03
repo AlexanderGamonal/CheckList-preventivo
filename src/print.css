@@ -230,19 +230,6 @@
     font-size: 7pt;
   }
 
-  .pdf-photos {
-    display: flex !important;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 4px;
-  }
-  .pdf-photo {
-    width: 82px;
-    height: 82px;
-    object-fit: cover;
-    border: 1px solid #ccc;
-    border-radius: 2px;
-  }
   .pdf-photo-label {
     font-size: 5.5pt;
     color: #64748b;

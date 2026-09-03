@@ -105,5 +105,3 @@
 .pdf-scope .pdf-ok   { background: #e2efda !important; font-weight: 700; color: #375623 !important; font-size: 7pt; }
 .pdf-scope .pdf-bad  { background: #ffcccc !important; font-weight: 700; color: #9c0006 !important; font-size: 7pt; }
 .pdf-scope .pdf-wrn  { background: #ffeb9c !important; font-weight: 700; color: #9c5700 !important; font-size: 7pt; }
-.pdf-scope .pdf-photos { display: flex !important; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
-.pdf-scope .pdf-photo  { width: 120px; height: 120px; object-fit: cover; border: 1px solid #ccc; border-radius: 2px; }
