@@ -88,6 +88,8 @@
 .pdf-scope .pdf-banner-dep   { background: #166534 !important; }
 .pdf-scope .pdf-banner-multi { background: #1f3864 !important; }
 .pdf-scope .pdf-banner-base  { background: #374151 !important; }
+.pdf-scope .pdf-banner-antes    { background: #475569 !important; }
+.pdf-scope .pdf-banner-despues  { background: #16a34a !important; }
 .pdf-scope .pdf-sh      { font-weight: 700; font-size: 5.5pt; text-align: center; color: #fff !important; }
 .pdf-scope .pdf-sh-disp { background: #2563eb !important; }
 .pdf-scope .pdf-sh-dep  { background: #16a34a !important; }

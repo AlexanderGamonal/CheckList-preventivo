@@ -128,6 +128,12 @@
   .pdf-banner-base {
     background: #374151 !important;
   }
+  .pdf-banner-antes {
+    background: #475569 !important;
+  }
+  .pdf-banner-despues {
+    background: #16a34a !important;
+  }
 
   .pdf-sh {
     font-weight: 700;

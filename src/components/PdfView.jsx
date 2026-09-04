@@ -99,12 +99,13 @@ function chunkArray(arr, size) {
    Col: (733-10)/3≈241px → alto 241×0.75≈181px + margen ≈190px por fila. */
 const PHOTOS_PER_ROW = 3;
 const PHOTO_ROW_H = 190;  // alto de una fila de fotos (foto + gap)
-const PHOTO_LABEL_H = 20; // alto del texto "Antes/Después del Mantenimiento"
+const PHOTO_LABEL_H = 22; // alto del banner "Antes/Después del Mantenimiento"
 
-function buildPhotoRowBlocks(label, fotos) {
+function buildPhotoRowBlocks(label, fotos, labelClass) {
   if (!fotos.length) return [];
   return chunkArray(fotos, PHOTOS_PER_ROW).map((row, i) => ({
     label: i === 0 ? label : null,
+    labelClass,
     photos: row,
   }));
 }
@@ -119,9 +120,7 @@ function PhotoBlockRows({ blocks }) {
       {blocks.map((b, i) => (
         <div key={i} style={{ marginTop: b.label ? 5 : 3 }}>
           {b.label && (
-            <p style={{ fontWeight: 700, fontSize: "7pt", marginBottom: 4 }}>
-              {b.label}
-            </p>
+            <div className={"pdf-banner " + b.labelClass}>{b.label}</div>
           )}
           <PdfPhotoGrid photos={b.photos} />
         </div>
@@ -464,8 +463,8 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
         const PAGE2_FIXED_H = 340;   // titulo + subtitulo + tabla conclusiones/site + banner (estimado)
 
         const photoBlocks = [
-          ...buildPhotoRowBlocks('Antes del Mantenimiento', fotosAntes),
-          ...buildPhotoRowBlocks('Después del Mantenimiento', fotosDespues),
+          ...buildPhotoRowBlocks('Antes del Mantenimiento', fotosAntes, 'pdf-banner-antes'),
+          ...buildPhotoRowBlocks('Después del Mantenimiento', fotosDespues, 'pdf-banner-despues'),
         ];
 
         const remainingBlocks = [...photoBlocks];
