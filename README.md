@@ -11,37 +11,51 @@ Aplicación web integral para la **gestión, registro y auditoría de cajeros au
 
 ## 🚀 Módulos Principales
 
-El sistema se divide en dos grandes módulos operativos orientados al personal en campo, más un panel de control administrativo.
+El sistema se divide en **tres módulos de campo** orientados al personal técnico, más un panel de control administrativo (backoffice).
 
 ### 1. 📋 Check List (Mantenimiento Preventivo)
-Formulario paso a paso para mantenimientos de rutina.
-- **Flujo Guiado**: Información general, Site, Voltajes, Dispositivos, Cierre y captura de fotos (Antes/Después).
-- **Control de Estado**: Indicadores visuales y validación estricta de campos obligatorios.
-- **Reporte Rápido**: Generación de PDF consolidado de 1 a 2 páginas con resumen ejecutivo.
+Formulario paso a paso para mantenimientos de rutina (ruta `/checklist`).
+- **Flujo Guiado por Tabs**: Información general, Site, Voltajes, Dispositivos, Cierre y captura de fotos (Antes/Después).
+- **Dispositivos Dinámicos**: Las secciones de equipos a revisar (Lectora, Dispensador, Aceptador, CPU, Monitor, etc.) se arman automáticamente según el tipo de ATM (dispensador / depósito / multifunción) y la marca (NCR, Diebold, GRG, Hyosung).
+- **Voltajes con Detección de "Sin Acceso"**: si el técnico deja las 3 mediciones (L-N, L-T, N-T) de un punto en 0, se interpreta como que no hubo acceso a esa medición (no como voltaje fuera de rango).
+- **Borrador Automático**: el progreso se guarda en `localStorage` en cada cambio, para no perder datos ante un cierre accidental.
+- **PDF Dinámico Multipágina**: tablas de dispositivos y evidencia fotográfica (grid de 3 columnas) se paginan automáticamente — genera tantas hojas como haga falta sin cortar fotos ni texto.
 
-### 2. 📝 Acta de Auditoría (Nueva Funcionalidad)
-Módulo avanzado para auditorías profundas de hardware y software.
-- **Análisis Eléctrico**: Captura y validación inteligente de voltajes L-T, L-N y N-T tanto para ATM como para UPS.
+### 2. 📥 Check List Cash Today (C2D)
+Formulario para mantenimiento de cajeros de depósito/reciclaje de efectivo (ruta `/checklist-c2d`).
+- **Estado del Site**: checklist de condiciones generales del entorno/cabina.
+- **Dispositivos con Evidencia Antes/Después**: dispositivos fijos del equipo más un dispositivo opcional de "Cash Control", cada uno con su propio set de fotos antes/después (comprimidas en cliente).
+- **Pruebas de Depósito**: batería de pruebas funcionales específicas del flujo de depósito de efectivo.
+- **Borrador Automático y PDF Dinámico**: mismo patrón de autosave y de paginación dinámica de fotos que el resto de los módulos.
+
+### 3. 📝 Acta de Auditoría
+Módulo avanzado para auditorías profundas de hardware y software (ruta `/auditoria`).
+- **Análisis Eléctrico**: Captura y validación inteligente de voltajes L-T, L-N y N-T tanto para ATM como para UPS, con la misma lógica de "sin acceso" ante mediciones en 0.
 - **Evidencias por Componente**: Captura de fotografías independientes (comprimidas en WebP) para Dispensador, Aceptador, Lectora, CPU, Shutter, etc.
 - **Cassettes Dinámicos**: Configuración automática de la cantidad de cassettes (4 o 5) dependiendo de la marca del equipo (NCR, GRG, Hyosung vs Diebold).
 - **Estados Rápidos**: Clasificación visual rápida por dispositivo (✅ OK, ⚠ Mantenimiento, ❌ Cambio de repuesto).
 - **PDF Dinámico Multipágina**: Algoritmo de renderizado que calcula el espacio disponible en tiempo real para agrupar fotos sin cortes de página.
 
-### 3. 🛡️ Panel de Administración (Backoffice)
-Centro de control para coordinadores y supervisores (Ruta: `/admin`).
+### 4. 🛡️ Panel de Administración (Backoffice)
+Centro de control para coordinadores y supervisores (ruta base `/admin`, protegido con autenticación).
 - **Dashboard Estadístico**: KPIs en tiempo real y gráficos de tendencia sobre el estado operativo de la red.
-- **Gestión Integral**: ABM (Alta, Baja, Modificación) de ATMs, Técnicos, Usuarios y Contactos de correo.
-- **Historial y Exportación**: Filtrado avanzado de intervenciones y exportación de data cruda a CSV.
-- **Roles y Permisos**: Accesos jerárquicos (`Admin` para lectura/reportes y `Superadmin` para configuración total).
+- **Historial por Módulo**: listados filtrables de intervenciones de Mantenimiento (MP), Mantenimiento C2D y Auditorías, cada uno con su propia vista de detalle.
+- **Gestión Integral** *(requiere rol `superadmin`)*: ABM (Alta, Baja, Modificación) de ATMs, Técnicos, Usuarios y Contactos de correo (grupos de notificación por evento).
+- **Reset de Datos de Prueba** *(`superadmin`)*: utilidad para limpiar datos de ambientes de prueba.
+- **Exportación**: exportación de la data cruda de cada módulo a CSV/Excel.
+- **Roles y Permisos**: accesos jerárquicos vía `useAuth.js` + `ProtectedRoute.jsx` — `admin` para lectura/reportes, `superadmin` para configuración y datos maestros.
 
 ---
 
 ## ✨ Características Técnicas Destacadas
 
-*   **Offline-First (Borrador Automático)**: El progreso de los formularios se guarda continuamente en el `localStorage` del navegador, previniendo la pérdida de datos ante cierres accidentales.
-*   **Motor de Renderizado PDF Híbrido**: Utiliza `html2canvas` (escalado a 2x de resolución) sobre un nodo DOM oculto combinado con `jsPDF` para asegurar documentos estéticos, corporativos y con textos nítidos.
-*   **Theme Switcher**: Soporte nativo para modo Claro/Oscuro optimizado para visibilidad en exteriores e interiores.
-*   **Compresión de Imágenes en Cliente**: Todas las fotografías tomadas se redimensionan y convierten a formato `WebP` antes de ser adjuntadas, ahorrando ancho de banda y reduciendo dramáticamente el peso final del reporte.
+* **Offline-First (Borrador Automático)**: El progreso de los formularios se guarda continuamente en el `localStorage` del navegador, previniendo la pérdida de datos ante cierres accidentales. En el módulo de Mantenimiento Preventivo esta lógica vive en hooks dedicados (`useMpDraft`, `useMpSubmit`); C2D y Auditoría la manejan directamente en su página de formulario.
+* **Motor de Renderizado PDF Híbrido**: `html2canvas` captura cada hoja como una imagen sobre un nodo DOM oculto (`#pdf-root`), y `jsPDF` las combina en un único documento — logrando reportes corporativos con texto y tablas nítidos.
+* **Paginación Dinámica del PDF**: en los tres módulos, el propio código en el navegador estima cuánto espacio ocupa cada bloque de contenido (tabla de dispositivos, fila de fotos) y decide en tiempo real cuántas hojas generar, para que ninguna tabla ni foto se corte al pasar de página — sin importar cuántas fotos suba el técnico.
+* **Dispositivos y Marcas Configurados por Datos**: las secciones de equipos a inspeccionar no están hardcodeadas por ATM — se calculan a partir del tipo de cajero y la marca (`constants/devices.js`, `constants/atm.jsx`), con normalización de mayúsculas/minúsculas para tolerar inconsistencias de la base de datos.
+* **Theme Switcher**: Soporte nativo para modo Claro/Oscuro optimizado para visibilidad en exteriores e interiores.
+* **Compresión de Imágenes en Cliente**: Todas las fotografías tomadas se redimensionan (máx. 1200×900) y convierten a formato `WebP` antes de ser adjuntadas, ahorrando ancho de banda y reduciendo dramáticamente el peso final del reporte.
+* **PWA (Progressive Web App)**: instalable en dispositivos móviles de campo vía `vite-plugin-pwa`, con app shell precacheado.
 
 ---
 
@@ -49,12 +63,13 @@ Centro de control para coordinadores y supervisores (Ruta: `/admin`).
 
 | Capa | Tecnología |
 | :--- | :--- |
-| **Frontend** | React 18, Vite, CSS Vanilla (Design System) |
-| **Enrutamiento** | React Router DOM v7 |
-| **Visualización de Datos**| Recharts |
-| **Exportación & Reportes**| jsPDF, html2canvas, SheetJS (xlsx) |
-| **Backend & Base de Datos**| Supabase (PostgreSQL, Row Level Security, Auth) |
-| **Funciones Serverless** | Supabase Edge Functions (Deno) |
+| **Frontend** | React 18.2, Vite 5, CSS Vanilla (Design System) |
+| **Enrutamiento** | React Router DOM 7 (rutas con lazy loading) |
+| **Visualización de Datos** | Recharts 3.8 |
+| **Exportación & Reportes** | jsPDF 4.2, html2canvas 1.4, SheetJS (xlsx) 0.18 |
+| **PWA / Offline Shell** | vite-plugin-pwa |
+| **Backend & Base de Datos** | Supabase (PostgreSQL, Row Level Security, Auth) |
+| **Funciones Serverless** | Supabase Edge Functions (Deno): `manage-users`, `send-email` |
 | **Despliegue (Hosting)** | Vercel |
 
 ---
@@ -62,23 +77,30 @@ Centro de control para coordinadores y supervisores (Ruta: `/admin`).
 ## 📂 Estructura del Proyecto
 
 ```text
-├── public/                 # Assets estáticos (Logos, favicons)
+├── public/                    # Assets estáticos (Logos, favicons)
 ├── src/
-│   ├── admin/              # Layout y Rutas protegidas (Backoffice)
-│   ├── components/         # UI Components reutilizables (Inputs, Cards, PhotoUploader)
-│   ├── constants/          # Diccionarios de datos (ATMs, Modelos, Validaciones)
-│   ├── hooks/              # Custom Hooks (useTheme, useAuth, useIsMobile)
-│   ├── lib/                # Configuración de clientes externos (Supabase)
-│   ├── pages/              # Vistas de la aplicación (Home, Formulario, Admin)
-│   ├── services/           # Lógica de negocio (pdfService, emailService, bdService)
-│   ├── App.jsx             # Punto de entrada de Formularios
-│   ├── router.jsx          # Configuración del árbol de rutas (Lazy Loading)
-│   └── main.jsx            # Entry point de React
-├── supabase/               # Configuración Backend
-│   ├── functions/          # Código fuente Deno para Edge Functions
-│   └── seed/               # Migraciones SQL, Políticas RLS y Datos Semilla
-├── vercel.json             # Reglas de enrutamiento SPA y Cabeceras de Seguridad
-└── vite.config.js          # Configuración del bundler y PWA
+│   ├── admin/                 # Layout y guard de rutas del backoffice (AdminLayout, ProtectedRoute)
+│   ├── components/            # UI reutilizable (PhotoUploader, SectionBlock, ItemCard, PdfPhotoGrid, Toast...)
+│   │   └── checklist/         # Tabs y layout del formulario de Mantenimiento Preventivo
+│   ├── constants/              # Diccionarios de datos: ATMs/marcas (atm.jsx), dispositivos por tipo (devices.js),
+│   │                           # lógica de voltajes/"sin acceso" (voltages.js), grupos de email (emailGrupos.js)
+│   ├── hooks/                  # Custom hooks (useAuth, useTheme, useIsMobile, useAtmLookup, useTecnicos,
+│   │                           # useMpDraft, useMpSubmit)
+│   ├── lib/                    # Configuración de clientes externos (cliente Supabase)
+│   ├── pages/                  # Vistas de la app: HomePage, *FormPage (MP/C2D/Auditoría), *PdfView, PdfPreviewPage
+│   │   └── admin/               # Páginas del backoffice (Dashboard, Mantenimientos, C2D, ATMs, Técnicos, Usuarios...)
+│   │       └── auditorias/       # Vistas de detalle/listado propias del módulo de Auditorías
+│   ├── services/                # Lógica de negocio: mantenimientoService, c2dService, auditoriaService,
+│   │                             # pdfService (generación), emailService (envío), csvExport
+│   ├── App.jsx                  # Formulario de Mantenimiento Preventivo (orquesta los tabs de checklist/)
+│   ├── router.jsx               # Árbol de rutas de la SPA (lazy loading por página)
+│   └── main.jsx                 # Entry point de React
+├── supabase/                   # Configuración Backend
+│   ├── functions/               # Código fuente Deno para Edge Functions
+│   └── seed/                    # Esquema base, políticas RLS y migraciones incrementales (C2D, auditorías,
+│                                 # normalización de marcas/clientes, etc.)
+├── vercel.json                  # Reglas de enrutamiento SPA y Cabeceras de Seguridad
+└── vite.config.js               # Configuración del bundler y PWA
 ```
 
 ---
@@ -110,12 +132,7 @@ VITE_SUPABASE_ANON_KEY_PUBLIC=<tu-anon-key>
 
 ### 3. Configuración de Base de Datos (Supabase)
 
-Desde el **SQL Editor** de Supabase, ejecuta los scripts de migración ubicados en `supabase/seed/` en el siguiente orden sugerido:
-
-1. `schema.sql` (Esquema base y tablas primarias)
-2. `add_auditorias_table.sql` / `add_auditorias_missing_fields.sql` (Módulo de Auditorías)
-3. `add_delete_policies.sql` (Políticas de seguridad RLS)
-4. `add_hyosung_models.sql` (Datos base)
+Desde el **SQL Editor** de Supabase, ejecuta los scripts de `supabase/seed/` en orden cronológico: empezando por `schema.sql` (esquema base) y `seed.sql` (datos semilla), seguido de las migraciones incrementales (soporte de Auditorías, tabla y columnas de C2D, políticas de borrado, modelos Hyosung, normalización de marcas/clientes, prefijos BBVA, etc.) en el orden en que fueron agregadas al repositorio.
 
 ### 4. Despliegue de Edge Functions (Opcional para uso local)
 
@@ -135,6 +152,11 @@ npx supabase functions deploy send-email
 ```bash
 npm run dev
 ```
+
+Rutas útiles durante el desarrollo:
+- `/preview` — vista previa del PDF de Mantenimiento Preventivo con datos de muestra (sin depender del formulario real).
+- `/specs` — especificaciones técnicas del proyecto.
+- `/dev/colors` — preview del design system (paleta de colores, solo en desarrollo).
 
 ---
 
