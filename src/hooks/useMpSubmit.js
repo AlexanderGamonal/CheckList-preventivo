@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { saveMantenimiento } from '../services/mantenimientoService.js';
 import { sendNotificationEmail } from '../services/emailService.js';
 import { initForm } from '../constants/devices.js';
+import { trackEvent } from '../lib/analytics.js';
 
 export function useMpSubmit({ form, sections, fotosAntes, fotosDespues, setForm, setFotosAntes, setFotosDespues, setTab, clearDraft, setToast }) {
   const [enviando, setEnviando] = useState(false);
@@ -87,6 +88,7 @@ export function useMpSubmit({ form, sections, fotosAntes, fotosDespues, setForm,
         console.error("DB save:", e),
       );
       await sendNotificationEmail(form, pdfBase64, setSendStep);
+      trackEvent('checklist_completado', { modulo: 'mp' });
       setSendStep("✓ Correo enviado");
       setToast({ msg: "✓ PDF generado y correo enviado", type: "ok" });
       // Limpiar borrador y restablecer formulario

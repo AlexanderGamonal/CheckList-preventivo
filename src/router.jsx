@@ -1,7 +1,8 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import ProtectedRoute from './admin/ProtectedRoute.jsx';
 import InstallPrompt from './components/InstallPrompt.jsx';
+import { trackPageView } from './lib/analytics.js';
 
 // Lazy: se descargan solo cuando el usuario navega a esa ruta
 const HomePage             = lazy(() => import('./pages/HomePage.jsx'));
@@ -37,6 +38,11 @@ function PageLoader() {
 
 export default function AppRouter() {
   const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
+
   return (
     <Suspense fallback={<PageLoader />}>
       {location.pathname === '/' && <InstallPrompt />}

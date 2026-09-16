@@ -22,6 +22,24 @@
 
     <title>GICE</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+
+    <!-- Google Analytics 4 — solo carga si VITE_GA_MEASUREMENT_ID está configurado
+         (Vite deja el placeholder sin resolver si la env var no existe, por eso
+         se valida con un regex en vez de comparar contra string vacío) -->
+    <script>
+      (function () {
+        var GA_ID = '%VITE_GA_MEASUREMENT_ID%';
+        if (!/^G-[A-Z0-9]+$/.test(GA_ID)) return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { window.dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+        window.gtag('config', GA_ID, { send_page_view: false });
+      })();
+    </script>
   </head>
   <body>
     <script>

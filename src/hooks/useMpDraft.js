@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { initForm } from '../constants/devices.js';
+import { trackEvent } from '../lib/analytics.js';
 
 const DRAFT_KEY = 'checklist_draft';
 
@@ -24,6 +25,12 @@ export function useMpDraft() {
   const [fotosDespues, setFotosDespues] = useState(normPhotos(draft?.fotosDespues));
   const [tab, setTab] = useState(draft?.tab || 0);
   const [storageError, setStorageError] = useState(false);
+
+  // Evento de uso: se dispara una sola vez al montar, solo si no había borrador previo
+  useEffect(() => {
+    if (!draft) trackEvent('checklist_iniciado', { modulo: 'mp' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Guardar borrador en cada cambio
   useEffect(() => {

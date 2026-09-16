@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.js';
+import { trackEvent } from '../lib/analytics.js';
 import TecnicoNumInput from '../components/TecnicoNumInput.jsx';
 import Toast from '../components/Toast.jsx';
 import { useIsMobile } from '../hooks/useIsMobile.js';
@@ -317,6 +318,13 @@ export default function C2dFormPage() {
   const [sendStep, setSendStep] = useState('');
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [storageError, setStorageError] = useState(false);
+  const [esBorradorNuevo] = useState(() => !localStorage.getItem(DRAFT_KEY));
+
+  // Evento de uso: se dispara una sola vez al montar, solo si no había borrador previo
+  useEffect(() => {
+    if (esBorradorNuevo) trackEvent('checklist_iniciado', { modulo: 'c2d' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     try {
@@ -385,6 +393,7 @@ export default function C2dFormPage() {
 
       saveC2d(form).catch(() => {});
       await sendC2dEmail(form, pdfBuffer, setSendStep);
+      trackEvent('checklist_completado', { modulo: 'c2d' });
 
       setSendStep('✓ Correo enviado');
       setToast({ msg: '✓ PDF generado y correo enviado correctamente', type: 'ok' });
