@@ -403,6 +403,8 @@ export default function C2dFormPage() {
       setToast({ msg: '✓ PDF generado y correo enviado correctamente', type: 'ok' });
       localStorage.removeItem(DRAFT_KEY);
       setForm(INITIAL);
+      // El formulario queda en blanco: arranca implícitamente un checklist nuevo
+      trackEvent('checklist_iniciado', { modulo: 'c2d' });
     } catch (e) {
       trackEvent(pdfGenerado ? 'error_email' : 'error_pdf', { modulo: 'c2d' });
       setToast({ msg: 'Error al enviar: ' + (e.message || 'intente nuevamente'), type: 'err' });

@@ -101,6 +101,8 @@ export function useMpSubmit({ form, sections, fotosAntes, fotosDespues, setForm,
       setFotosAntes([]);
       setFotosDespues([]);
       setTab(0);
+      // El formulario queda en blanco: arranca implícitamente un checklist nuevo
+      trackEvent('checklist_iniciado', { modulo: 'mp' });
     } catch (e) {
       trackEvent(pdfGenerado ? 'error_email' : 'error_pdf', { modulo: 'mp' });
       console.error(e);
