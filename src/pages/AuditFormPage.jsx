@@ -492,14 +492,18 @@ export default function AuditFormPage() {
 
     setSending(true);
     setSendStep('Generando PDF...');
+    let pdfGenerado = false;
     try {
       const { generatePDF } = await import('../services/pdfService.js');
       const idSafe   = (form.idAtm || 'ATM').replace(/[\\/:*?"<>|]/g, '_');
       const filename = `Auditoria_${idSafe}_${form.fecha || 'sin-fecha'}`;
       const pdfBuffer = await generatePDF('audit-pdf-area', filename, { download: true });
+      pdfGenerado = true;
+      trackEvent('pdf_generado', { modulo: 'auditoria' });
 
       saveAuditoria(form).catch(() => {});
       await sendAuditoriaEmail(form, pdfBuffer, setSendStep);
+      trackEvent('email_enviado', { modulo: 'auditoria' });
       trackEvent('checklist_completado', { modulo: 'auditoria' });
 
       setSendStep('✓ Correo enviado');
@@ -507,6 +511,7 @@ export default function AuditFormPage() {
       localStorage.removeItem(DRAFT_KEY);
       setForm(INITIAL);
     } catch (e) {
+      trackEvent(pdfGenerado ? 'error_email' : 'error_pdf', { modulo: 'auditoria' });
       setToast({ msg: 'Error al enviar: ' + (e.message || 'intente nuevamente'), type: 'err' });
     } finally {
       setSending(false);

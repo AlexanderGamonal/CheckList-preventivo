@@ -384,15 +384,19 @@ export default function C2dFormPage() {
 
     setSending(true);
     setSendStep('Generando PDF...');
+    let pdfGenerado = false;
     try {
       const { generatePDF } = await import('../services/pdfService.js');
       const idSafe    = (form.idAtm || 'ATM').replace(/[\\/:*?"<>|]/g, '_');
       const puntoSafe = (form.punto || '').replace(/[\\/:*?"<>|]/g, '_').slice(0, 40);
       const filename  = `C2D-${puntoSafe ? puntoSafe + '-' : ''}${idSafe}_${form.fecha || 'sin-fecha'}`;
       const pdfBuffer = await generatePDF('c2d-pdf-area', filename, { download: true });
+      pdfGenerado = true;
+      trackEvent('pdf_generado', { modulo: 'c2d' });
 
       saveC2d(form).catch(() => {});
       await sendC2dEmail(form, pdfBuffer, setSendStep);
+      trackEvent('email_enviado', { modulo: 'c2d' });
       trackEvent('checklist_completado', { modulo: 'c2d' });
 
       setSendStep('✓ Correo enviado');
@@ -400,6 +404,7 @@ export default function C2dFormPage() {
       localStorage.removeItem(DRAFT_KEY);
       setForm(INITIAL);
     } catch (e) {
+      trackEvent(pdfGenerado ? 'error_email' : 'error_pdf', { modulo: 'c2d' });
       setToast({ msg: 'Error al enviar: ' + (e.message || 'intente nuevamente'), type: 'err' });
     } finally {
       setSending(false);

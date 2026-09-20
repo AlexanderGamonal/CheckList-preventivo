@@ -81,13 +81,17 @@ export function useMpSubmit({ form, sections, fotosAntes, fotosDespues, setForm,
 
     setEnviando(true);
     setSendStep("Generando PDF…");
+    let pdfGenerado = false;
     try {
       const { generatePDF } = await import('../services/pdfService.js');
       const pdfBase64 = await generatePDF("pdf-root", filename);
+      pdfGenerado = true;
+      trackEvent('pdf_generado', { modulo: 'mp' });
       saveMantenimiento(form, sections).catch((e) =>
         console.error("DB save:", e),
       );
       await sendNotificationEmail(form, pdfBase64, setSendStep);
+      trackEvent('email_enviado', { modulo: 'mp' });
       trackEvent('checklist_completado', { modulo: 'mp' });
       setSendStep("✓ Correo enviado");
       setToast({ msg: "✓ PDF generado y correo enviado", type: "ok" });
@@ -98,6 +102,7 @@ export function useMpSubmit({ form, sections, fotosAntes, fotosDespues, setForm,
       setFotosDespues([]);
       setTab(0);
     } catch (e) {
+      trackEvent(pdfGenerado ? 'error_email' : 'error_pdf', { modulo: 'mp' });
       console.error(e);
       setToast({
         msg: "Error: " + (e?.message || "no se pudo enviar el correo"),
