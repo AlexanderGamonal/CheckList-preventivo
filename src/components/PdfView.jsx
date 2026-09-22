@@ -216,13 +216,24 @@ export default function PdfView({ form, fotosAntes, fotosDespues, sections }) {
     <div>
       {/* ═══ PÁGINA 1: Datos + Checklist ═══ */}
       {(() => {
-        const ROW_H = 15;       // alto aprox. de una fila de item de dispositivo (px)
+        const ROW_H = 15;            // alto base de una fila de item de dispositivo (px)
+        const ROW_H_PER_LINE = 12;   // alto adicional por cada línea extra que envuelve la Observación (px)
+        const OBS_CHARS_PER_LINE = 40; // estimado conservador de caracteres por línea en la columna Observaciones
         const SEC_HEAD_H = 18;   // header de tabla + margen inferior (px)
         const PAGE_BODY_H = 1000; // alto util aprox. de una hoja A4 completa (px)
         const PAGE1_FIXED_H = 260; // titulo + subtitulo + tabla datos + tabla voltajes + banner (estimado)
 
+        // Una observación larga envuelve a varias líneas y la fila crece en la
+        // realidad — sin esto, la paginación subestima la altura real y puede
+        // dejar más contenido del que entra en la hoja (canvas demasiado alto
+        // al capturarlo → fondo negro o "estática" en dispositivos limitados).
         function estimateSectionH(sec) {
-          return SEC_HEAD_H + sec.items.length * ROW_H;
+          const rowsH = sec.items.reduce((acc, _item, ii) => {
+            const obs = form.devices[sec.id + "_" + ii]?.obs || "";
+            const lines = obs ? Math.max(1, Math.ceil(obs.length / OBS_CHARS_PER_LINE)) : 1;
+            return acc + ROW_H + (lines - 1) * ROW_H_PER_LINE;
+          }, 0);
+          return SEC_HEAD_H + rowsH;
         }
 
         const remaining = [...sections];
