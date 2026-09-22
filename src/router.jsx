@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import ProtectedRoute from './admin/ProtectedRoute.jsx';
 import InstallPrompt from './components/InstallPrompt.jsx';
 import { trackPageView } from './lib/analytics.js';
@@ -45,6 +46,7 @@ export default function AppRouter() {
 
   return (
     <Suspense fallback={<PageLoader />}>
+      <Analytics />
       {location.pathname === '/' && <InstallPrompt />}
       <Routes>
         {/* Home — selección de módulo */}
