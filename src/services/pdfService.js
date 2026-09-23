@@ -19,6 +19,37 @@ function waitForImages(el, timeoutMs = 4000) {
   }));
 }
 
+/* Detecta un canvas mayormente negro — cuando html2canvas se queda sin
+   memoria/recursos a mitad de la captura, las zonas que no llega a pintar
+   quedan transparentes y se exportan como negro sólido al pasar a JPEG.
+   Ninguna hoja de esta app es legítimamente así de oscura. */
+function isCanvasSuspiciouslyBlack(canvas) {
+  const { width: w, height: h } = canvas;
+  if (!w || !h) return true;
+  const ctx = canvas.getContext('2d');
+  const { data } = ctx.getImageData(0, 0, w, h);
+  const totalPixels = w * h;
+  // Muestreo (no cada píxel) para no penalizar el rendimiento en canvases grandes
+  const stridePixels = Math.max(1, Math.floor(totalPixels / 2000));
+  const stride = stridePixels * 4;
+  let dark = 0, sampled = 0;
+  for (let i = 0; i < data.length; i += stride) {
+    if (data[i] < 20 && data[i + 1] < 20 && data[i + 2] < 20) dark++;
+    sampled++;
+  }
+  return sampled > 0 && dark / sampled > 0.35;
+}
+
+async function captureWithRetry(target, opts) {
+  let canvas = await html2canvas(target, opts);
+  if (isCanvasSuspiciouslyBlack(canvas)) {
+    // Probable falla de memoria/GPU a mitad de captura — reintentar una vez
+    await new Promise((r) => setTimeout(r, 400));
+    canvas = await html2canvas(target, opts);
+  }
+  return canvas;
+}
+
 async function buildPDF(containerId, scale, jpegQuality) {
   const element = document.getElementById(containerId);
   if (!element) throw new Error(`Element #${containerId} not found`);
@@ -32,7 +63,7 @@ async function buildPDF(containerId, scale, jpegQuality) {
 
   for (let i = 0; i < targets.length; i++) {
     const rect = targets[i].getBoundingClientRect();
-    const canvas = await html2canvas(targets[i], {
+    const canvas = await captureWithRetry(targets[i], {
       scale,
       useCORS: true,
       allowTaint: true,
