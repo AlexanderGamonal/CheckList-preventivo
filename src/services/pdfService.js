@@ -1,6 +1,24 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+/* Espera a que todas las <img> dentro de `el` terminen de cargar (o fallen)
+   antes de capturar el canvas — sin esto, con mala señal en campo,
+   html2canvas puede fotografiar un logo a medio descargar (rayas/artefactos
+   en la cabecera). Timeout de seguridad: una imagen rota o muy lenta no debe
+   colgar la generación del PDF entero. */
+function waitForImages(el, timeoutMs = 4000) {
+  const imgs = Array.from(el.querySelectorAll('img'));
+  return Promise.all(imgs.map((img) => {
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise((resolve) => {
+      const done = () => { clearTimeout(timer); resolve(); };
+      const timer = setTimeout(done, timeoutMs);
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    });
+  }));
+}
+
 async function buildPDF(containerId, scale, jpegQuality) {
   const element = document.getElementById(containerId);
   if (!element) throw new Error(`Element #${containerId} not found`);
@@ -59,6 +77,9 @@ export async function generatePDF(containerId, filename, { download = true } = {
   element.style.top        = '0';
   element.style.visibility = 'visible';
   element.style.zIndex     = '-1';
+
+  // Esperar a que las imágenes (logos de marca, etc.) terminen de cargar
+  await waitForImages(element);
 
   // Esperar dos frames para que el navegador pinte el elemento antes de capturar
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
